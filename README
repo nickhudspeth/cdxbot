@@ -1,0 +1,29 @@
+node: cdxbot
+    description:
+    arguments:
+    publishes:
+    subscribes: gantry-controller, pipetter-controller, vision-controller
+
+node: gantry-controller
+    description: Abstraction layer for gantry controller board
+                 (e.g. SmoothieBoard) with generic interface
+    arguments:
+    publishes:  geometry_msgs/Vector3Stamped - pos - position of tool carriage
+                std_msgs/Float64 - target - current target position
+                std_msgs/Bool - reached_target - has the tool carriage reached
+                                                 the target?
+    subscribes:
+
+node: pipetter-controller
+    description: Abstraction layer for pipetter module with generic interface
+    arguments:
+    publishes:  geometry_msgs/Vector3Stamped - pos - z-offset of pipette tip
+    subscribes:
+
+node: vision-controller
+    description: Abstraction layer for vision system with generic interface
+    arguments:
+    publishes:
+    subscribes:
+
+
