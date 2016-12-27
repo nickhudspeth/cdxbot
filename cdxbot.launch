@@ -1,0 +1,9 @@
+<launch>
+<node
+pkg="cdxbot"
+type="CDXBotNode"
+name="cdxbot_node"
+respawn="false"
+output="screen"
+/>
+</launch>

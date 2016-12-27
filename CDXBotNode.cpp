@@ -37,36 +37,16 @@ LICENSE:
 #include <cstdio>
 #include <iostream>
 #include <stdbool.h>
-#include "CDXBot.h"
 #include "std_msgs/String.h"
+#include "CDXBot.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
 /***********************    GLOBAL VARIABLES    ************************/
 std::string defaultConfigFilePath = ".";
-CDXBot * cd;
+CDXBot cd;
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
-
-
-
-
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "cdxbot");
-    ros::NodeHandle nh;
-
-    /* Subscribe to GUI topic */
-    ros::Subscriber guiSub = nh.subscribe("gui/cmd", 1000, &guiCmdReceived);
-    cd->parseHLMDFile(cd->HLMDFileLocation);
-    while(ros::ok()) {
-        if(cd->getRunStatus()) {
-
-
-        }
-    }
-    return 0;
-}
 
 int loadConfig(const std::string file) {
     ROS_INFO_STREAM("Loaded configuration parameters.");
@@ -75,7 +55,38 @@ int loadConfig(const std::string file) {
 
 void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
     ROS_INFO_STREAM("Received cmd from gui" << s);
-    if (s == "RUN") {
-        cd->setRunStatus(1);
+    if (s->data == "RUN") {
+        cd.setRunStatus(1);
     }
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "CDXBotNode");
+    ros::NodeHandle nh;
+
+    /* Subscribe to GUI topic */
+    ros::Subscriber guiSub = nh.subscribe("gui/cmd", 1000, &guiCmdReceived);
+    // ROS_INFO_STREAM("Parsing HLMD file at " << cd.HLMDFileLocation );
+    if(!cd.parseHLMDFile(cd.HLMDFileLocation)){
+        ROS_INFO_STREAM(cd.actionMap.size() << "items pushed into actionmap.");
+        ROS_INFO_STREAM("items pushed into actionmap");
+        for(size_t i = 0; i < cd.actionMap.size(); i++) {
+            ROS_INFO_STREAM(cd.actionMap[i].cmd);
+            for(size_t j = 0; j < cd.actionMap[i].args.size(); j++){
+                ROS_INFO_STREAM("\t" << cd.actionMap[i].args[j]);
+            }
+        }
+    }
+    else{
+        ROS_INFO_STREAM("Error reading HLMD file.");
+    }
+    while(ros::ok()) {
+        ROS_INFO_STREAM("OK!");
+        return 0;
+        if(cd.getRunStatus()) {
+
+
+        }
+    }
+    return 0;
 }

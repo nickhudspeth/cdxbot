@@ -48,22 +48,26 @@ LICENSE:
 #include <string>
 #include <map>
 #include <vector>
+#include <ros/ros.h>
+#include <boost/tokenizer.hpp>
+
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class CDXBot {
   public:
-    CDXBot ();
-    virtual ~CDXBot ();
+    CDXBot (){};
+    virtual ~CDXBot (){};
     int parseHLMDFile(const char *fname);
     void setRunStatus(unsigned int status);
     unsigned int getRunStatus(void) {
         return _runStatus;
     }
-    const char *HLMDFileLocation = "run.hlmd";
+    const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
+    std::vector<struct action> actionMap;
   private:
-    char d = ','; /*HLMD File delimiter */
+    const char *d = ","; /*HLMD File delimiter */
     int _runStatus = 0;
-    std::map<std::string, struct action> actionMap;
-    int split (const std::string &s, char c, std::vector<std::string> &v);
+//    std::map<std::string, struct action> actionMap;
+    // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);
     /* data */
 };

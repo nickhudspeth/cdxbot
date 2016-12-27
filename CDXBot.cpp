@@ -1,7 +1,7 @@
 /************************************************************************
-Title:    cdxbot.cpp 
-Author:   Nicholas Morrow <nmorrow@crystaldiagnostics.com>
-File:     cdxbot.cpp 
+Title:    cdxbot.cpp
+Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
+File:     cdxbot.cpp
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -31,61 +31,55 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <ros/ros.h>
-#include <cstdlib>
-#include <string>
-#include <cstdio>
-#include <iostream>
-#include <confuse.h>
+#include "CDXBot.h"
 
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
 /***********************    GLOBAL VARIABLES    ************************/
-std::string defaultConfigFilePath = ".";
+
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
-
-
-int loadConfig(const std::string file)
-{
-    cfg_t *cfg;
-    cfg_opt_t opts[] = {
-        CFG_INT((char*)"id", 1, CFGF_NONE),
-        CFG_STR((char*)"pipetter_type", (char*)"NONE", CFGF_NONE),
-        CFG_STR((char*)"controller_type", (char*)"NONE", CFGF_NONE),
-        CFG_END(),
-    };
-    cfg = cfg_init(opts, CFGF_NOCASE);
-    if(cfg_parse(cfg, file.c_str()) == CFG_PARSE_ERROR) {
-        ROS_ERROR_STREAM("Error parsing config file.");
+int CDXBot::parseHLMDFile(const char *fname) {
+    std::ifstream infile(fname);
+    std::string line;
+    std::vector<std::string> v;
+    std::string s;
+    if(!infile.good()) {
         return -1;
     }
-    /* Load default settings from configuration file, if available.*/
-    if(file.empty()) {
-        std::string cfgPath = defaultConfigFilePath + "/" + file + std::string(".conf");
-        std::cout << "Loading configuration from file at " << cfgPath << std::endl;
+    while(std::getline(infile, line)) {
+        struct action a;
+        if(line.empty()) {
+            break;
+        }
+        /* Strip whitespace from string */
+        std::string::iterator end_pos = std::remove(line.begin(), line.end(), ' ');
+        line.erase(end_pos, line.end());
+        // Assemble an action structure from the parsed tokens in the line.
+        // a.fp = getActionPointer(v[0]);
+        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+        boost::char_separator<char> sep(d);
+        tokenizer v(line,sep);
+
+        for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter)
+            if(iter == v.begin()) {
+                a.cmd = *iter;
+            }
+            else {
+                a.args.push_back(std::stof(*iter));
+            }
+        actionMap.push_back(a);
     }
-    else{
-        ROS_WARN_STREAM("No configuration file found at " + defaultConfigFilePath\
-                + ". Loading default values for all parameters in " + file + ".conf!");
-
-    }
-
-}
-
-
-
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "cdxbot");
-    ros::NodeHandle nh;
-
-    ROS_INFO_STREAM("Hello, ROS!");
-    // while(ros::ok()){
-
-    // }
     return 0;
 }
 
+
+void CDXBot::setRunStatus(unsigned int s) {
+    if(s > 0) {
+        _runStatus = 1;
+    } else {
+        _runStatus = 0;
+    }
+}

@@ -31,7 +31,7 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include "cdxbot.h"
+#include "CDXBot.h"
 
 
 /*********************    CONSTANTS AND MACROS    **********************/
@@ -41,6 +41,8 @@ LICENSE:
 
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
+
+
 
 int CDXBot::parseHLMDFile(const char *fname) {
     std::ifstream infile(fname);

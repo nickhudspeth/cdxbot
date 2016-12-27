@@ -8,9 +8,11 @@ find_package(catkin REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
+    roslaunch
     std_msgs
     geometry_msgs
     message_generation)
+# roslaunch_add_file_check(launch)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 # find_package(Confuse REQUIRED)
@@ -103,10 +105,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    #  INCLUDE_DIRS include
-    #  LIBRARIES cdxbot
+     # INCLUDE_DIRS include
+     # LIBRARIES cdxbot
     #  CATKIN_DEPENDS other_catkin_pkg
-    #  DEPENDS system_lib
+     # DEPENDS system_lib
     CATKIN_DEPENDS message_runtime
     )
 
@@ -131,10 +133,10 @@ include_directories(include
 # add_dependencies(cdxbot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(CDXBotNode src/CDXBotNode.cpp)
-add_executable(gantryControllerNode src/gantryControllerNode.cpp)
-add_executable(pipetterControllerNode src/pipetterControllerNode.cpp)
-add_executable(visionControllerNode src/visionControllerNode.cpp)
+add_executable(gantryControllerNode gantryControllerNode.cpp)
+add_executable(pipetterControllerNode pipetterControllerNode.cpp)
+add_executable(visionControllerNode visionControllerNode.cpp)
+add_executable(CDXBotNode CDXBotNode.cpp CDXBot.cpp)
 
 
 ## Add cmake target dependencies of the executable
@@ -170,10 +172,10 @@ target_link_libraries(visionControllerNode
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS cdxbot cdxbot_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# install(TARGETS cdxbot CDXBotNode 
+  # ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  # LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  # RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
@@ -202,3 +204,4 @@ target_link_libraries(visionControllerNode
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+ADD_DEFINITIONS(-std=c++11 -g)
