@@ -54,38 +54,50 @@ int loadConfig(const std::string file) {
 }
 
 void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
-    ROS_INFO_STREAM("Received cmd from gui" << s);
+    ROS_INFO_STREAM("Received cmd from gui " << s->data);
     if (s->data == "RUN") {
         cd.setRunStatus(1);
+    } else if (s->data == "STOP") {
+        cd.setRunStatus(0);
     }
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "CDXBotNode");
+    ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
 
     /* Subscribe to GUI topic */
-    ros::Subscriber guiSub = nh.subscribe("gui/cmd", 1000, &guiCmdReceived);
-    // ROS_INFO_STREAM("Parsing HLMD file at " << cd.HLMDFileLocation );
-    if(!cd.parseHLMDFile(cd.HLMDFileLocation)){
-        ROS_INFO_STREAM(cd.actionMap.size() << "items pushed into actionmap.");
-        ROS_INFO_STREAM("items pushed into actionmap");
+    ros::Subscriber guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
+
+    /* Check for and load/parse HLMD file */
+    if(!cd.parseHLMDFile(cd.HLMDFileLocation)) {
+        ROS_INFO_STREAM("Found HLMD file at " << cd.HLMDFileLocation <<".");
+        ROS_DEBUG_STREAM(cd.actionMap.size() << "items pushed into actionmap.");
+        ROS_DEBUG_STREAM("items pushed into actionmap");
         for(size_t i = 0; i < cd.actionMap.size(); i++) {
-            ROS_INFO_STREAM(cd.actionMap[i].cmd);
-            for(size_t j = 0; j < cd.actionMap[i].args.size(); j++){
-                ROS_INFO_STREAM("\t" << cd.actionMap[i].args[j]);
+            ROS_DEBUG_STREAM(cd.actionMap[i].cmd);
+            for(size_t j = 0; j < cd.actionMap[i].args.size(); j++) {
+                ROS_DEBUG_STREAM("\t" << cd.actionMap[i].args[j]);
             }
         }
-    }
-    else{
+        ROS_INFO_STREAM("Parsed HLMD file successfully.");
+    } else {
         ROS_INFO_STREAM("Error reading HLMD file.");
     }
+
+    /* Process commands in HLMD file. */
     while(ros::ok()) {
-        ROS_INFO_STREAM("OK!");
-        return 0;
-        if(cd.getRunStatus()) {
+        if(cd.getRunStatus() == 1) {
+            struct action a;
 
-
+            if(cd.getNextAction(a) < 0) {
+                ROS_INFO_STREAM("DONE!");
+                cd.setRunStatus(0);
+            } else {
+                ROS_INFO_STREAM("Got action: " << a.cmd);
+            }
+        } else {
+            ros::spinOnce();
         }
     }
     return 0;

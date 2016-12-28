@@ -66,8 +66,7 @@ int CDXBot::parseHLMDFile(const char *fname) {
         for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter)
             if(iter == v.begin()) {
                 a.cmd = *iter;
-            }
-            else {
+            } else {
                 a.args.push_back(std::stof(*iter));
             }
         actionMap.push_back(a);
@@ -79,7 +78,21 @@ int CDXBot::parseHLMDFile(const char *fname) {
 void CDXBot::setRunStatus(unsigned int s) {
     if(s > 0) {
         _runStatus = 1;
+        ROS_INFO_STREAM("RunStatus set to 1.");
     } else {
         _runStatus = 0;
+        ROS_INFO_STREAM("RunStatus set to 0.");
+    }
+}
+
+int CDXBot::getNextAction(struct action &a) {
+    if(actionMap.begin() != actionMap.end()) {
+        a.cmd = actionMap[0].cmd;
+        a.args = actionMap[0].args;
+        actionMap.erase(actionMap.begin());
+        return 0;
+
+    } else {
+        return -1;
     }
 }

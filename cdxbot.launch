@@ -6,4 +6,13 @@ name="cdxbot_node"
 respawn="false"
 output="screen"
 />
+
+<node
+pkg="cdxbot"
+type="gui.py"
+name="gui_node"
+respawn="false"
+/>
+
 </launch>
+

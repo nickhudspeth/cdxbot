@@ -63,6 +63,7 @@ class CDXBot {
     }
     const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
     std::vector<struct action> actionMap;
+    int getNextAction(struct action &a);
   private:
     const char *d = ","; /*HLMD File delimiter */
     int _runStatus = 0;
