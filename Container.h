@@ -37,7 +37,7 @@ LICENSE:
     THE SOFTWARE.
 
 *************************************************************************/
-#pragma once
+//#pragma once
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
@@ -55,8 +55,8 @@ struct container_cell {
 
 class Container {
   public:
-    Container ();
-    virtual ~Container ();
+    Container () {}
+    virtual ~Container () {}
 
     /*************************************************************************
     * Function :   setCellProperties()
@@ -80,7 +80,9 @@ class Container {
     * Returns  :   struct container_cell
     *************************************************************************/
     struct container_cell getCell(const unsigned int row,
-                                  const unsigned int col);
+                                  const unsigned int col) {
+        return _cells[row][col];
+    }
 
     /*************************************************************************
     * Function :   getGlobalCoords()
@@ -90,37 +92,8 @@ class Container {
     *              unsigned int col
     * Returns  :   double
     *************************************************************************/
-    double getGlobalCoords(const char axis, unsigned int row, unsigned int col) {
-        double ret = 0;
-        if(row > _rows) {
-            // Throw error: specified row index out of range for container.
-            return 0;
-        }
-        if(col > _cols) {
-            // Throw error: specified column index out of range for container.
-            return 0;
-        }
+    double getGlobalCoords(const char axis, unsigned int row, unsigned int col);
 
-        switch(axis) {
-        case 'x':
-            ret = _offset_x + row * _row_spacing;
-            break;
-
-        case 'y':
-            ret = _offset_y + col * _col_spacing;
-            break;
-
-        case 'z':
-            ret = _height;
-            break;
-
-        default:
-            // Throw error: unspecified axis selected
-            break;
-        }
-        return ret;
-
-    }
   private:
     double _length;
     double _width;
@@ -136,4 +109,3 @@ class Container {
     double _offset_z;
     std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
 };
-

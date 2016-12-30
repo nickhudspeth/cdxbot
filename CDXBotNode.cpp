@@ -39,6 +39,8 @@ LICENSE:
 #include <stdbool.h>
 #include "std_msgs/String.h"
 #include "cdxbot/gc_cmd.h"
+#include "cdxbot/pc_cmd.h"
+#include "cdxbot/vc_cmd.h"
 #include "CDXBot.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 

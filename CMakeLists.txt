@@ -73,6 +73,9 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
+  # gc_cmd.msg
+  # pc_cmd.msg
+  # vc_cmd.msg
 )
 
 ################################################
@@ -123,10 +126,13 @@ include_directories(include
     )
 
 ## Declare a C++ library
-# add_library(cdxbot
-#   src/${PROJECT_NAME}/cdxbot.cpp
-# )
-
+add_library(container
+    # src/${PROJECT_NAME}/Container.cpp
+    Container.cpp
+)
+add_library(cdxbot
+    CDXBot.cpp
+    Container.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -136,16 +142,18 @@ include_directories(include
 add_executable(gantryControllerNode gantryControllerNode.cpp GantryController.cpp)
 add_executable(pipetterControllerNode pipetterControllerNode.cpp)
 add_executable(visionControllerNode visionControllerNode.cpp)
-add_executable(CDXBotNode CDXBotNode.cpp CDXBot.cpp)
+add_executable(CDXBotNode Container.cpp CDXBot.cpp CDXBotNode.cpp )
 
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(cdxbot_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(CDXBotNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(CDXBotNode
     ${catkin_LIBRARIES}
+    container
+    cdxbot
     )
 target_link_libraries(gantryControllerNode
     ${catkin_LIBRARIES}

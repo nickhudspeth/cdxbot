@@ -1,7 +1,7 @@
 /************************************************************************
-Title:    Container.cpp 
+Title:    Container.cpp
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     Container.cpp 
+File:     Container.cpp
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -42,4 +42,36 @@ LICENSE:
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
+
+double Container::getGlobalCoords(const char axis, unsigned int row, unsigned int col) {
+    double ret = 0;
+    if(row > _rows) {
+        // Throw error: specified row index out of range for container.
+        return 0;
+    }
+    if(col > _cols) {
+        // Throw error: specified column index out of range for container.
+        return 0;
+    }
+
+    switch(axis) {
+    case 'x':
+        ret = _offset_x + row * _row_spacing;
+        break;
+
+    case 'y':
+        ret = _offset_y + col * _col_spacing;
+        break;
+
+    case 'z':
+        ret = _height;
+        break;
+
+    default:
+        // Throw error: unspecified axis selected
+        break;
+    }
+    return ret;
+
+}
 

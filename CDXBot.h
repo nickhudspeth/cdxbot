@@ -51,13 +51,13 @@ LICENSE:
 #include <ros/ros.h>
 #include <boost/tokenizer.hpp>
 #include <map>
-
 #include "Container.h"
+
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class CDXBot {
   public:
-    CDXBot (){};
-    virtual ~CDXBot (){};
+    CDXBot () {};
+    virtual ~CDXBot () {};
     int parseHLMDFile(const char *fname);
     void setRunStatus(unsigned int status);
     unsigned int getRunStatus(void) {
@@ -66,9 +66,15 @@ class CDXBot {
     const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
     std::vector<struct action> actionMap;
     int getNextAction(struct action &a);
-    unsigned int getNumContainers(void);
-    Container getContainer(unsigned int index);
-    double getFeedPlaneHeight(void){return _feed_plane;}
+    unsigned int getNumContainers(void) {
+        return _containers.size();
+    }
+    Container& getContainer(unsigned int index) {
+        return _containers[index];
+    };
+    double getFeedPlaneHeight(void) {
+        return _feed_plane;
+    }
     void setFeedPlaneHeight(double z);
   private:
     double _feed_plane;  /* Feed plane height (mm) */
@@ -79,7 +85,7 @@ class CDXBot {
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);
     /* data */
-    std::map<unsigned int, class Container> containers; // List of deck containers.
+    std::map<unsigned int, class Container> _containers; // List of deck containers.
 };
 
 struct action {
