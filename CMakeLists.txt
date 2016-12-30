@@ -133,7 +133,7 @@ include_directories(include
 # add_dependencies(cdxbot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(gantryControllerNode gantryControllerNode.cpp)
+add_executable(gantryControllerNode gantryControllerNode.cpp GantryController.cpp)
 add_executable(pipetterControllerNode pipetterControllerNode.cpp)
 add_executable(visionControllerNode visionControllerNode.cpp)
 add_executable(CDXBotNode CDXBotNode.cpp CDXBot.cpp)

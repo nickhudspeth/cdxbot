@@ -143,21 +143,52 @@ class GantryController {
     *************************************************************************/
     virtual int setUnits(unsigned int u = UNITS_MM);
 
+    /*************************************************************************
+    * Function :   getPos()
+    * Purpose  :   Returns the current position for the given axis.
+    * Input    :   const char *axis
+    * Returns  :   double
+    *************************************************************************/
+    double getPos(const char axis) {
+        switch(axis) {
+        case 'x':
+            return _pos_x;
+            break;
+        case 'y':
+            return _pos_y;
+            break;
+        case 'z':
+            return _pos_z;
+            break;
+        default:
+            break;
+
+        }
+        return 0;
+    }
+
+
     std::string type;
     std::string cominterface;
     std::string ipaddress;
     std::string port;
-    std::string timeout; 
+    std::string timeout;
 
   private:
+    double _pos_x;
+    double _pos_y;
+    double _pos_z;
+
+
+
     bool _modalSpacePrefix; /* Specifies whether or not the controller
                                      requires a space to be prepended to
                                      line arguments following a modal command */
     unsigned int _id;
-    
-    
-    
-    
+
+
+
+
     std::string _pipetterType = "";
     std::string _pipetterPath = "";
     std::string _controllerType = "";

@@ -36,6 +36,7 @@ LICENSE:
 #include <stdlib.h>
 #include <iostream>
 #include "GantryController.h"
+#include "cdxbot/gc_cmd.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
@@ -50,56 +51,56 @@ LICENSE:
 * Input    :   GantryController *gc
 * Returns  :   void
 *************************************************************************/
-void loadParams(ros::NodeHandle &nh, GantryController *gc) {
+void loadParams(ros::NodeHandle &nh, GantryController &gc) {
 
     /* TODO: nam - Add value checks for all parameters loaded from user-defined
      * configuration files. Also consider restricting choices to allowed values
      * via GUI.- Tue 20 Dec 2016 11:59:36 AM MST */
 
-    if(!nh.getParam("/gc/type", gc->type)) {
-        nh.getParam("/gcdefaults/type", gc->type);
+    if(!nh.getParam("/gc/type", gc.type)) {
+        nh.getParam("/gcdefaults/type", gc.type);
         ROS_WARN("No parameter 'type' found in configuration file.\
                         Initializing gantry controller with default value %s",\
-                 gc->type);
+                 gc.type);
 
-        if(!nh.getParam("/gc/cominterface", gc->cominterface)) {
-            nh.getParam("/gcdefaults/cominterface", gc->cominterface);
+        if(!nh.getParam("/gc/cominterface", gc.cominterface)) {
+            nh.getParam("/gcdefaults/cominterface", gc.cominterface);
             ROS_WARN_STREAM("No parameter \"cominterface\" found in configuration file.\
                             Initializing gantry controller with default value " <<\
-                            gc->cominterface);
+                            gc.cominterface);
 
-            if(!nh.getParam("/gc/cominterface", gc->cominterface)) {
-                nh.getParam("/gcdefaults/cominterface", gc->cominterface);
+            if(!nh.getParam("/gc/cominterface", gc.cominterface)) {
+                nh.getParam("/gcdefaults/cominterface", gc.cominterface);
                 ROS_WARN_STREAM("No parameter \"cominterface\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
-                                gc->cominterface);
+                                gc.cominterface);
             }
 
             /* Load ethernet configuration parameters only if ethernet interface used.*/
-            if(gc->cominterface == "ethernet") {
-                if(!nh.getParam("/gc/ipaddress", gc->ipaddress)) {
-                    nh.getParam("/gcdefaults/ipaddress", gc->ipaddress);
+            if(gc.cominterface == "ethernet") {
+                if(!nh.getParam("/gc/ipaddress", gc.ipaddress)) {
+                    nh.getParam("/gcdefaults/ipaddress", gc.ipaddress);
                     ROS_WARN_STREAM("No parameter \"ipaddress\" found in configuration file.\
                                     Initializing gantry controller with default value " <<\
-                                    gc->ipaddress);
+                                    gc.ipaddress);
                 }
-                if(!nh.getParam("/gc/port", gc->port)) {
-                    nh.getParam("/gcdefaults/port", gc->port);
+                if(!nh.getParam("/gc/port", gc.port)) {
+                    nh.getParam("/gcdefaults/port", gc.port);
                     ROS_WARN_STREAM("No parameter \"port\" found in configuration file.\
                                         Initializing gantry controller with default value " <<\
-                                    gc->port);
+                                    gc.port);
                 }
-                if(!nh.getParam("/gc/timeout", gc->timeout)) {
-                    nh.getParam("/gcdefaults/timeout", gc->timeout);
+                if(!nh.getParam("/gc/timeout", gc.timeout)) {
+                    nh.getParam("/gcdefaults/timeout", gc.timeout);
                     ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file.\
                                         Initializing gantry controller with default value " <<\
-                                    gc->timeout);
+                                    gc.timeout);
                 }
 
             }
         }
         /* Load usb configuration parameters only if usb interface used.*/
-        else if(gc->cominterface == "usb") {
+        else if(gc.cominterface == "usb") {
 
         }
     }
@@ -107,9 +108,23 @@ void loadParams(ros::NodeHandle &nh, GantryController *gc) {
 }
 
 int main(int argc, char **argv) {
+    const char *gcfile = "./gantryConfig.conf";
+    geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
-    GantryController *gc;
+    GantryController gc(gcfile);
+    ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
+    ros::Rate rate(100);
     loadParams(nh, gc);
+
+    while(ros::ok()) {
+        msg.vector.x = gc.getPos('x');
+        msg.vector.y = gc.getPos('y');
+        msg.vector.z = gc.getPos('z');
+        pos_pub.publish(msg);
+        rate.sleep();
+    }
+
+
     return 0;
 }

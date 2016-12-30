@@ -50,7 +50,9 @@ LICENSE:
 #include <vector>
 #include <ros/ros.h>
 #include <boost/tokenizer.hpp>
+#include <map>
 
+#include "Container.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class CDXBot {
   public:
@@ -64,13 +66,20 @@ class CDXBot {
     const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
     std::vector<struct action> actionMap;
     int getNextAction(struct action &a);
+    unsigned int getNumContainers(void);
+    Container getContainer(unsigned int index);
+    double getFeedPlaneHeight(void){return _feed_plane;}
+    void setFeedPlaneHeight(double z);
   private:
+    double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
-    int _runStatus = 0;
-//    std::map<std::string, struct action> actionMap;
+    unsigned int _runStatus = 0;
+    unsigned int _num_containers;
+    //    std::map<std::string, struct action> actionMap;
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);
     /* data */
+    std::map<unsigned int, class Container> containers; // List of deck containers.
 };
 
 struct action {
@@ -78,4 +87,5 @@ struct action {
     std::string cmd;
     std::vector<float> args;
 };
+
 /***********************    FUNCTION PROTOTYPES    ***********************/
