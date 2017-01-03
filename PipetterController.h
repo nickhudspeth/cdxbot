@@ -42,16 +42,39 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <string>
+#include <dlfcn.h>
+#include <ros/ros.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class PipetterController {
   public:
-    PipetterController ();
-    virtual ~PipetterController ();
+    PipetterController (){};
+    virtual ~PipetterController (){};
+
+    /*************************************************************************
+    * Function :   loadDriver()
+    * Purpose  :   Loads a gantry controller driver from the file specified.
+    * Input    :   std::string file
+    * Returns  :   int
+    *************************************************************************/
+    int loadDriver(std::string file);
+
+    /*************************************************************************
+    * Function :   getZPos()
+    * Purpose  :   What does this function do?
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getZPos(void);
 
   private:
+    void* _driver_handle;
+    int (*_driver_init)(void);
+    int (*_driver_exit)(void);
+    int (*_driver_lconf)(void);
+    void (*_driver_seterrfunc)(void);
+
     /* data */
 };
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
-

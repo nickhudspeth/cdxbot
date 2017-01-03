@@ -140,7 +140,8 @@ add_library(cdxbot
 
 ## Declare a C++ executable
 add_executable(gantryControllerNode gantryControllerNode.cpp GantryController.cpp)
-add_executable(pipetterControllerNode pipetterControllerNode.cpp)
+add_executable(pipetterControllerNode pipetterControllerNode.cpp
+    PipetterController.cpp)
 add_executable(visionControllerNode visionControllerNode.cpp)
 add_executable(CDXBotNode Container.cpp CDXBot.cpp CDXBotNode.cpp )
 
@@ -160,6 +161,7 @@ target_link_libraries(gantryControllerNode
     )
 target_link_libraries(pipetterControllerNode
     ${catkin_LIBRARIES}
+    dl
     )
 target_link_libraries(visionControllerNode
     ${catkin_LIBRARIES}
@@ -213,3 +215,4 @@ target_link_libraries(visionControllerNode
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 ADD_DEFINITIONS(-std=c++11 -g)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ldl -fPIC -lpthread")

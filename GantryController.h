@@ -47,6 +47,8 @@ LICENSE:
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "common.h"
+#include <dlfcn.h>
+#include <ros/ros.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
@@ -54,6 +56,9 @@ class GantryController {
   public:
     GantryController (const char* file);
     ~GantryController ();
+
+
+
 
     /*************************************************************************
     * Function :   dwell()
