@@ -62,16 +62,16 @@ int PipetterController::loadDriver(std::string file) {
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_init() not found in specified \
                     driver at " << file.c_str());
-        ROS_ERROR_STREAM(dlerror());
+        ROS_ERROR_STREAM(error);
         return -1;
     }
 
     dlerror(); // Clear error code
-    _driver_exit = reinterpret_cast<int(*)()>(dlsym(_driver_handle, "exit")); // cast me to fn ptr
+    _driver_deinit = reinterpret_cast<int(*)()>(dlsym(_driver_handle, "deinit")); // cast me to fn ptr
     if((error = dlerror()) != NULL) {
-        ROS_ERROR_STREAM("Function driver_exit() not found in specified \
+        ROS_ERROR_STREAM("Function driver_deinit() not found in specified \
                     driver at " << file.c_str());
-        ROS_ERROR_STREAM(dlerror());
+        ROS_ERROR_STREAM(error);
         return -1;
     }
 
@@ -80,7 +80,7 @@ int PipetterController::loadDriver(std::string file) {
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_lconf() not found in specified \
                     driver at " << file.c_str());
-        ROS_ERROR_STREAM(dlerror());
+        ROS_ERROR_STREAM(error);
         return -1;
     }
 
@@ -89,7 +89,7 @@ int PipetterController::loadDriver(std::string file) {
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_seterrfunc() not found in specified \
                     driver at " << file.c_str());
-        ROS_ERROR_STREAM(dlerror());
+        ROS_ERROR_STREAM(error);
         return -1;
     }
     return 0; // All required functions exist in the specified driver.

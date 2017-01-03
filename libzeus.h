@@ -1,7 +1,7 @@
 /*************************************************************************
-Title:    PipetterController.h -
+Title:    libzeus.h -
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     PipetterController.h
+File:     libzeus.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -16,7 +16,7 @@ NOTES:
 
 
 LICENSE:
-    Copyright (C) 2016 Nicholas Morrow
+    Copyright (C) 2017 Nicholas Morrow
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to
@@ -37,53 +37,18 @@ LICENSE:
     THE SOFTWARE.
 
 *************************************************************************/
-#pragma once
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include <dlfcn.h>
-#include <ros/ros.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-class PipetterController {
-  public:
-    PipetterController () {
-        if(loadDriver(_defaultDriverLocation) == 0) {
-            ROS_INFO_STREAM("Loaded pipetter hardware driver from "\
-                            << _defaultDriverLocation);
-
-        }
-        else{
-            ROS_WARN_STREAM("Could not load pipetter hardware driver.");
-        }
-    };
-    virtual ~PipetterController () {};
-
-    /*************************************************************************
-    * Function :   loadDriver()
-    * Purpose  :   Loads a gantry controller driver from the file specified.
-    * Input    :   std::string file
-    * Returns  :   int
-    *************************************************************************/
-    int loadDriver(std::string file);
-
-    /*************************************************************************
-    * Function :   getZPos()
-    * Purpose  :   What does this function do?
-    * Input    :   void
-    * Returns  :   double
-    *************************************************************************/
-    double getZPos(void);
-
-  private:
-    void* _driver_handle;
-    int (*_driver_init)(void);
-    int (*_driver_deinit)(void);
-    int (*_driver_lconf)(void);
-    void (*_driver_seterrfunc)(void);
-    std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libzeus.so";
-    /* data */
-};
-
+extern "C" {
+    int init(void);
+    void(*PRINT_ERROR)(std::string s);
+    int deinit(void);
+    int lconf(void);
+    void seterrfunc(void(*ef)(std::string s));
+}
 /***********************    FUNCTION PROTOTYPES    ***********************/
+

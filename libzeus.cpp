@@ -32,14 +32,13 @@ LICENSE:
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "libzeus.h"
-#include <string>
+// #include <string>
 //#include <python2.7/Python.h>
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
 /***********************    GLOBAL VARIABLES    ************************/
-char * python_driver = "zeus.py"
-                       void(*PRINT_ERROR)(std::string s);
+char python_driver[] = "zeus.py";
 //PyObject *pName, *pModule, *pDict, *pFunc;
 //PyObject *pArgs, *pValue;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
@@ -56,31 +55,31 @@ int init(void) {
 //    pModule =  PyImport_Import(pName);
 //    Py_DECREF(pName); // We don't need pName anymore here, so free this memory.
 //    if (pModule != NULL) {
-        /* Do we have to call __init__ manually, or is it done automatically
-         * on importing the module? Don't forget to pass the module number
-         * to the pipetter.*/
+    /* Do we have to call __init__ manually, or is it done automatically
+     * on importing the module? Don't forget to pass the module number
+     * to the pipetter.*/
 //        pFunc = pyObject_GetAttrString(pModule, "__init__");
 //        if (pFunc &&PyCallableCheck(pFunc )) {
-            
+
 //        } else {
-            //  COULD NOT FIND FUNCTION. THROW ERROR.
+    //  COULD NOT FIND FUNCTION. THROW ERROR.
 //        }
 
 //    } else {
-        // COULD NOT FIND PYTHON MODULE. THROW ERROR.
+    // COULD NOT FIND PYTHON MODULE. THROW ERROR.
 //    }
 
 
 }
 
 /*************************************************************************
-* Function :   exit()
+* Function :   deinit()
 * Purpose  :   Performs all shutdown and cleanup routines on unlozding the
 *              driver
 * Input    :   void
 * Returns  :   int
 *************************************************************************/
-int exit(void) {
+int deinit(void) {
 
 }
 

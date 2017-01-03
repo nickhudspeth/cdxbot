@@ -14,5 +14,12 @@ name="gui_node"
 respawn="false"
 />
 
+<node
+pkg="cdxbot"
+type="pipetterControllerNode"
+name="pc_node"
+respawn="false"
+output="screen"
+/>
 </launch>
 

@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "pipetterControllerNode");
     ros::NodeHandle nh;
-    PipetterController  pc;
+    PipetterController pc;
     /* Instantiate publishers and subscribers*/
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);

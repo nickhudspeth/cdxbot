@@ -133,6 +133,9 @@ add_library(container
 add_library(cdxbot
     CDXBot.cpp
     Container.cpp)
+
+add_library(zeus
+    libzeus.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -182,11 +185,12 @@ target_link_libraries(visionControllerNode
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS cdxbot CDXBotNode 
-  # ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  # LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  # RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS cdxbot CDXBotNode 
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  #LIBRARY DESTINATION "./lib"
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
