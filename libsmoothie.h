@@ -1,7 +1,7 @@
 /*************************************************************************
-Title:    GantryController.h -
-Author:   Nicholas Morrow <nmorrow@crystaldiagnostics.com>
-File:     ControllerBase.h
+Title:    libsmoothie.h - CDXBot Gantry Controller Driver for Smoothieboard
+Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
+File:     libsmoothie.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -13,10 +13,12 @@ USAGE:
 
 
 NOTES:
-
+    2017-01-04: The driver currently only supports ethernet communications.
+                If USB support is to be added, separate instructions will
+                have to be added in init(), deinit(), and sendCommand().
 
 LICENSE:
-    Copyright (C) 2016 Crystal Diagnostics
+    Copyright (C) 2017 Nicholas Morrow
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to
@@ -46,43 +48,66 @@ LICENSE:
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "common.h"
+// #include "common.h"
 #include <dlfcn.h>
-#include <ros/ros.h>
+#include "GantryController.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+#define AXIS_ALL 0
+#define AXIS_X 1
+#define AXIS_Y 2
+#define AXIS_Z 3
+
+GantryController gc;
+
+std::string type;
+std::string cominterface;
+std::string ipaddress;
+std::string port;
+std::string timeout;
+double _pos_x;
+double _pos_y;
+double _pos_z;
+bool _modalSpacePrefix; /* Specifies whether or not the controller
+                                     requires a space to be prepended to
+                                     line arguments following a modal command */
+unsigned int _id;
+std::string _pipetterType = "";
+std::string _pipetterPath = "";
+std::string _controllerType = "";
+std::string _controllerPath = "";
+std::string _comInterface = "";
+std::string _comProtocol = "";
+std::string _type = "";
+std::string _file = "";
+std::string _defaultConfigFilePath = "../res/";
+/* Networking configuration */
+int _sockfd = 0;
+std::string _host_ip = "";
+unsigned int _host_port = 0;
+char _buffer[NETBUFSIZE];
+double _netTimeoutMS = 0.0;
+double _speed = 0.0;
+struct sockaddr_in _remote;
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
-class GantryController {
-  public:
-    GantryController () {
-        if(loadDriver(_defaultDriverLocation) == 0) {
-            ROS_INFO_STREAM("Loaded gantry controller hardware driver from "\
-                            << _defaultDriverLocation);
 
-        } else {
-            ROS_WARN_STREAM("Could not load gantry controller hardware driver.");
-        }
-    };
-
-    ~GantryController ();
-
-
-    /*************************************************************************
-    * Function :   loadDriver()
-    * Purpose  :   Loads a hardware driver fron the specified location.
-    * Input    :   std::string file
-    * Returns  :   int
-    *************************************************************************/
-    int loadDriver(std::string file);
-
+/* The 'extern "C"' keyword must be used here to force the compiler to use
+ * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
+ * name and causes dlsym to not be able to locate any symbols in the library.*/
+extern "C" {
+    int init(GantryController& gc);
+    void(*PRINT_ERROR)(std::string s);
+    int deinit(void);
+    int lconf(void);
+    void seterrfunc(void(*ef)(std::string s));
 
     /*************************************************************************
     * Function :   dwell()
     * Purpose  :   Dwell for t milliseconds
     * Input    :   int t
-    * Returns  :   virtual void
+    * Returns  :   void
     *************************************************************************/
-    virtual void dwell(int t);
+    void dwell(int t);
 
     /*************************************************************************
     * Function :   emergencyStop()
@@ -91,42 +116,42 @@ class GantryController {
     * Input    :   void
     * Returns  :   void
     *************************************************************************/
-    virtual void emergencyStop(void);
+    void emergencyStop(void);
 
     /*************************************************************************
     * Function :   emergencyStopReset()
     * Purpose  :   Resets from a halted state caused by a limit switch, M112,
     *              or kill switch.
     * Input    :   void
-    * Returns  :   virtual void
+    * Returns  :   void
     *************************************************************************/
-    virtual void emergencyStopReset(void);
+    void emergencyStopReset(void);
 
     /*************************************************************************
     * Function :   home()
     * Purpose  :   Homes the given axis. If no argument is passed, all three
     *              axes will be homed simultaneously.
     * Input    :   unsigned int axis
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int home(unsigned int axis = 0);
+    int home(unsigned int axis = 0);
 
 
     /*************************************************************************
     * Function :   motorsDisable()
     * Purpose  :   Disables the stepper motors
     * Input    :   int axis
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int motorsDisable(unsigned int axis = 0);
+    int motorsDisable(unsigned int axis = AXIS_ALL);
 
     /*************************************************************************
     * Function :   motorsEnable()
     * Purpose  :   Enables the stepper motors
     * Input    :   void
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int motorsEnable(void);
+    int motorsEnable(void);
 
     /*************************************************************************
     * Function :   moveAbsolute()
@@ -135,7 +160,7 @@ class GantryController {
     * Input    :   std::float x, std::float y, std::float z
     * Returns  :   int
     *************************************************************************/
-    virtual int moveAbsolute(float x, float y, float z);
+    int moveAbsolute(float x, float y, float z);
 
     /*************************************************************************
     * Function :   moveRelative()
@@ -146,23 +171,23 @@ class GantryController {
     * Input    :   float x, float y, float z
     * Returns  :   int
     *************************************************************************/
-    virtual int moveRelative(float x, float y, float z);
+    int moveRelative(float x, float y, float z);
 
     /*************************************************************************
     * Function :   setAxisStepsPerMM()
     * Purpose  :   Sets the axis drive ratio in steps/mm
     * Input    :   unsigned int axis, unsigned int steps
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int setAxisStepsPerMM(unsigned int axis, unsigned int steps);
+    int setAxisStepsPerMM(unsigned int axis, unsigned int steps);
 
     /*************************************************************************
     * Function :   setUnits()
     * Purpose  :   Sets the default system of units used by the controller.
     * Input    :   unsigned int u
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int setUnits(unsigned int u = UNITS_MM);
+    int setUnits(unsigned int u = UNITS_MM);
 
     /*************************************************************************
     * Function :   getPos()
@@ -189,50 +214,13 @@ class GantryController {
     }
 
 
-    std::string type;
-    std::string cominterface;
-    std::string ipaddress;
-    std::string port;
-    std::string timeout;
-
-  private:
-    void* _driver_handle;
-    int (*_driver_init)(void);
-    int (*_driver_deinit)(void);
-    int (*_driver_lconf)(void);
-    void (*_driver_seterrfunc)(void);
-    std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libsmoothie.so";
-    double _pos_x;
-    double _pos_y;
-    double _pos_z;
-    bool _modalSpacePrefix; /* Specifies whether or not the controller
-                                     requires a space to be prepended to
-                                     line arguments following a modal command */
-    unsigned int _id;
-    std::string _pipetterType = "";
-    std::string _pipetterPath = "";
-    std::string _controllerType = "";
-    std::string _controllerPath = "";
-    std::string _comInterface = "";
-    std::string _comProtocol = "";
-    std::string _type = "";
-    std::string _file = "";
-    std::string _defaultConfigFilePath = "../res/";
-    /* Networking configuration */
-    int _sockfd = 0;
-    std::string _host_ip = "";
-    unsigned int _host_port = 0;
-    char _buffer[NETBUFSIZE];
-    double _netTimeoutMS = 0.0;
-    double _speed = 0.0;
-    struct sockaddr_in _remote;
     /*************************************************************************
     * Function :   initComms()
     * Purpose  :   Initializes the communications bridge to the controller
     * Input    :   void
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int initComms(void);
+    int initComms(void);
 
     /*************************************************************************
     * Function :   loadConfig()
@@ -247,15 +235,15 @@ class GantryController {
     * Function :   sendCommand()
     * Purpose  :   Send the G-Code command specified by cmd to the controller.
     * Input    :   const std::string &cmd
-    * Returns  :   virtual int
+    * Returns  :   int
     *************************************************************************/
-    virtual int sendCommand(const std::string &s);
+    int sendCommand(const std::string &s);
 
     /*************************************************************************
     * Function :   readResponse()
     * Purpose  :   What does this function do?
     * Input    :   void
-    * Returns  :   virtual int - number of bytes read.
+    * Returns  :   int - number of bytes read.
     *************************************************************************/
-    virtual int  readResponse(void);
-};
+    int  readResponse(void);
+}

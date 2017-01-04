@@ -37,9 +37,6 @@ LICENSE:
 #include <iostream>
 #include "GantryController.h"
 
-GantryController::GantryController(const char *file){
-
-}
 
 GantryController::~GantryController(){
 
@@ -89,9 +86,9 @@ int GantryController::initComms(void){
 
 }
 
-int GantryController::loadConfig(const std::string file){
+// int GantryController::loadConfig(const std::string file){
 
-}
+// }
 
 int GantryController::sendCommand(const std::string &s){
 
@@ -100,3 +97,57 @@ int GantryController::sendCommand(const std::string &s){
 int GantryController::readResponse(void){
 
 }
+
+int GantryController::loadDriver(std::string file) {
+
+    char *error;
+    /* ATTEMPT TO LOAD DRIVER FROM FILE */
+    dlerror(); // Clear error code
+    /* Load without verifying symbols so that symbols may be resolved
+     * manually below. */
+    _driver_handle = dlopen(file.c_str(), RTLD_LAZY);
+    if(!_driver_handle) {
+        /* Handle error */
+        ROS_ERROR_STREAM("Failed to open driver at location " << file.c_str());
+        ROS_ERROR_STREAM(dlerror());
+        return -1;
+    }
+    /* VERIFY THAT DRIVER PROVIDES ALL THE REQUIRED METHODS */
+    dlerror(); // Clear error code
+    _driver_init = reinterpret_cast<int(*)()>(dlsym(_driver_handle, "init")); // cast me to fn ptr
+    if((error = dlerror()) != NULL) {
+        ROS_ERROR_STREAM("Function driver_init() not found in specified \
+                    driver at " << file.c_str());
+        ROS_ERROR_STREAM(error);
+        return -1;
+    }
+
+    dlerror(); // Clear error code
+    _driver_deinit = reinterpret_cast<int(*)()>(dlsym(_driver_handle, "deinit")); // cast me to fn ptr
+    if((error = dlerror()) != NULL) {
+        ROS_ERROR_STREAM("Function driver_deinit() not found in specified \
+                    driver at " << file.c_str());
+        ROS_ERROR_STREAM(error);
+        return -1;
+    }
+
+    dlerror(); // Clear error code
+    _driver_lconf = reinterpret_cast<int(*)()>(dlsym(_driver_handle, "lconf")); // cast me to fn ptr
+    if((error = dlerror()) != NULL) {
+        ROS_ERROR_STREAM("Function driver_lconf() not found in specified \
+                    driver at " << file.c_str());
+        ROS_ERROR_STREAM(error);
+        return -1;
+    }
+
+    dlerror(); // Clear error code
+    _driver_seterrfunc = reinterpret_cast<void(*)()>(dlsym(_driver_handle, "seterrfunc")); // cast me to fn ptr
+    if((error = dlerror()) != NULL) {
+        ROS_ERROR_STREAM("Function driver_seterrfunc() not found in specified \
+                    driver at " << file.c_str());
+        ROS_ERROR_STREAM(error);
+        return -1;
+    }
+    return 0; // All required functions exist in the specified driver.
+}
+

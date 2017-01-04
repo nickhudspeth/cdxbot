@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
-    GantryController gc(gcfile);
+    GantryController gc;
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Rate rate(100);
     loadParams(nh, gc);

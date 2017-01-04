@@ -6,6 +6,8 @@ name="cdxbot_node"
 respawn="false"
 output="screen"
 />
+<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/cdxbot.yaml" />
+
 
 <node
 pkg="cdxbot"
@@ -14,6 +16,7 @@ name="gui_node"
 respawn="false"
 />
 
+
 <node
 pkg="cdxbot"
 type="pipetterControllerNode"
@@ -21,5 +24,17 @@ name="pc_node"
 respawn="false"
 output="screen"
 />
+<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/pipetterController.yaml" />
+
+<node
+pkg="cdxbot"
+type="gantryControllerNode"
+name="gc_node"
+respawn="false"
+output="screen"
+/>
+<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/gantryController.yaml" />
+
+
 </launch>
 

@@ -43,6 +43,10 @@ LICENSE:
 #include <stdio.h>
 #include <string>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+
+/* The 'extern "C"' keyword must be used here to force the compiler to use
+ * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
+ * name and causes dlsym to not be able to locate any symbols in the library.*/
 extern "C" {
     int init(void);
     void(*PRINT_ERROR)(std::string s);

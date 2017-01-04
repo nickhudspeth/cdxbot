@@ -49,11 +49,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-  FILES
-  gc_cmd.msg
-  pc_cmd.msg
-  vc_cmd.msg
-)
+    FILES
+    gc_cmd.msg
+    pc_cmd.msg
+    vc_cmd.msg
+    )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -71,12 +71,12 @@ add_message_files(
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-  # gc_cmd.msg
-  # pc_cmd.msg
-  # vc_cmd.msg
-)
+    DEPENDENCIES
+    std_msgs  # Or other packages containing msgs
+    # gc_cmd.msg
+    # pc_cmd.msg
+    # vc_cmd.msg
+    )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -108,10 +108,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-     # INCLUDE_DIRS include
-     # LIBRARIES cdxbot
+    # INCLUDE_DIRS include
+    # LIBRARIES cdxbot
     #  CATKIN_DEPENDS other_catkin_pkg
-     # DEPENDS system_lib
+    # DEPENDS system_lib
     CATKIN_DEPENDS message_runtime
     )
 
@@ -128,14 +128,18 @@ include_directories(include
 ## Declare a C++ library
 add_library(container
     # src/${PROJECT_NAME}/Container.cpp
-    Container.cpp
-)
+    Container.cpp)
+
 add_library(cdxbot
     CDXBot.cpp
     Container.cpp)
 
 add_library(zeus
     libzeus.cpp)
+
+add_library(smoothie
+    libsmoothie.cpp
+    GantryController.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -161,7 +165,9 @@ target_link_libraries(CDXBotNode
     )
 target_link_libraries(gantryControllerNode
     ${catkin_LIBRARIES}
+    dl
     )
+
 target_link_libraries(pipetterControllerNode
     ${catkin_LIBRARIES}
     dl
@@ -185,12 +191,12 @@ target_link_libraries(visionControllerNode
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS cdxbot CDXBotNode 
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  #LIBRARY DESTINATION "./lib"
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+install(TARGETS cdxbot CDXBotNode
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    #LIBRARY DESTINATION "./lib"
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

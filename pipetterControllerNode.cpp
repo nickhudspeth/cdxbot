@@ -9,7 +9,7 @@ void loadParams(PipetterController *pc) {
 
 
 int main(int argc, char **argv) {
-    const char *gcfile = "..gantryConfig.conf";
+    const char *pcfile = "..pipetterConfig.conf";
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "pipetterControllerNode");
     ros::NodeHandle nh;
