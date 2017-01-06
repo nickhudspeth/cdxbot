@@ -46,7 +46,6 @@ LICENSE:
 
 
 /***********************    GLOBAL VARIABLES    ************************/
-std::string defaultConfigFilePath = ".";
 CDXBot cd;
 
 /* Create subscriber for GUI commands */

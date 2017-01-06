@@ -217,7 +217,6 @@ class GantryController {
     std::string _comProtocol = "";
     std::string _type = "";
     std::string _file = "";
-    std::string _defaultConfigFilePath = "../res/";
     /* Networking configuration */
     int _sockfd = 0;
     std::string _host_ip = "";
