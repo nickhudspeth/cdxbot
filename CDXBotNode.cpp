@@ -34,14 +34,18 @@ LICENSE:
 #include <ros/ros.h>
 #include <cstdlib>
 #include <string>
+#include <cstring>
 #include <cstdio>
 #include <iostream>
 #include <stdbool.h>
+#include <ros/ros.h>
 #include "std_msgs/String.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/vc_cmd.h"
 #include "CDXBot.h"
+
+
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
@@ -58,7 +62,150 @@ ros::Publisher vc_pub;
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
-int loadConfig(const std::string file) {
+int loadConfig(ros::NodeHandle nh, CDXBot cd) {
+    char buf[64];
+    memset(buf, ' ',64);
+    if(!nh.getParam("/cdxbot/num_containers", cd.getNumContainersRef())) {
+        nh.getParam("/cdxbot_defaults/num_containers", cd.getNumContainersRef());
+        ROS_WARN("No parameter 'num_containers' found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                 cd.getNumContainers());
+    }
+    // if(cd.getNumContainers() < 0) {
+    // cd.setNumContainers(0);
+    // }
+    for(unsigned int i=0; i < cd.getNumContainers(); i++) {
+        sprintf(buf,"/cdxbot/containers/%d/type", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
+            nh.getParam("/cdxbot_defaults/type",cd.getContainer(i).getTypeRef());
+            ROS_WARN("No parameter containers:%d:type found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getType());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/length", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getLengthRef())) {
+            nh.getParam("/cdxbot_defaults/length", cd.getContainer(i).getLengthRef());
+            ROS_WARN("No parameter containers:%d:length found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getLengthRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/width", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWidthRef())) {
+            nh.getParam("/cdxbot_defaults/width", cd.getContainer(i).getWidthRef());
+            ROS_WARN("No parameter containers:%d:width found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getWidthRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/height", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getHeightRef())) {
+            nh.getParam("/cdxbot_defaults/height", cd.getContainer(i).getHeightRef());
+            ROS_WARN("No parameter containers:%d:height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getHeightRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/rows", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getRowsRef())) {
+            nh.getParam("/cdxbot_defaults/rows", cd.getContainer(i).getRowsRef());
+            ROS_WARN("No parameter containers:%d:rows found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getRowsRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/cols", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getColsRef())) {
+            nh.getParam("/cdxbot_defaults/cols", cd.getContainer(i).getColsRef());
+            ROS_WARN("No parameter containers:%d:cols found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getColsRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/row_spacing", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getRowSpacingRef())) {
+            nh.getParam("/cdxbot_defaults/row_spacing", cd.getContainer(i).getRowSpacingRef());
+            ROS_WARN("No parameter containers:%d:row_spacing found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getRowSpacingRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/col_spacing", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getColSpacingRef())) {
+            nh.getParam("/cdxbot_defaults/col_spacing", cd.getContainer(i).getColSpacingRef());
+            ROS_WARN("No parameter containers:%d:col_spacing found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getColSpacingRef());
+        }
+
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/offset_x", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetXRef())) {
+            nh.getParam("/cdxbot_defaults/offset_x", cd.getContainer(i).getOffsetXRef());
+            ROS_WARN("No parameter containers:%d:offset_x found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getOffsetXRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/offset_y", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetYRef())) {
+            nh.getParam("/cdxbot_defaults/offset_y", cd.getContainer(i).getOffsetYRef());
+            ROS_WARN("No parameter containers:%d:offset_y found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getOffsetYRef());
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/%d/offset_z", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetZRef())) {
+            nh.getParam("/cdxbot_defaults/offset_z", cd.getContainer(i).getOffsetZRef());
+            ROS_WARN("No parameter containers:%d:offset_z found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getOffsetZRef());
+        }
+        /* INITIALIZE CONTAINER CELL MATRIX */
+        for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
+            std::vector<struct container_cell> newRow;
+            cd.getContainer(i).getCellsVecRef().push_back(newRow);
+            for(unsigned int k=0; k < cd.getContainer(i).getCols(); k++) {
+                struct container_cell c;
+                c.test_type = " ";
+                c.used = 0;
+                if(cd.getContainer(i).getType() == "well") {
+                    memset(buf, ' ',64);
+                    sprintf(buf,"/cdxbot/containers/%d/container_vol", i);
+                    if(!nh.getParam(buf, c.vol)) {
+                    nh.getParam("/cdxbot_defaults/container_vol", c.vol);
+                        ROS_WARN("No parameter containers:%d:container_vol found in configuration file.\
+                        Initializing cdxbot with default value %f",\
+                                 i, c.vol);
+                    }
+
+                    memset(buf, ' ',64);
+                    sprintf(buf,"/cdxbot/containers/%d/well_depth", i);
+                    if(!nh.getParam(buf, c.depth)){
+                    nh.getParam("/cdxbot_defaults/well_depth", c.depth);
+                        ROS_WARN("No parameter containers:%d:well_depth found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                                 i, c.depth);
+                    }
+                }
+                cd.getContainer(i).getCellsVecRef()[j].push_back(c);
+            }
+        }
+    }
+
+
     ROS_INFO_STREAM("Loaded configuration parameters.");
     return 0;
 }

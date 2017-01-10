@@ -45,19 +45,20 @@ LICENSE:
 int init(GantryController& gc) {
     /* Clear out needed memory */
     std::memset(_buffer, 0, NETBUFSIZE);
-    std::memset(&_remote, 0, sizeof(_remote));
+    std::memset(&remote, 0, sizeof(remote));
     /* Fill in required details in the socket structure */
-    _remote.sin_family = AF_INET;
-    _remote.sin_port = htons(_host_port);
-    _remote.sin_addr.s_addr = inet_addr(_host_ip.c_str());
+    remote.sin_family = AF_INET;
+    remote.sin_port = htons(gc.getHostPort());
+    remote.sin_addr.s_addr = inet_addr(gc.getIPAddress().c_str());
     /* Create a socket */
-    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(_sockfd < 0) {
+    printf("DEBUG: Connecting to %s:%d", gc.getIPAddress().c_str(), gc.getHostPort());
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0) {
         perror("socket");
         return -1;
     }
     /* Connect to remote host */
-    if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
+    if(connect(sockfd, (struct sockaddr *) &remote, sizeof(remote)) < 0) {
         perror("connect");
         return -1;
     }
@@ -65,6 +66,7 @@ int init(GantryController& gc) {
 }
 
 int deinit(void) {
+    close(sockfd);
 
 }
 
@@ -118,7 +120,7 @@ int home(unsigned int axis) {
 int sendCommand(const std::string &s) {
     int n = 0;
     if(_comInterface == "ethernet") {
-        n = write(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote));
+        n = write(sockfd, (struct sockaddr *) &remote, sizeof(remote));
         if(n < 0) {
             perror("Error writing to socket.\n");
             return -1;
@@ -130,26 +132,21 @@ int sendCommand(const std::string &s) {
 int readResponse(void) {
     int n = 0;
     boost::timer t;
+    /* Receive date information and print it */
 
-    if(_comInterface == "ethernet") {
-        /* Receive date information and print it */
-
-        /* TODO: nam - Do we need to memset() the buffer again here?
-         * Thu 01 Dec 2016 01:59:16 PM MST */
-        while((t.elapsed() * 1000) < _netTimeoutMS) {
-            if((n = read(_sockfd, &_buffer, NETBUFSIZE - 1)) > 0) {
-                _buffer[n] = '\0'; // Null terminate the string
-                printf("%s", _buffer);
-                break;
-            }
-            if(n < 0) {
-                /* Socket read error */
-                perror("read");
-                break;
-            }
+    /* TODO: nam - Do we need to memset() the buffer again here?
+     * Thu 01 Dec 2016 01:59:16 PM MST */
+    while((t.elapsed() * 1000) < _netTimeoutMS) {
+        if((n = read(sockfd, &_buffer, NETBUFSIZE - 1)) > 0) {
+            _buffer[n] = '\0'; // Null terminate the string
+            printf("%s", _buffer);
+            break;
         }
-    } else if(_comInterface == "usb") {
-
+        if(n < 0) {
+            /* Socket read error */
+            perror("read");
+            break;
+        }
     }
     return n;
 }
@@ -221,63 +218,63 @@ int setUnits(unsigned int u) {
 }
 
 // int loadConfig(const std::string file) {
-    // cfg_t *cfg;
-    // cfg_opt_t linearStageOpts[] = {
-        // CFG_FLOAT((char *)"steps_per_revolution", 0.0, CFGF_NONE),
-        // CFG_FLOAT((char *)"leadscrew_pitch", 0.0, CFGF_NONE),
-        // CFG_FLOAT((char *)"limit_min", 0.0, CFGF_NONE),
-        // CFG_FLOAT((char *)"limit_max", 0.0, CFGF_NONE),
-        // CFG_END(),
-    // };
-    // cfg_opt_t opts[] = {
-        // CFG_INT((char *)"id", 1, CFGF_NONE),
-        // CFG_STR((char *)"pipetter_type",(char *) "NONE", CFGF_NONE),
-        // CFG_STR((char *)"pipetter_path", (char *)"NONE", CFGF_NONE),
-        // CFG_STR((char *)"controller_type", (char *)"NONE", CFGF_NONE),
-        // CFG_STR((char *)"controller_interface", (char *)"NONE", CFGF_NONE),
-        // CFG_STR((char *)"controller_IP", (char *)"NONE", CFGF_NONE),
-        // CFG_INT((char *)"controller_port", 0, CFGF_NONE),
-        // CFG_INT((char *)"controller_net_recv_timeout", 0, CFGF_NONE),
-        // CFG_STR((char *)"controller_path", (char *)"NONE", CFGF_NONE),
-        // CFG_STR((char *)"controller_protocol", (char *)"NONE", CFGF_NONE),
-        // CFG_SEC((char *)"linear_stage", linearStageOpts, CFGF_MULTI | CFGF_TITLE),
-        // CFG_END(),
-    // };
-    // cfg = cfg_init(opts, CFGF_NOCASE);
-    // if(cfg_parse(cfg, file.c_str()) == CFG_PARSE_ERROR) {
-        // perror("Error parsing config file.\n");
-        // return -1;
-    // }
-    // _id = cfg_getint(cfg, "id");
-    // _pipetterType = cfg_getstr(cfg, "pipetter_type");
-    // std::cout << "pipetter type = " << _pipetterType << std::endl;
-    // _pipetterPath = cfg_getstr(cfg, "pipetter_path");
-    // std::cout << "pipetter path = " << _pipetterPath << std::endl;
-    // _controllerType = cfg_getstr(cfg, "controller_type");
-    // std::cout << "controller type = " << _controllerType << std::endl;
-    // _controllerPath = cfg_getstr(cfg, "controller_path");
-    // std::cout << "controller path = " << _controllerPath << std::endl;
-    // _comInterface = cfg_getstr(cfg, "controller_interface");
-    // std::cout << "comms interface = " << _comInterface << std::endl;
-    // _comProtocol = cfg_getstr(cfg, "controller_protocol");
-    // std::cout << "controller protocol = " << _comProtocol << std::endl;
-    // _host_ip  = cfg_getstr(cfg, "controller_IP");
-    // std::cout << "host IP = " << _host_ip << std::endl;
-    // _host_port = cfg_getint(cfg, "controller_port");
-    // std::cout << "host port = " << _host_port << std::endl;
-    // _netTimeoutMS = cfg_getint(cfg, "controller_net_recv_timeout");
-    // std::cout << "network timeout = " << _netTimeoutMS << "ms" << std::endl;
+// cfg_t *cfg;
+// cfg_opt_t linearStageOpts[] = {
+// CFG_FLOAT((char *)"steps_per_revolution", 0.0, CFGF_NONE),
+// CFG_FLOAT((char *)"leadscrew_pitch", 0.0, CFGF_NONE),
+// CFG_FLOAT((char *)"limit_min", 0.0, CFGF_NONE),
+// CFG_FLOAT((char *)"limit_max", 0.0, CFGF_NONE),
+// CFG_END(),
+// };
+// cfg_opt_t opts[] = {
+// CFG_INT((char *)"id", 1, CFGF_NONE),
+// CFG_STR((char *)"pipetter_type",(char *) "NONE", CFGF_NONE),
+// CFG_STR((char *)"pipetter_path", (char *)"NONE", CFGF_NONE),
+// CFG_STR((char *)"controller_type", (char *)"NONE", CFGF_NONE),
+// CFG_STR((char *)"controller_interface", (char *)"NONE", CFGF_NONE),
+// CFG_STR((char *)"controller_IP", (char *)"NONE", CFGF_NONE),
+// CFG_INT((char *)"controller_port", 0, CFGF_NONE),
+// CFG_INT((char *)"controller_net_recv_timeout", 0, CFGF_NONE),
+// CFG_STR((char *)"controller_path", (char *)"NONE", CFGF_NONE),
+// CFG_STR((char *)"controller_protocol", (char *)"NONE", CFGF_NONE),
+// CFG_SEC((char *)"linear_stage", linearStageOpts, CFGF_MULTI | CFGF_TITLE),
+// CFG_END(),
+// };
+// cfg = cfg_init(opts, CFGF_NOCASE);
+// if(cfg_parse(cfg, file.c_str()) == CFG_PARSE_ERROR) {
+// perror("Error parsing config file.\n");
+// return -1;
+// }
+// _id = cfg_getint(cfg, "id");
+// _pipetterType = cfg_getstr(cfg, "pipetter_type");
+// std::cout << "pipetter type = " << _pipetterType << std::endl;
+// _pipetterPath = cfg_getstr(cfg, "pipetter_path");
+// std::cout << "pipetter path = " << _pipetterPath << std::endl;
+// _controllerType = cfg_getstr(cfg, "controller_type");
+// std::cout << "controller type = " << _controllerType << std::endl;
+// _controllerPath = cfg_getstr(cfg, "controller_path");
+// std::cout << "controller path = " << _controllerPath << std::endl;
+// _comInterface = cfg_getstr(cfg, "controller_interface");
+// std::cout << "comms interface = " << _comInterface << std::endl;
+// _comProtocol = cfg_getstr(cfg, "controller_protocol");
+// std::cout << "controller protocol = " << _comProtocol << std::endl;
+// _host_ip  = cfg_getstr(cfg, "controller_IP");
+// std::cout << "host IP = " << _host_ip << std::endl;
+// _host_port = cfg_getint(cfg, "controller_port");
+// std::cout << "host port = " << _host_port << std::endl;
+// _netTimeoutMS = cfg_getint(cfg, "controller_net_recv_timeout");
+// std::cout << "network timeout = " << _netTimeoutMS << "ms" << std::endl;
 
-    // int n = cfg_size(cfg, "linear_stage");
-    // std::cout << "Machine configured with " << n << " linear stages." << std::endl;
-    // for (unsigned int i = 0; i < n; i++) {
-        // cfg_t *ls = cfg_getnsec(cfg, "linear_stage", i);
-        // std::cout << "Axis " << cfg_title(ls) << std::endl;
-        // std::cout << "Steps per revolution: " << \
-                  // cfg_getfloat(ls,"steps_per_revolution") << std::endl;
-    // }
-    // cfg_free(cfg);
-    // return 0;
+// int n = cfg_size(cfg, "linear_stage");
+// std::cout << "Machine configured with " << n << " linear stages." << std::endl;
+// for (unsigned int i = 0; i < n; i++) {
+// cfg_t *ls = cfg_getnsec(cfg, "linear_stage", i);
+// std::cout << "Axis " << cfg_title(ls) << std::endl;
+// std::cout << "Steps per revolution: " << \
+// cfg_getfloat(ls,"steps_per_revolution") << std::endl;
+// }
+// cfg_free(cfg);
+// return 0;
 // }
 
 int setAxisStepsPerMM(unsigned int axis, unsigned int steps) {

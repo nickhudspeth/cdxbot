@@ -1,2 +1,4 @@
-<launch>
-</launch>
+pc_conf:
+    type: "zeus"
+    driver_name: "libzeus.so"
+    driver_path: "/home/cdx/catkin_ws/devel/lib/libzeus.so"

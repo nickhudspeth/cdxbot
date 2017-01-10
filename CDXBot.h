@@ -66,9 +66,21 @@ class CDXBot {
     const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
     std::vector<struct action> actionMap;
     int getNextAction(struct action &a);
-    unsigned int getNumContainers(void) {
+    int getNumContainers(void) {
         return _containers.size();
     }
+    void setNumContainers(unsigned int i) {
+        _num_containers = i;
+    }
+
+    int& getNumContainersRef(void) {
+        return _num_containers;
+    }
+
+    // unsigned int getNumContainers(void) {
+    // return _num_containers;
+    // }
+
     Container& getContainer(unsigned int index) {
         return _containers[index];
     };
@@ -80,7 +92,14 @@ class CDXBot {
     double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
     unsigned int _runStatus = 0;
-    unsigned int _num_containers;
+    int _num_containers;
+    double origin_x = 0.0;
+    double origin_y = 0.0;
+    double origin_z = 0.0;
+    double extents_x = 0.0;
+    double extents_y = 0.0;
+    double extents_z = 0.0;
+
     //    std::map<std::string, struct action> actionMap;
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);

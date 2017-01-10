@@ -61,48 +61,418 @@ class Container {
     /*************************************************************************
     * Function :   setCellProperties()
     * Purpose  :   What does this function do?
-    * Input    :   const unsigned int row,
-                   const unsigned int col,
-                   const std::string type = ""
+    * Input    :   unsigned int row,
+                   unsigned int col,
+                   std::string type = ""
     * Returns  :   void
     *************************************************************************/
-    void setCellProperties(const unsigned int row,
-                           const unsigned int col,
-                           const std::string type = ""
+    void setCellProperties(unsigned int row,
+                           unsigned int col,
+                           std::string type = ""
                           );
 
     /*************************************************************************
     * Function :    getCell()
     * Purpose  :   Returns a struct containing the properties of a cell at a
     *              given index.
-    * Input    :   const unsigned int row,
-                   const unsigned int col
+    * Input    :   unsigned int row,
+                   unsigned int col
     * Returns  :   struct container_cell
     *************************************************************************/
-    struct container_cell getCell(const unsigned int row,
-                                  const unsigned int col) {
+    struct container_cell getCell(unsigned int row,
+                                  unsigned int col) {
         return _cells[row][col];
     }
 
     /*************************************************************************
     * Function :   getGlobalCoords()
     * Purpose  :   Returns the XYZ coordinates for a specified cell
-    * Input    :   const char axis,
+    * Input    :   char axis,
     *              unsigned int row
     *              unsigned int col
     * Returns  :   double
     *************************************************************************/
-    double getGlobalCoords(const char axis, unsigned int row, unsigned int col);
+    double getGlobalCoords(char axis, unsigned int row, unsigned int col);
+
+    /*************************************************************************
+    * Function :   getType()
+    * Purpose  :   Getter for the variable _type
+    * Input    :   void
+    * Returns  :       std::string
+    *************************************************************************/
+    std::string getType(void) {
+        return _type;
+    }
+
+    /*************************************************************************
+    * Function :   getTypeRef()
+    * Purpose  :   Returns a reference to the variable Container::_type
+    * Input    :   void
+    * Returns  :   std::string&
+    *************************************************************************/
+    std::string& getTypeRef (void) {
+        return _type;
+    }
+
+    /*************************************************************************
+    * Function :   setType()
+    * Purpose  :   Setter for the variable _type
+    * Input    :   std::string t
+    * Returns  :   void
+    *************************************************************************/
+    void setType(std::string t) {
+        _type = t;
+    }
+
+    /*************************************************************************
+    * Function :   getLength()
+    * Purpose  :   Getter for the variable _length
+    * Input    :   void
+    * Returns  :       double
+    *************************************************************************/
+    double getLength(void) {
+        return _length;
+    }
+
+    /*************************************************************************
+    * Function :   getLengthRef()
+    * Purpose  :   Returns a reference to the variable Container::_length
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getLengthRef (void) {
+        return _length;
+    }
+
+    /*************************************************************************
+    * Function :   setLength()
+    * Purpose  :   Setter for the variable _length
+    * Input    :   double l
+    * Returns  :   void
+    *************************************************************************/
+    void setLength(double l) {
+        _length = l;
+    }
+
+    /*************************************************************************
+    * Function :   getWidth()
+    * Purpose  :   Getter for the variable _width
+    * Input    :   void
+    * Returns  :       double
+    *************************************************************************/
+    double getWidth(void) {
+        return _width;
+    }
+
+    /*************************************************************************
+    * Function :   getWidthRef()
+    * Purpose  :   Returns a reference to the variable Container::_width
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getWidthRef (void) {
+        return _width;
+    }
+
+    /*************************************************************************
+    * Function :   setWidth()
+    * Purpose  :   Setter for the variable _width
+    * Input    :   double w
+    * Returns  :   void
+    *************************************************************************/
+    void setWidth(double w) {
+        _width = w;
+    }
+
+    /*************************************************************************
+    * Function :   getHeight()
+    * Purpose  :   Getter for the variable _height
+    * Input    :   void
+    * Returns  :       double
+    *************************************************************************/
+    double getHeight(void) {
+        return _height;
+    }
+
+    /*************************************************************************
+    * Function :   getHeightRef()
+    * Purpose  :   Returns a reference to the variable Container::_height
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getHeightRef (void) {
+        return _height;
+    }
+
+    /*************************************************************************
+    * Function :   setHeight()
+    * Purpose  :   Setter for the variable _height
+    * Input    :   double h
+    * Returns  :   void
+    *************************************************************************/
+    void setHeight(double h) {
+        _height = h;
+    }
+
+    /*************************************************************************
+    * Function :   getRows()
+    * Purpose  :   Getter for the variable _rows
+    * Input    :   void
+    * Returns  :   int
+    *************************************************************************/
+    int getRows(void) {
+        return _rows;
+    }
+
+    /*************************************************************************
+    * Function :   getRowsRef()
+    * Purpose  :   Returns a reference to the variable Container::_rows
+    * Input    :   void
+    * Returns  :   int&
+    *************************************************************************/
+    int& getRowsRef (void) {
+        return _rows;
+    }
+
+    /*************************************************************************
+    * Function :   setRows()
+    * Purpose  :   Setter for the variable _rows
+    * Input    :   unsigned int r
+    * Returns  :   void
+    *************************************************************************/
+    void setRows(unsigned int r) {
+        _rows = r;
+    }
+
+    /*************************************************************************
+    * Function :   getCols()
+    * Purpose  :   Getter for the variable _cols
+    * Input    :   void
+    * Returns  :   int
+    *************************************************************************/
+    int getCols(void) {
+        return _cols;
+    }
+
+    /*************************************************************************
+    * Function :   getColsRef()
+    * Purpose  :   Returns a reference to the variable Container::_cols
+    * Input    :   void
+    * Returns  :   int&
+    *************************************************************************/
+    int& getColsRef (void) {
+        return _cols;
+    }
+
+    /*************************************************************************
+    * Function :   setCols()
+    * Purpose  :   Setter for the variable _cols
+    * Input    :   unsigned int c
+    * Returns  :   void
+    *************************************************************************/
+    void setCols(unsigned int c) {
+        _cols = c;
+    }
+
+    /*************************************************************************
+    * Function :   getRowSpacing()
+    * Purpose  :   Getter for the variable _row_spacing
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getRowSpacing(void) {
+        return _row_spacing;
+    }
+
+    /*************************************************************************
+    * Function :   getRowSpacingRef()
+    * Purpose  :   Returns a reference to the variable Container::_row_spacing
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getRowSpacingRef (void) {
+        return _row_spacing;
+    }
+
+    /*************************************************************************
+    * Function :   setRowSpacing()
+    * Purpose  :   Setter for the variable _row_spacing
+    * Input    :   double r
+    * Returns  :   void
+    *************************************************************************/
+    void setRowSpacing(double r) {
+        _row_spacing = r;
+    }
+
+    /*************************************************************************
+    * Function :   getColSpacing()
+    * Purpose  :   Getter for the variable _col_spacing
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getColSpacing(void) {
+        return _col_spacing;
+    }
+
+    /*************************************************************************
+    * Function :   getColSpacingRef()
+    * Purpose  :   Returns a reference to the variable Container::_col_spacing
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getColSpacingRef (void) {
+        return _col_spacing;
+    }
+
+    /*************************************************************************
+    * Function :   setColSpacing()
+    * Purpose  :   Setter for the variable _col_spacing
+    * Input    :   double c
+    * Returns  :   void
+    *************************************************************************/
+    void setColSpacing(double c) {
+        _col_spacing = c;
+    }
+
+    /*************************************************************************
+    * Function :   getWellDepth()
+    * Purpose  :   Getter for the variable _well_depth
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getWellDepth(void) {
+        return _well_depth;
+    }
+
+    /*************************************************************************
+    * Function :   getWellDepthRef()
+    * Purpose  :   Returns a reference to the variable Container::_well_depth
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getWellDepthRef (void) {
+        return _well_depth;
+    }
+
+    /*************************************************************************
+    * Function :   setWellDepth()
+    * Purpose  :   Setter for the variable _well_depth
+    * Input    :   double d
+    * Returns  :   void
+    *************************************************************************/
+    void setWellDepth(double d) {
+        _well_depth = d;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetX()
+    * Purpose  :   Getter for the variable _offset_x
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getOffsetX(void) {
+        return _offset_x;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetXRef()
+    * Purpose  :   Returns a reference to the variable Container::_offset_x
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getOffsetXRef (void) {
+        return _offset_x;
+    }
+
+    /*************************************************************************
+    * Function :   setOffsetX()
+    * Purpose  :   Setter for the variable _offset_x
+    * Input    :   double o
+    * Returns  :   void
+    *************************************************************************/
+    void setOffsetX(double o) {
+        _offset_x = o;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetY()
+    * Purpose  :   Getter for the variable _offset_y
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getOffsetY(void) {
+        return _offset_y;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetYRef()
+    * Purpose  :   Returns a reference to the variable Container::_offset_y
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getOffsetYRef (void) {
+        return _offset_y;
+    }
+
+    /*************************************************************************
+    * Function :   setOffsetY()
+    * Purpose  :   Setter for the variable _offset_y
+    * Input    :   double o
+    * Returns  :   void
+    *************************************************************************/
+    void setOffsetY(double o) {
+        _offset_y = o;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetZ()
+    * Purpose  :   Getter for the variable _offset_z
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getOffsetZ(void) {
+        return _offset_z;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetZRef()
+    * Purpose  :   Returns a reference to the variable Container::_offset_z
+    * Input    :   void
+    * Returns  :   double&
+    *************************************************************************/
+    double& getOffsetZRef (void) {
+        return _offset_z;
+    }
+
+    /*************************************************************************
+    * Function :   setOffsetZ()
+    * Purpose  :   Setter for the variable _offset_z
+    * Input    :   double o
+    * Returns  :   void
+    *************************************************************************/
+    void setOffsetZ(double o) {
+        _offset_z = o;
+    }
+
+    /*************************************************************************
+    * Function :   getCellsVecRef()
+    * Purpose  :   Returns a reference to the variable Container::cells
+    * Input    :   void
+    * Returns  :   std::vector<std::vector<struct container_cell>>&
+    *************************************************************************/
+    std::vector<std::vector<struct container_cell>>& getCellsVecRef (void) {
+        return _cells;
+    }
 
   private:
+    std::string _type;      // Type of container.(tip rack, well plate, etc.)
     double _length;
     double _width;
     double _height;
-    unsigned int _rows;
-    unsigned int _cols;
+    int _rows;
+    int _cols;
     double _row_spacing;
     double _col_spacing;
-    std::string _type;      // Type of container.(tip rack, well plate, etc.)
     double _well_depth;     // Well depth measured from top of deck (mm)
     double _offset_x;       // Container origin offset from gantry origin (mm)
     double _offset_y;

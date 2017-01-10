@@ -1,3 +1,25 @@
-<launch>
-
-</launch>
+cdxbot:
+    num_containers: 6
+    origin_x: 0.00
+    origin_y: 0.00
+    origin_z: 0.00
+    extent_x: 440.00
+    extent_y: 440.00
+    extent_z: 440.00 
+    containers:
+        # Container Properties
+        0:              # Container ID Number
+            type: "well"        # Container type [tip/well]
+            length: 150         # Container Exterior Length
+            width:  100         # Container Exterior Width
+            height: 50          # Container Exterior Height
+            rows: 12            # Number of Rows in Container
+            cols: 8             # Number of Columns in Container
+            row_spacing: 10     # Spacing Between Adjacent Cells in Row
+            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
+            container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
+                # due to nonuniform container floor profiles.
+            offset_x: 50        # X-offset Between Container Origin and Deck Origin
+            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 50        # Z-offset Between Container Origin and Deck Origin

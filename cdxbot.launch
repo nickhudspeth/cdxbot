@@ -6,7 +6,7 @@ name="cdxbot_node"
 respawn="false"
 output="screen"
 />
-<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/cdxbot.yaml" />
+<rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
 
 
 <node
@@ -15,6 +15,7 @@ type="gui.py"
 name="gui_node"
 respawn="false"
 />
+<rosparam file ="$(find cdxbot)/conf/gui.yaml" command="load"/>
 
 
 <node
@@ -24,7 +25,7 @@ name="pc_node"
 respawn="false"
 output="screen"
 />
-<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/pipetterController.yaml" />
+<rosparam file ="$(find cdxbot)/conf/pipetterController.yaml" command="load"/>
 
 <node
 pkg="cdxbot"
@@ -33,7 +34,7 @@ name="gc_node"
 respawn="false"
 output="screen"
 />
-<include file = "/home/cdx/catkin_ws/src/cdxbot/conf/gantryController.yaml" />
+<rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/>
 
 
 </launch>

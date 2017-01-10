@@ -53,8 +53,7 @@ class PipetterController {
             ROS_INFO_STREAM("Loaded pipetter hardware driver from "\
                             << _defaultDriverLocation);
 
-        }
-        else{
+        } else {
             ROS_WARN_STREAM("Could not load pipetter hardware driver.");
         }
     };
@@ -76,6 +75,10 @@ class PipetterController {
     *************************************************************************/
     double getZPos(void);
 
+    std::string type;
+    std::string driver_name;
+    std::string driver_path;
+
   private:
     void* _driver_handle;
     int (*_driver_init)(void);
@@ -83,6 +86,7 @@ class PipetterController {
     int (*_driver_lconf)(void);
     void (*_driver_seterrfunc)(void);
     std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libzeus.so";
+
     /* data */
 };
 

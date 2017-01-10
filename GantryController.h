@@ -59,6 +59,7 @@ class GantryController {
             ROS_INFO_STREAM("Loaded gantry controller hardware driver from "\
                             << _defaultDriverLocation);
 
+            //        driver_init(*this);
         } else {
             ROS_WARN_STREAM("Could not load gantry controller hardware driver.");
         }
@@ -188,19 +189,35 @@ class GantryController {
         return 0;
     }
 
+    std::string getIPAddress() {
+        return _ip_address;
+    }
+    unsigned int getHostPort() {
+        return _port;
+    }
+
+    void setIPAddress(std::string s) {
+        _ip_address = s;
+    }
+
+    void setHostPort(unsigned int p) {
+        _port = p;
+    }
 
     std::string type;
-    std::string cominterface;
-    std::string ipaddress;
-    std::string port;
     std::string timeout;
+    std::string driver_name;
+    std::string driver_path;
+    std::string _ip_address;
+    int _port;
+
+    int (*driver_init)(GantryController &gc);
+    int (*driver_deinit)(void);
+    int (*driver_lconf)(void);
+    void (*driver_seterrfunc)(void);
 
   private:
-    void* _driver_handle;
-    int (*_driver_init)(void);
-    int (*_driver_deinit)(void);
-    int (*_driver_lconf)(void);
-    void (*_driver_seterrfunc)(void);
+    void* driver_handle;
     std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libsmoothie.so";
     double _pos_x;
     double _pos_y;
@@ -209,22 +226,17 @@ class GantryController {
                                      requires a space to be prepended to
                                      line arguments following a modal command */
     unsigned int _id;
-    std::string _pipetterType = "";
-    std::string _pipetterPath = "";
     std::string _controllerType = "";
     std::string _controllerPath = "";
-    std::string _comInterface = "";
     std::string _comProtocol = "";
     std::string _type = "";
     std::string _file = "";
     /* Networking configuration */
-    int _sockfd = 0;
     std::string _host_ip = "";
     unsigned int _host_port = 0;
     char _buffer[NETBUFSIZE];
     double _netTimeoutMS = 0.0;
     double _speed = 0.0;
-    struct sockaddr_in _remote;
     /*************************************************************************
     * Function :   initComms()
     * Purpose  :   Initializes the communications bridge to the controller

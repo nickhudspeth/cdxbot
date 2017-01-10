@@ -81,14 +81,13 @@ std::string _type = "";
 std::string _file = "";
 std::string _defaultConfigFilePath = "../res/";
 /* Networking configuration */
-int _sockfd = 0;
+int sockfd = 0;
 std::string _host_ip = "";
 unsigned int _host_port = 0;
 char _buffer[NETBUFSIZE];
 double _netTimeoutMS = 0.0;
 double _speed = 0.0;
-struct sockaddr_in _remote;
-
+struct sockaddr_in remote;
 /***********************    FUNCTION PROTOTYPES    ***********************/
 
 /* The 'extern "C"' keyword must be used here to force the compiler to use

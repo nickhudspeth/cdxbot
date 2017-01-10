@@ -1,2 +1,24 @@
-<launch>
-</launch>
+gc_conf:
+    type: "smoothie"
+    driver_name: "libzeus.so"
+    driver_path: "/home/cdx/catkin_ws/devel/lib/libzeus.so"
+        # NETWORKING CONFIGURATION
+    ip_address: "192.168.169.99"
+    port: 23
+    timeout: 100
+    buffer_size: 100
+
+        # DRIVE CONFIGURATION SETTINGS
+    units: "mm"
+    traverse_velocity: 50
+    rapid_feed_velocity: 100
+
+    xpos_min: 0.0
+    xpos_max: 440.0
+    ypos_min: 0.0
+    ypos_max: 440.0
+    zpos_min: 0.0
+    zpos_max: 440.0
+        # CONFIGURATION SETTINGS FOR CONTROLLERS WITH CHARACTER INTERFACEs
+        # path: /dev/usbtty0
+

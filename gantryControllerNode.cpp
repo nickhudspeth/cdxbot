@@ -48,7 +48,7 @@ LICENSE:
 * Function :   loadParams()
 * Purpose  :   Loads the pipetter configuration parameters from the
 *              parameter server.
-* Input    :   GantryController *gc
+* Input    :   PipetterController gc
 * Returns  :   void
 *************************************************************************/
 void loadParams(ros::NodeHandle &nh, GantryController &gc) {
@@ -57,54 +57,37 @@ void loadParams(ros::NodeHandle &nh, GantryController &gc) {
      * configuration files. Also consider restricting choices to allowed values
      * via GUI.- Tue 20 Dec 2016 11:59:36 AM MST */
 
-    if(!nh.getParam("/gc/type", gc.type)) {
+    if(!nh.getParam("/gc_conf/type", gc.type)) {
         nh.getParam("/gcdefaults/type", gc.type);
         ROS_WARN("No parameter 'type' found in configuration file.\
                         Initializing gantry controller with default value %s",\
                  gc.type);
-
-        if(!nh.getParam("/gc/cominterface", gc.cominterface)) {
-            nh.getParam("/gcdefaults/cominterface", gc.cominterface);
-            ROS_WARN_STREAM("No parameter \"cominterface\" found in configuration file.\
+    }
+    if(!nh.getParam("/gc_conf/driver_name", gc.driver_name)) {
+        nh.getParam("/gcdefaults/driver_name", gc.driver_name);
+        ROS_WARN_STREAM("No parameter \"driver_name\" found in configuration file.\
                             Initializing gantry controller with default value " <<\
-                            gc.cominterface);
-
-            if(!nh.getParam("/gc/cominterface", gc.cominterface)) {
-                nh.getParam("/gcdefaults/cominterface", gc.cominterface);
-                ROS_WARN_STREAM("No parameter \"cominterface\" found in configuration file.\
+                        gc.driver_name);
+    }
+    if(!nh.getParam("/gc_conf/driver_path", gc.driver_path)) {
+        nh.getParam("/gcdefaults/driver_path", gc.driver_path);
+        ROS_WARN_STREAM("No parameter \"driver_path\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
-                                gc.cominterface);
-            }
-
-            /* Load ethernet configuration parameters only if ethernet interface used.*/
-            if(gc.cominterface == "ethernet") {
-                if(!nh.getParam("/gc/ipaddress", gc.ipaddress)) {
-                    nh.getParam("/gcdefaults/ipaddress", gc.ipaddress);
-                    ROS_WARN_STREAM("No parameter \"ipaddress\" found in configuration file.\
-                                    Initializing gantry controller with default value " <<\
-                                    gc.ipaddress);
-                }
-                if(!nh.getParam("/gc/port", gc.port)) {
-                    nh.getParam("/gcdefaults/port", gc.port);
-                    ROS_WARN_STREAM("No parameter \"port\" found in configuration file.\
-                                        Initializing gantry controller with default value " <<\
-                                    gc.port);
-                }
-                if(!nh.getParam("/gc/timeout", gc.timeout)) {
-                    nh.getParam("/gcdefaults/timeout", gc.timeout);
-                    ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file.\
-                                        Initializing gantry controller with default value " <<\
-                                    gc.timeout);
-                }
-
-            }
-        }
-        /* Load usb configuration parameters only if usb interface used.*/
-        else if(gc.cominterface == "usb") {
-
-        }
+                        gc.driver_path);
     }
 
+    if(!nh.getParam("/gc_conf/ip_address", gc._ip_address)) {
+        nh.getParam("/gcdefaults/ip_address", gc._ip_address);
+        ROS_WARN_STREAM("No parameter \"ip_address\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc._ip_address);
+    }
+    if(!nh.getParam("/gc_conf/port", gc._port)) {
+        nh.getParam("/gcdefaults/port", gc._port);
+        ROS_WARN_STREAM("No parameter \"port\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc._port);
+    }
 }
 
 int main(int argc, char **argv) {
@@ -116,7 +99,7 @@ int main(int argc, char **argv) {
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Rate rate(100);
     loadParams(nh, gc);
-
+    gc.driver_init(gc);
     while(ros::ok()) {
         msg.vector.x = gc.getPos('x');
         msg.vector.y = gc.getPos('y');
