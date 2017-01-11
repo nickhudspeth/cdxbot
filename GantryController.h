@@ -55,17 +55,9 @@ LICENSE:
 class GantryController {
   public:
     GantryController () {
-        if(loadDriver(_defaultDriverLocation) == 0) {
-            ROS_INFO_STREAM("Loaded gantry controller hardware driver from "\
-                            << _defaultDriverLocation);
+    }
 
-            //        driver_init(*this);
-        } else {
-            ROS_WARN_STREAM("Could not load gantry controller hardware driver.");
-        }
-    };
-
-    ~GantryController ();
+    virtual ~GantryController ();
 
 
     /*************************************************************************
@@ -74,7 +66,7 @@ class GantryController {
     * Input    :   std::string file
     * Returns  :   int
     *************************************************************************/
-    int loadDriver(std::string file);
+    int loadDriver(void);
 
 
     /*************************************************************************
@@ -189,27 +181,198 @@ class GantryController {
         return 0;
     }
 
+    std::string getType() {
+        return _type;
+    }
+
+    std::string &getTypeRef() {
+        return _type;
+    }
+
+    void setType(std::string s) {
+        _type = s;
+    }
+
+    std::string getDriverName() {
+        return _driver_name;
+    }
+
+    std::string &getDriverNameRef() {
+        return _driver_name;
+    }
+
+    void setDriverName(std::string s) {
+        _driver_name = s;
+    }
+
+    std::string getDriverPath() {
+        return _driver_path;
+    }
+
+    std::string &getDriverPathRef() {
+        return _driver_path;
+    }
+
+    void setDriverPath(std::string s) {
+        _driver_path = s;
+    }
+
     std::string getIPAddress() {
         return _ip_address;
     }
-    unsigned int getHostPort() {
-        return _port;
+
+    std::string &getIPAddressRef() {
+        return _ip_address;
     }
 
     void setIPAddress(std::string s) {
         _ip_address = s;
     }
 
-    void setHostPort(unsigned int p) {
+    int getPort(void) {
+        return _port;
+    }
+
+    int &getPortRef(void) {
+        return _port;
+    }
+
+    void setPort(unsigned int p) {
         _port = p;
     }
 
-    std::string type;
-    std::string timeout;
-    std::string driver_name;
-    std::string driver_path;
-    std::string _ip_address;
-    int _port;
+    int getTimeout(void) {
+        return _timeout;
+    }
+
+    int &getTimeoutRef(void) {
+        return _timeout;
+    }
+
+    void setTimeout(unsigned int p) {
+        _timeout = p;
+    }
+
+    int getBufferSize(void) {
+        return _buffer_size;
+    }
+
+    int &getBufferSizeRef(void) {
+        return _buffer_size;
+    }
+
+    void setBufferSize(unsigned int p) {
+        _buffer_size = p;
+    }
+
+    std::string getUnits() {
+        return _units;
+    }
+
+    std::string &getUnitsRef() {
+        return _units;
+    }
+
+    void setUnits(std::string s) {
+        _units = s;
+    }
+
+    double getTraverseVelocity(void) {
+        return _traverse_velocity;
+    }
+
+    double &getTraverseVelocityRef(void) {
+        return _traverse_velocity;
+    }
+
+    void setTraverseVelocity(double p) {
+        _traverse_velocity = p;
+    }
+
+    double getRapidFeedVelocity(void) {
+        return _rapid_feed_velocity;
+    }
+
+    double &getRapidFeedVelocityRef(void) {
+        return _rapid_feed_velocity;
+    }
+
+    void setRapidFeedVelocity(double p) {
+        _rapid_feed_velocity = p;
+    }
+
+    double getXPosMin(void) {
+        return _xpos_min;
+    }
+
+    double &getXPosMinRef(void) {
+        return _xpos_min;
+    }
+
+    void setXPosMin(double p) {
+        _xpos_min = p;
+    }
+
+    double getXPosMax(void) {
+        return _xpos_max;
+    }
+
+    double &getXPosMaxRef(void) {
+        return _xpos_max;
+    }
+
+    void setXPosMax(double p) {
+        _xpos_max = p;
+    }
+
+    double getYPosMin(void) {
+        return _ypos_min;
+    }
+
+    double &getYPosMinRef(void) {
+        return _ypos_min;
+    }
+
+    void setYPosMin(double p) {
+        _ypos_min = p;
+    }
+
+    double getYPosMax(void) {
+        return _ypos_max;
+    }
+
+    double &getYPosMaxRef(void) {
+        return _ypos_max;
+    }
+
+    void setYPosMax(double p) {
+        _ypos_max = p;
+    }
+
+    double getZPosMin(void) {
+        return _zpos_min;
+    }
+
+    double &getZPosMinRef(void) {
+        return _zpos_min;
+    }
+
+    void setZPosMin(double p) {
+        _zpos_min = p;
+    }
+
+    double getZPosMax(void) {
+        return _zpos_max;
+    }
+
+    double &getZPosMaxRef(void) {
+        return _zpos_max;
+    }
+
+    void setZPosMax(double p) {
+        _zpos_max = p;
+    }
+
 
     int (*driver_init)(GantryController &gc);
     int (*driver_deinit)(void);
@@ -217,8 +380,27 @@ class GantryController {
     void (*driver_seterrfunc)(void);
 
   private:
-    void* driver_handle;
+
+    std::string _type = "";
+    std::string _driver_name = "";
+    std::string _driver_path = "";
+    std::string _ip_address = "";
+    int _port = 0;
+    int _timeout = 0;
+    int _buffer_size = 0;
+    std::string _units = "";
+    double _traverse_velocity;
+    double _rapid_feed_velocity;
+
+    double _xpos_min = 0.0;
+    double _xpos_max = 0.0;
+    double _ypos_min = 0.0;
+    double _ypos_max = 0.0;
+    double _zpos_min = 0.0;
+    double _zpos_max = 0.0;
+
     std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libsmoothie.so";
+    void* driver_handle;
     double _pos_x;
     double _pos_y;
     double _pos_z;
@@ -226,16 +408,8 @@ class GantryController {
                                      requires a space to be prepended to
                                      line arguments following a modal command */
     unsigned int _id;
-    std::string _controllerType = "";
-    std::string _controllerPath = "";
-    std::string _comProtocol = "";
-    std::string _type = "";
-    std::string _file = "";
     /* Networking configuration */
-    std::string _host_ip = "";
-    unsigned int _host_port = 0;
     char _buffer[NETBUFSIZE];
-    double _netTimeoutMS = 0.0;
     double _speed = 0.0;
     /*************************************************************************
     * Function :   initComms()
@@ -269,4 +443,6 @@ class GantryController {
     * Returns  :   virtual int - number of bytes read.
     *************************************************************************/
     virtual int  readResponse(void);
+
+
 };

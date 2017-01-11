@@ -1,7 +1,7 @@
 gc_conf:
     type: "smoothie"
-    driver_name: "libzeus.so"
-    driver_path: "/home/cdx/catkin_ws/devel/lib/libzeus.so"
+    driver_name: "libsmoothie.so"
+    driver_path: "/home/cdx/catkin_ws/devel/lib/"
         # NETWORKING CONFIGURATION
     ip_address: "192.168.169.99"
     port: 23

@@ -94,12 +94,11 @@ struct sockaddr_in remote;
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
 extern "C" {
-    int init(GantryController& gc);
+    int init(GantryController &gc);
     void(*PRINT_ERROR)(std::string s);
     int deinit(void);
     int lconf(void);
     void seterrfunc(void(*ef)(std::string s));
-
     /*************************************************************************
     * Function :   dwell()
     * Purpose  :   Dwell for t milliseconds

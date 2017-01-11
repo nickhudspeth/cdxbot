@@ -1,11 +1,10 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <stdlib.h>
+#include "std_msgs/String.h"
 #include "PipetterController.h"
 
-void loadParams(PipetterController *pc) {
-
-}
+PipetterController pc;
 
 void loadParams(ros::NodeHandle &nh, PipetterController &pc) {
 
@@ -33,17 +32,24 @@ void loadParams(ros::NodeHandle &nh, PipetterController &pc) {
     }
 }
 
+void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
+    ROS_INFO_STREAM("PipetterControllerNode: Received shutdown directive.");
+    pc.driver_deinit();
+    ros::shutdown();
+}
+
 int main(int argc, char **argv) {
     const char *pcfile = "..pipetterConfig.conf";
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "pipetterControllerNode");
     ros::NodeHandle nh;
-    PipetterController pc;
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     /* Instantiate publishers and subscribers*/
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);
     ros::Rate rate(100);
     while(ros::ok()) {
+        ros::spinOnce();
         msg.vector.x = 0;
         msg.vector.y = 0;
         msg.vector.z = pc.getZPos();

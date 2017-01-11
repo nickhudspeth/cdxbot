@@ -109,7 +109,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     # INCLUDE_DIRS include
-    # LIBRARIES cdxbot
+    LIBRARIES smoothie zeus
     #  CATKIN_DEPENDS other_catkin_pkg
     # DEPENDS system_lib
     CATKIN_DEPENDS message_runtime

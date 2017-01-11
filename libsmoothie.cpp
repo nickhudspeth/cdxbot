@@ -42,16 +42,19 @@ LICENSE:
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
-int init(GantryController& gc) {
+int init(GantryController &gc) {
+    std::cout << "Recieved controller ref: " << &gc << std::endl;
+    std::cout << "DEBUG: Initializing driver with IP" << gc.getIPAddress() << std::endl;
     /* Clear out needed memory */
     std::memset(_buffer, 0, NETBUFSIZE);
     std::memset(&remote, 0, sizeof(remote));
     /* Fill in required details in the socket structure */
+    std::string ip = gc.getIPAddress();
     remote.sin_family = AF_INET;
-    remote.sin_port = htons(gc.getHostPort());
+    remote.sin_port = htons(gc.getPort());
     remote.sin_addr.s_addr = inet_addr(gc.getIPAddress().c_str());
     /* Create a socket */
-    printf("DEBUG: Connecting to %s:%d", gc.getIPAddress().c_str(), gc.getHostPort());
+    std::cout <<"DEBUG: Connecting to" << ip << ":" << gc.getPort() << std::endl;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if(sockfd < 0) {
         perror("socket");
@@ -67,6 +70,8 @@ int init(GantryController& gc) {
 
 int deinit(void) {
     close(sockfd);
+    printf("LIBSMOOTHIE: Successfully shut down driver.\n");
+    PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
 
 }
 

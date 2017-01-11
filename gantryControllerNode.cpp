@@ -35,12 +35,15 @@ LICENSE:
 #include <geometry_msgs/Vector3Stamped.h>
 #include <stdlib.h>
 #include <iostream>
+#include <atomic>
+#include "std_msgs/String.h"
 #include "GantryController.h"
 #include "cdxbot/gc_cmd.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 
 
 /***********************    GLOBAL VARIABLES    ************************/
+GantryController gc;
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
@@ -57,37 +60,118 @@ void loadParams(ros::NodeHandle &nh, GantryController &gc) {
      * configuration files. Also consider restricting choices to allowed values
      * via GUI.- Tue 20 Dec 2016 11:59:36 AM MST */
 
-    if(!nh.getParam("/gc_conf/type", gc.type)) {
-        nh.getParam("/gcdefaults/type", gc.type);
+    if(!nh.getParam("/gc_conf/type", gc.getTypeRef())) {
+        nh.getParam("/gcdefaults/type", gc.getTypeRef());
         ROS_WARN("No parameter 'type' found in configuration file.\
                         Initializing gantry controller with default value %s",\
-                 gc.type);
+                 gc.getType());
     }
-    if(!nh.getParam("/gc_conf/driver_name", gc.driver_name)) {
-        nh.getParam("/gcdefaults/driver_name", gc.driver_name);
+    if(!nh.getParam("/gc_conf/driver_name", gc.getDriverNameRef())) {
+        nh.getParam("/gcdefaults/driver_name", gc.getDriverNameRef());
         ROS_WARN_STREAM("No parameter \"driver_name\" found in configuration file.\
                             Initializing gantry controller with default value " <<\
-                        gc.driver_name);
+                        gc.getDriverName());
     }
-    if(!nh.getParam("/gc_conf/driver_path", gc.driver_path)) {
-        nh.getParam("/gcdefaults/driver_path", gc.driver_path);
+    if(!nh.getParam("/gc_conf/driver_path", gc.getDriverPathRef())) {
+        nh.getParam("/gcdefaults/driver_path", gc.getDriverPathRef());
         ROS_WARN_STREAM("No parameter \"driver_path\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
-                        gc.driver_path);
+                        gc.getDriverPath());
     }
 
-    if(!nh.getParam("/gc_conf/ip_address", gc._ip_address)) {
-        nh.getParam("/gcdefaults/ip_address", gc._ip_address);
+    if(!nh.getParam("/gc_conf/ip_address", gc.getIPAddressRef())) {
+        nh.getParam("/gcdefaults/ip_address", gc.getIPAddressRef());
         ROS_WARN_STREAM("No parameter \"ip_address\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
-                        gc._ip_address);
+                        gc.getIPAddress());
     }
-    if(!nh.getParam("/gc_conf/port", gc._port)) {
-        nh.getParam("/gcdefaults/port", gc._port);
+    ROS_WARN_STREAM(" IP = " << gc.getIPAddress());
+
+
+
+    if(!nh.getParam("/gc_conf/port", gc.getPortRef())) {
+        nh.getParam("/gcdefaults/port", gc.getPortRef());
         ROS_WARN_STREAM("No parameter \"port\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
-                        gc._port);
+                        gc.getPort());
     }
+    if(!nh.getParam("/gc_conf/port", gc.getTimeoutRef())) {
+        nh.getParam("/gcdefaults/port", gc.getTimeoutRef());
+        ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getTimeout());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getBufferSizeRef())) {
+        nh.getParam("/gcdefaults/port", gc.getBufferSizeRef());
+        ROS_WARN_STREAM("No parameter \"buffer_size\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getBufferSize());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getUnitsRef())) {
+        nh.getParam("/gcdefaults/port", gc.getUnitsRef());
+        ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getUnits());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getTraverseVelocityRef())) {
+        nh.getParam("/gcdefaults/port", gc.getTraverseVelocityRef());
+        ROS_WARN_STREAM("No parameter \"traverse_velocity\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getTraverseVelocity());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getRapidFeedVelocityRef())) {
+        nh.getParam("/gcdefaults/port", gc.getRapidFeedVelocityRef());
+        ROS_WARN_STREAM("No parameter \"rapid_feed_velocity\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getRapidFeedVelocity());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getXPosMinRef())) {
+        nh.getParam("/gcdefaults/port", gc.getXPosMinRef());
+        ROS_WARN_STREAM("No parameter \"xpos_min\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getXPosMin());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getXPosMaxRef())) {
+        nh.getParam("/gcdefaults/port", gc.getXPosMaxRef());
+        ROS_WARN_STREAM("No parameter \"xpos_max\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getXPosMax());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getYPosMinRef())) {
+        nh.getParam("/gcdefaults/port", gc.getYPosMinRef());
+        ROS_WARN_STREAM("No parameter \"ypos_min\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getYPosMin());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getYPosMaxRef())) {
+        nh.getParam("/gcdefaults/port", gc.getYPosMaxRef());
+        ROS_WARN_STREAM("No parameter \"ypos_max\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getYPosMax());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getZPosMinRef())) {
+        nh.getParam("/gcdefaults/port", gc.getZPosMinRef());
+        ROS_WARN_STREAM("No parameter \"zpos_min\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getZPosMin());
+    }
+    if(!nh.getParam("/gc_conf/port", gc.getZPosMaxRef())) {
+        nh.getParam("/gcdefaults/port", gc.getZPosMaxRef());
+        ROS_WARN_STREAM("No parameter \"zpos_max\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        gc.getZPosMax());
+    }
+}
+
+void gcPubCallback(const cdxbot::gc_cmd msg) {
+
+}
+
+//ros::Subscriber shutdown = nh.subscribe("shutdown", 100, shutdownCallback);
+void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO_STREAM("GantryControllerNode: Received shutdown directive.");
+    gc.driver_deinit();
+    ros::shutdown();
 }
 
 int main(int argc, char **argv) {
@@ -95,12 +179,16 @@ int main(int argc, char **argv) {
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
-    GantryController gc;
-    ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
-    ros::Rate rate(100);
     loadParams(nh, gc);
-    gc.driver_init(gc);
+    ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
+    ros::Subscriber sub = nh.subscribe("gc_pub", 100, gcPubCallback);
+    ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
+    ros::Rate rate(100);
+    std::cout << "Initialized gc with addr: " << &gc << std::endl;
+    gc.loadDriver();
+    //gc.driver_init(gc);
     while(ros::ok()) {
+        ros::spinOnce();
         msg.vector.x = gc.getPos('x');
         msg.vector.y = gc.getPos('y');
         msg.vector.z = gc.getPos('z');

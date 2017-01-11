@@ -59,7 +59,7 @@ ros::Subscriber guiSub;
 ros::Publisher gc_pub; //= nh.advertise<cdx
 ros::Publisher pc_pub;
 ros::Publisher vc_pub;
-
+ros::Publisher shutdown_pub;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int loadConfig(ros::NodeHandle nh, CDXBot cd) {
@@ -75,7 +75,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
     // cd.setNumContainers(0);
     // }
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
-        sprintf(buf,"/cdxbot/containers/%d/type", i);
+        sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
             nh.getParam("/cdxbot_defaults/type",cd.getContainer(i).getTypeRef());
             ROS_WARN("No parameter containers:%d:type found in configuration file.\
@@ -84,7 +84,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/length", i);
+        sprintf(buf,"/cdxbot/containers/c%d/length", i);
         if(!nh.getParam(buf, cd.getContainer(i).getLengthRef())) {
             nh.getParam("/cdxbot_defaults/length", cd.getContainer(i).getLengthRef());
             ROS_WARN("No parameter containers:%d:length found in configuration file.\
@@ -93,7 +93,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/width", i);
+        sprintf(buf,"/cdxbot/containers/c%d/width", i);
         if(!nh.getParam(buf, cd.getContainer(i).getWidthRef())) {
             nh.getParam("/cdxbot_defaults/width", cd.getContainer(i).getWidthRef());
             ROS_WARN("No parameter containers:%d:width found in configuration file.\
@@ -102,7 +102,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/height", i);
+        sprintf(buf,"/cdxbot/containers/c%d/height", i);
         if(!nh.getParam(buf, cd.getContainer(i).getHeightRef())) {
             nh.getParam("/cdxbot_defaults/height", cd.getContainer(i).getHeightRef());
             ROS_WARN("No parameter containers:%d:height found in configuration file.\
@@ -111,7 +111,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/rows", i);
+        sprintf(buf,"/cdxbot/containers/c%d/rows", i);
         if(!nh.getParam(buf, cd.getContainer(i).getRowsRef())) {
             nh.getParam("/cdxbot_defaults/rows", cd.getContainer(i).getRowsRef());
             ROS_WARN("No parameter containers:%d:rows found in configuration file.\
@@ -120,7 +120,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/cols", i);
+        sprintf(buf,"/cdxbot/containers/c%d/cols", i);
         if(!nh.getParam(buf, cd.getContainer(i).getColsRef())) {
             nh.getParam("/cdxbot_defaults/cols", cd.getContainer(i).getColsRef());
             ROS_WARN("No parameter containers:%d:cols found in configuration file.\
@@ -129,7 +129,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/row_spacing", i);
+        sprintf(buf,"/cdxbot/containers/c%d/row_spacing", i);
         if(!nh.getParam(buf, cd.getContainer(i).getRowSpacingRef())) {
             nh.getParam("/cdxbot_defaults/row_spacing", cd.getContainer(i).getRowSpacingRef());
             ROS_WARN("No parameter containers:%d:row_spacing found in configuration file.\
@@ -138,7 +138,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/col_spacing", i);
+        sprintf(buf,"/cdxbot/containers/c%d/col_spacing", i);
         if(!nh.getParam(buf, cd.getContainer(i).getColSpacingRef())) {
             nh.getParam("/cdxbot_defaults/col_spacing", cd.getContainer(i).getColSpacingRef());
             ROS_WARN("No parameter containers:%d:col_spacing found in configuration file.\
@@ -148,7 +148,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
 
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/offset_x", i);
+        sprintf(buf,"/cdxbot/containers/c%d/offset_x", i);
         if(!nh.getParam(buf, cd.getContainer(i).getOffsetXRef())) {
             nh.getParam("/cdxbot_defaults/offset_x", cd.getContainer(i).getOffsetXRef());
             ROS_WARN("No parameter containers:%d:offset_x found in configuration file.\
@@ -157,7 +157,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/offset_y", i);
+        sprintf(buf,"/cdxbot/containers/c%d/offset_y", i);
         if(!nh.getParam(buf, cd.getContainer(i).getOffsetYRef())) {
             nh.getParam("/cdxbot_defaults/offset_y", cd.getContainer(i).getOffsetYRef());
             ROS_WARN("No parameter containers:%d:offset_y found in configuration file.\
@@ -166,7 +166,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/%d/offset_z", i);
+        sprintf(buf,"/cdxbot/containers/c%d/offset_z", i);
         if(!nh.getParam(buf, cd.getContainer(i).getOffsetZRef())) {
             nh.getParam("/cdxbot_defaults/offset_z", cd.getContainer(i).getOffsetZRef());
             ROS_WARN("No parameter containers:%d:offset_z found in configuration file.\
@@ -183,18 +183,18 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
                 c.used = 0;
                 if(cd.getContainer(i).getType() == "well") {
                     memset(buf, ' ',64);
-                    sprintf(buf,"/cdxbot/containers/%d/container_vol", i);
+                    sprintf(buf,"/cdxbot/containers/c%d/container_vol", i);
                     if(!nh.getParam(buf, c.vol)) {
-                    nh.getParam("/cdxbot_defaults/container_vol", c.vol);
+                        nh.getParam("/cdxbot_defaults/container_vol", c.vol);
                         ROS_WARN("No parameter containers:%d:container_vol found in configuration file.\
                         Initializing cdxbot with default value %f",\
                                  i, c.vol);
                     }
 
                     memset(buf, ' ',64);
-                    sprintf(buf,"/cdxbot/containers/%d/well_depth", i);
-                    if(!nh.getParam(buf, c.depth)){
-                    nh.getParam("/cdxbot_defaults/well_depth", c.depth);
+                    sprintf(buf,"/cdxbot/containers/c%d/well_depth", i);
+                    if(!nh.getParam(buf, c.depth)) {
+                        nh.getParam("/cdxbot_defaults/well_depth", c.depth);
                         ROS_WARN("No parameter containers:%d:well_depth found in configuration file.\
                         Initializing cdxbot with default value %s",\
                                  i, c.depth);
@@ -206,16 +206,25 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
     }
 
 
-    ROS_INFO_STREAM("Loaded configuration parameters.");
+    ROS_INFO_STREAM(ros::this_node::getName() << "Loaded configuration parameters.");
     return 0;
 }
 
 void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
-    ROS_INFO_STREAM("Received cmd from gui " << s->data);
+    ROS_INFO_STREAM("CDXBotNode: Received cmd from gui " << s->data);
     if (s->data == "RUN") {
         cd.setRunStatus(1);
     } else if (s->data == "STOP") {
         cd.setRunStatus(0);
+    }
+    if(s->data == "SHUTDOWN") {
+        cd.setRunStatus(0);
+        std_msgs::String msg;
+        std::stringstream ss;
+        ss << "SHUT THE HELL DOWN";
+        msg.data = ss.str();
+        shutdown_pub.publish(msg);
+        ros::shutdown();
     }
 }
 
@@ -307,33 +316,41 @@ void parseAction(CDXBot cd, const struct action a) {
     }
 }
 
+void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO_STREAM("CDXBotNode: Received shutdown directive.");
+    ros::shutdown();
+}
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
 
     /* Subscribe to GUI topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
+    ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
 
     /* Create publishers for the various controller */
-    //gc_pub = nh.advertise<cdxbot::gc_cmd.msg>();
-    //pc_pub = ;
-    //vc_pub = ;
+    gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
+    pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
+    vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
+    //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
+
     /* Check for and load/parse HLMD file */
     if(!cd.parseHLMDFile(cd.HLMDFileLocation)) {
-        ROS_INFO_STREAM("Found HLMD file at " << cd.HLMDFileLocation <<".");
-        ROS_DEBUG_STREAM(cd.actionMap.size() << "items pushed into actionmap.");
-        ROS_DEBUG_STREAM("items pushed into actionmap");
+        ROS_INFO_STREAM(ros::this_node::getName() << "Found HLMD file at " << cd.HLMDFileLocation <<".");
+        ROS_DEBUG_STREAM(ros::this_node::getName() << cd.actionMap.size() << "items pushed into actionmap.");
         for(size_t i = 0; i < cd.actionMap.size(); i++) {
             ROS_DEBUG_STREAM(cd.actionMap[i].cmd);
             for(size_t j = 0; j < cd.actionMap[i].args.size(); j++) {
                 ROS_DEBUG_STREAM("\t" << cd.actionMap[i].args[j]);
             }
         }
-        ROS_INFO_STREAM("Parsed HLMD file successfully.");
-    } else {
-        ROS_INFO_STREAM("Error reading HLMD file.");
-    }
+        ROS_INFO_STREAM(ros::this_node::getName() << "Parsed HLMD file successfully.");
 
+    } else {
+        ROS_INFO_STREAM(ros::this_node::getName() << "Error reading HLMD file.");
+    }
+    loadConfig(nh, cd);
     /* Process commands in HLMD file. */
     while(ros::ok()) {
         if(cd.getRunStatus() == 1) {

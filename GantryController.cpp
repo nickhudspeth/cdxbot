@@ -38,51 +38,51 @@ LICENSE:
 #include "GantryController.h"
 
 
-GantryController::~GantryController(){
+GantryController::~GantryController() {
+    driver_deinit();
+}
+
+void GantryController::dwell(int t) {
 
 }
 
-void GantryController::dwell(int t){
+void GantryController::emergencyStop(void) {
 
 }
 
-void GantryController::emergencyStop(void){
+void GantryController::emergencyStopReset(void) {
 
 }
 
-void GantryController::emergencyStopReset(void){
+int GantryController::home(unsigned int axis) {
 
 }
 
-int GantryController::home(unsigned int axis){
+int GantryController::motorsDisable(unsigned int axis) {
 
 }
 
-int GantryController::motorsDisable(unsigned int axis){
+int GantryController::motorsEnable(void) {
 
 }
 
-int GantryController::motorsEnable(void){
+int GantryController::moveAbsolute(float x, float y, float z) {
 
 }
 
-int GantryController::moveAbsolute(float x, float y, float z){
+int GantryController::moveRelative(float x, float y, float z) {
 
 }
 
-int GantryController::moveRelative(float x, float y, float z){
+int GantryController::setAxisStepsPerMM(unsigned int axis, unsigned int steps) {
 
 }
 
-int GantryController::setAxisStepsPerMM(unsigned int axis, unsigned int steps){
+int GantryController::setUnits(unsigned int u) {
 
 }
 
-int GantryController::setUnits(unsigned int u){
-
-}
-
-int GantryController::initComms(void){
+int GantryController::initComms(void) {
 
 }
 
@@ -90,64 +90,79 @@ int GantryController::initComms(void){
 
 // }
 
-int GantryController::sendCommand(const std::string &s){
+int GantryController::sendCommand(const std::string &s) {
 
 }
 
-int GantryController::readResponse(void){
+int GantryController::readResponse(void) {
 
 }
 
-int GantryController::loadDriver(std::string file) {
+int GantryController::loadDriver(void) {
 
     char *error;
+    int ef = 0;
+    std::string d_str = _driver_path + _driver_name;
     /* ATTEMPT TO LOAD DRIVER FROM FILE */
     dlerror(); // Clear error code
     /* Load without verifying symbols so that symbols may be resolved
      * manually below. */
-    driver_handle = dlopen(file.c_str(), RTLD_LAZY);
+    driver_handle = dlopen(d_str.c_str(), RTLD_LAZY);
     if(!driver_handle) {
         /* Handle error */
-        ROS_ERROR_STREAM("Failed to open driver at location " << file.c_str());
+        ROS_ERROR_STREAM("Failed to open driver at location " << d_str.c_str());
         ROS_ERROR_STREAM(dlerror());
-        return -1;
+        ef = 1;
     }
     /* VERIFY THAT DRIVER PROVIDES ALL THE REQUIRED METHODS */
     dlerror(); // Clear error code
-    driver_init = reinterpret_cast<int(*)(GantryController &gc)>(dlsym(driver_handle, "init")); // cast me to fn ptr
+   // driver_init = reinterpret_cast<int(*)(GantryController &gc)>(dlsym(driver_handle, "init")); // cast me to fn ptr
+    //driver_init = dlsym(driver_handle, "init"); // cast me to fn ptr
+    driver_init = (int(*)(GantryController &gc))(dlsym(driver_handle, "init")); // cast me to fn ptr
+    printf("driver_init set by driver as %d at address %d\n", driver_init, &driver_init);
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_init() not found in specified \
-                    driver at " << file.c_str());
+                    driver at " << d_str.c_str());
         ROS_ERROR_STREAM(error);
-        return -1;
+        ef = 1;
     }
 
     dlerror(); // Clear error code
     driver_deinit = reinterpret_cast<int(*)()>(dlsym(driver_handle, "deinit")); // cast me to fn ptr
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_deinit() not found in specified \
-                    driver at " << file.c_str());
+                    driver at " << d_str.c_str());
         ROS_ERROR_STREAM(error);
-        return -1;
+        ef = 1;
     }
 
     dlerror(); // Clear error code
     driver_lconf = reinterpret_cast<int(*)()>(dlsym(driver_handle, "lconf")); // cast me to fn ptr
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_lconf() not found in specified \
-                    driver at " << file.c_str());
+                    driver at " << d_str.c_str());
         ROS_ERROR_STREAM(error);
-        return -1;
+        ef = 1;
     }
 
     dlerror(); // Clear error code
     driver_seterrfunc = reinterpret_cast<void(*)()>(dlsym(driver_handle, "seterrfunc")); // cast me to fn ptr
     if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Function driver_seterrfunc() not found in specified \
-                    driver at " << file.c_str());
+                    driver at " << d_str.c_str());
         ROS_ERROR_STREAM(error);
-        return -1;
+        ef = 1;
     }
+
+
+    if(ef == 0) {
+        ROS_INFO_STREAM("Loaded gantry controller hardware driver from "\
+                        << _driver_path+_driver_name);
+
+        driver_init(*this);
+    } else {
+        ROS_WARN_STREAM("Could not load gantry controller hardware driver.");
+    }
+
     return 0; // All required functions exist in the specified driver.
 }
-
