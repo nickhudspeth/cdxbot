@@ -43,10 +43,15 @@ int main(int argc, char **argv) {
     geometry_msgs::Vector3Stamped msg;
     ros::init(argc, argv, "pipetterControllerNode");
     ros::NodeHandle nh;
+    loadParams(nh, pc);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     /* Instantiate publishers and subscribers*/
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);
+//    pc.loadDriver(); 
+    
+    
+    
     ros::Rate rate(100);
     while(ros::ok()) {
         ros::spinOnce();

@@ -32,7 +32,7 @@ def shutdownCallback(instance):
     rospy.shutdown()
 
 class MyScreen(GridLayout):
-
+    pass
     def __init__(self, **kwargs):
         super(MyScreen, self).__init__(**kwargs)
         self.cols = 2

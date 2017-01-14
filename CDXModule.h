@@ -1,13 +1,14 @@
 /*************************************************************************
-Title:    PipetterController.h -
+Title:    CDXModule.h - CDXBot Module Base Class
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     PipetterController.h
+File:     CDXModule.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
 
 DESCRIPTION:
-    What does this module do?
+    Provides a base class implementation from which all CDXBot hardware drivers
+    are derived.
 
 USAGE:
 
@@ -16,7 +17,7 @@ NOTES:
 
 
 LICENSE:
-    Copyright (C) 2016 Nicholas Morrow
+    Copyright (C) 2017 Nicholas Morrow
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to
@@ -37,60 +38,32 @@ LICENSE:
     THE SOFTWARE.
 
 *************************************************************************/
-#pragma once
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include <dlfcn.h>
-#include <ros/ros.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-class PipetterController {
-  public:
-    PipetterController () {
-        if(loadDriver(_defaultDriverLocation) == 0) {
-            ROS_INFO_STREAM("Loaded pipetter hardware driver from "\
-                            << _defaultDriverLocation);
 
-        } else {
-            ROS_WARN_STREAM("Could not load pipetter hardware driver.");
-        }
-    };
-    virtual ~PipetterController () {
-        driver_deinit();
-    };
-
-    /*************************************************************************
-    * Function :   loadDriver()
-    * Purpose  :   Loads a gantry controller driver from the file specified.
-    * Input    :   void
-    * Returns  :   int
-    *************************************************************************/
-    int loadDriver(std::string file);
-
-    /*************************************************************************
-    * Function :   getZPos()
-    * Purpose  :   What does this function do?
-    * Input    :   void
-    * Returns  :   double
-    *************************************************************************/
-    double getZPos(void);
-
-    std::string type;
-    std::string driver_name;
-    std::string driver_path;
-
-    int (*driver_init)(void);
-    int (*driver_deinit)(void);
-    int (*driver_lconf)(void);
-    void (*driver_seterrfunc)(void);
-
-  private:
-    void* _driver_handle;
-    std::string _defaultDriverLocation = "/home/cdx/catkin_ws/devel/lib/libzeus.so";
-
-    /* data */
-};
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
+class CDXModule {
+  public:
+    CDXModule (void){};
+    virtual ~CDXModule (void) {};
+    virtual int init(void) {
+        return 0;
+    }
+    virtual int deinit(void) {
+        return 0;
+    }
+    virtual int lconf(void) {
+        return 0;
+    }
+    virtual void seterrfunc(void(*ef)(std::string s)) {
+        PRINT_ERROR = ef;
+    }
+  protected:
+    void(*PRINT_ERROR)(std::string s);
+
+};

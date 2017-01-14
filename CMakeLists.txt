@@ -176,6 +176,8 @@ target_link_libraries(visionControllerNode
     ${catkin_LIBRARIES}
     )
 
+SET(GCC_LINKER_FLAGS "-l -E")
+ADD_DEFINITIONS(${GCC_LINKER_FLAGS})
 #############
 ## Install ##
 #############

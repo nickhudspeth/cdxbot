@@ -41,65 +41,66 @@ LICENSE:
 
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
+SmoothieModule::SmoothieModule(){}
+SmoothieModule::~SmoothieModule(){}
 
-int init(GantryController &gc) {
-    std::cout << "Recieved controller ref: " << &gc << std::endl;
-    std::cout << "DEBUG: Initializing driver with IP" << gc.getIPAddress() << std::endl;
+
+
+int SmoothieModule::init(void) {
     /* Clear out needed memory */
+    std::cout << "Init smoothiemodule with ip " << _ip_address << std::endl;
     std::memset(_buffer, 0, NETBUFSIZE);
-    std::memset(&remote, 0, sizeof(remote));
+    std::memset(&_remote, 0, sizeof(_remote));
     /* Fill in required details in the socket structure */
-    std::string ip = gc.getIPAddress();
-    remote.sin_family = AF_INET;
-    remote.sin_port = htons(gc.getPort());
-    remote.sin_addr.s_addr = inet_addr(gc.getIPAddress().c_str());
+    _remote.sin_family = AF_INET;
+    _remote.sin_port = htons(_port);
+    _remote.sin_addr.s_addr = inet_addr(_ip_address.c_str());
     /* Create a socket */
-    std::cout <<"DEBUG: Connecting to" << ip << ":" << gc.getPort() << std::endl;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd < 0) {
+    std::cout <<"DEBUG: Connecting to" << _ip_address << ":" << _port << std::endl;
+    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(_sockfd < 0) {
         perror("socket");
         return -1;
     }
     /* Connect to remote host */
-    if(connect(sockfd, (struct sockaddr *) &remote, sizeof(remote)) < 0) {
+    if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
         perror("connect");
         return -1;
     }
     return 0;
 }
 
-int deinit(void) {
-    close(sockfd);
+int SmoothieModule::deinit(void) {
+    close(_sockfd);
     printf("LIBSMOOTHIE: Successfully shut down driver.\n");
     PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
+}
+
+int SmoothieModule::lconf(void) {
 
 }
 
-int lconf(void) {
-
-}
-
-void seterrfunc(void(*ef)(std::string s)) {
+void SmoothieModule::seterrfunc(void(*ef)(std::string s)) {
     PRINT_ERROR = ef;
 }
 
-void dwell(int t) {
+void SmoothieModule::dwell(int t) {
     std::string ret = "G4 P";
     ret += t;
     sendCommand(ret);
 }
 
-void emergencyStop() {
+void SmoothieModule::emergencyStop() {
     std::string ret = "M112";
     sendCommand(ret);
 }
 
-void emergencyStopReset(void) {
+void SmoothieModule::emergencyStopReset(void) {
     std::string ret = "M999";
     sendCommand(ret);
 }
 
-int home(unsigned int axis) {
+int SmoothieModule::home(unsigned int axis) {
     std::string ret = "G28";
     switch (axis) {
     case AXIS_ALL:
@@ -122,19 +123,17 @@ int home(unsigned int axis) {
 }
 
 
-int sendCommand(const std::string &s) {
+int SmoothieModule::sendCommand(const std::string s) {
     int n = 0;
-    if(_comInterface == "ethernet") {
-        n = write(sockfd, (struct sockaddr *) &remote, sizeof(remote));
-        if(n < 0) {
-            perror("Error writing to socket.\n");
-            return -1;
-        }
+    n = write(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote));
+    if(n < 0) {
+        perror("Error writing to socket.\n");
+        return -1;
     }
     return n;
 }
 
-int readResponse(void) {
+int SmoothieModule::readResponse(void) {
     int n = 0;
     boost::timer t;
     /* Receive date information and print it */
@@ -142,7 +141,7 @@ int readResponse(void) {
     /* TODO: nam - Do we need to memset() the buffer again here?
      * Thu 01 Dec 2016 01:59:16 PM MST */
     while((t.elapsed() * 1000) < _netTimeoutMS) {
-        if((n = read(sockfd, &_buffer, NETBUFSIZE - 1)) > 0) {
+        if((n = read(_sockfd, &_buffer, NETBUFSIZE - 1)) > 0) {
             _buffer[n] = '\0'; // Null terminate the string
             printf("%s", _buffer);
             break;
@@ -156,7 +155,7 @@ int readResponse(void) {
     return n;
 }
 
-int motorsDisable(unsigned int axis) {
+int SmoothieModule::motorsDisable(unsigned int axis) {
     std::string ret = "M18";
     switch (axis) {
     case AXIS_X:
@@ -176,37 +175,37 @@ int motorsDisable(unsigned int axis) {
     return 0;
 }
 
-int motorsEnable(void) {
+int SmoothieModule::motorsEnable(void) {
     std::string ret = "M17";
     sendCommand(ret);
     return 0;
 }
 
-int moveAbsolute(float x, float y, float z) {
+int SmoothieModule::moveAbsolute(float x, float y, float z) {
     std::string ret = "G90"; // Set absolute mode (modal)
     sendCommand(ret);
     ret = std::string("G0") + \
           std::string(" X") + std::to_string(x) + \
           std::string(" Y") + std::to_string(y) + \
           std::string(" Z") + std::to_string(z) + \
-          std::string(" F") + std::to_string(_speed);
+          std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
     return 0;
 }
 
-int moveRelative(float x, float y, float z) {
+int SmoothieModule::moveRelative(float x, float y, float z) {
     std::string ret = "G91"; // Set relative mode (modal)
     sendCommand(ret);
     ret = std::string("G0") + \
           std::string(" X") + std::to_string(x) + \
           std::string(" Y") + std::to_string(y) + \
           std::string(" Z") + std::to_string(z) + \
-          std::string(" F") + std::to_string(_speed);
+          std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
     return 0;
 }
 
-int setUnits(unsigned int u) {
+int SmoothieModule::setUnits(unsigned int u) {
     std::string ret;
     switch(u) {
     case UNITS_MM:
@@ -222,6 +221,42 @@ int setUnits(unsigned int u) {
     return 0;
 }
 
+int SmoothieModule::setAxisStepsPerMM(unsigned int axis, unsigned int steps) {
+    std::string ret = "M92";
+    switch (axis) {
+    case AXIS_X:
+        ret += " X";
+        break;
+    case AXIS_Y:
+        ret += " Y";
+        break;
+    case AXIS_Z:
+        ret += " Z";
+        break;
+    default:
+        return -1;
+    }
+    ret += std::to_string(steps);
+    return 0;
+}
+
+
+
+/*************************************************************************
+* Function :   maker()
+* Purpose  :   Returns a pointer to a new GantryModule instance
+* Input    :   void
+* Returns  :   GantryModule*
+*************************************************************************/
+
+
+extern "C" GantryModule *create(void) {
+    return new SmoothieModule;
+}
+
+extern "C" void destroy(GantryModule *gc) {
+    delete gc;
+}
 // int loadConfig(const std::string file) {
 // cfg_t *cfg;
 // cfg_opt_t linearStageOpts[] = {
@@ -281,22 +316,3 @@ int setUnits(unsigned int u) {
 // cfg_free(cfg);
 // return 0;
 // }
-
-int setAxisStepsPerMM(unsigned int axis, unsigned int steps) {
-    std::string ret = "M92";
-    switch (axis) {
-    case AXIS_X:
-        ret += " X";
-        break;
-    case AXIS_Y:
-        ret += " Y";
-        break;
-    case AXIS_Z:
-        ret += " Z";
-        break;
-    default:
-        return -1;
-    }
-    ret += std::to_string(steps);
-    return 0;
-}
