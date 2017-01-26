@@ -45,14 +45,29 @@ LICENSE:
 #include <boost/timer.hpp>
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 // #include "common.h"
 #include <dlfcn.h>
+#include <pthread.h>
 #include "GantryController.h"
 #include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+#define NETBUFSIZE 64
+
+typedef struct {
+    int sockfd;
+    char *buffer;
+    double timeout = 0.0;
+    struct sockaddr_in remote;
+} thread_params_t;
+
+
+pthread_t thread_id;
+thread_params_t thread_params;
+
 /* The 'extern "C"' keyword must be used here to force the compiler to use
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
@@ -66,7 +81,7 @@ extern "C" {
         int lconf(void);
         void seterrfunc(void(*ef)(std::string s));
         void dwell(int t);
-        void emergencyStop();
+        void emergencyStop(void);
         void emergencyStopReset(void);
         int home(unsigned int axis);
         int motorsDisable(unsigned int axis);
@@ -75,14 +90,20 @@ extern "C" {
         int moveRelative(float x, float y, float z);
         int setUnits(unsigned int u);
         int setAxisStepsPerMM(unsigned int axis, unsigned int steps);
+        int getSocket(void) {
+            return _sockfd;
+        }
+        char *getBuffer(void) {
+            return _buffer;
+        }
 
       private:
         int sendCommand(const std::string s);
         int readResponse(void);
         /* Networking configuration */
-        int _sockfd = 0;
         std::string _host_ip = "";
         unsigned int _host_port = 0;
+        int _sockfd = 0;
         char _buffer[NETBUFSIZE];
         double _netTimeoutMS = 0.0;
         struct sockaddr_in _remote;

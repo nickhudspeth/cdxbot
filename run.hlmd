@@ -1,4 +1,7 @@
-MOVEM, 100, 200, 20
-WAIT, 100, 150
-MOVEC, 100, 200
-END
+estop
+estoprst
+home
+move, 100, 200, 20
+wait, 100, 150
+move, 100, 200
+end

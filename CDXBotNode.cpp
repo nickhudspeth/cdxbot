@@ -71,9 +71,6 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
                         Initializing cdxbot with default value %s",\
                  cd.getNumContainers());
     }
-    // if(cd.getNumContainers() < 0) {
-    // cd.setNumContainers(0);
-    // }
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
@@ -235,10 +232,10 @@ void parseAction(CDXBot cd, const struct action a) {
 
     if(a.cmd == "move") {
         /* Convert CRC (Container, Row, Column) coords to XYZ Coordinates. */
-        if(a.args[1] > cd.getNumContainers()) {
-            // THROW ERROR: CONTAINER INDEX OUT OF RANGE.
-            return;
-        }
+        // if(a.args[1] > cd.getNumContainers()) {
+        //    THROW ERROR: CONTAINER INDEX OUT OF RANGE.
+            // return;
+        // }
         double x = cd.getContainer(a.args[1]).getGlobalCoords('x', a.args[2], a.args[3]);
         double y = cd.getContainer(a.args[1]).getGlobalCoords('y', a.args[2], a.args[3]);
         double z = cd.getContainer(a.args[1]).getGlobalCoords('z', a.args[2], a.args[3]);
@@ -277,7 +274,7 @@ void parseAction(CDXBot cd, const struct action a) {
         double max_vol  = cd.getContainer(a.args[0]).getCell(row, col).vol;
         if((curr_vol + a.args[3]) > max_vol) {
             //Throw some error
-            return;
+            //return;
         }
         /* Move pipette tip to bottom of well */
         /* Set velocity to plunge velocity */
@@ -313,6 +310,21 @@ void parseAction(CDXBot cd, const struct action a) {
         /* Eject tip from pipetter */
 
         /* Move to home position? */
+    } else if(a.cmd == "wait"){
+        gmsg.cmd = "wait";
+        gmsg.time = a.args[0];
+        gc_pub.publish(gmsg);
+    }else if(a.cmd == "home"){
+        gmsg.cmd = "home";
+        gc_pub.publish(gmsg);
+    }
+    else if (a.cmd == "estop"){
+        gmsg.cmd = "estop";
+        gc_pub.publish(gmsg);
+    }
+    else if(a.cmd == "estoprst"){
+        gmsg.cmd = "estoprst";
+        gc_pub.publish(gmsg);
     }
 }
 
@@ -320,11 +332,10 @@ void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO_STREAM("CDXBotNode: Received shutdown directive.");
     ros::shutdown();
 }
-
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
-
+    ros::Rate rate(100);
     /* Subscribe to GUI topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
@@ -365,6 +376,7 @@ int main(int argc, char **argv) {
             }
         } else {
             ros::spinOnce();
+            rate.sleep();
         }
     }
     return 0;

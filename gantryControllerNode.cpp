@@ -41,12 +41,15 @@ LICENSE:
 #include "GantryModule.h"
 #include "cdxbot/gc_cmd.h"
 /*********************    CONSTANTS AND MACROS    **********************/
-
+#define MOVE_MODE_ABSOLUTE 0
+#define MOVE_MODE_RELATIVE 1
 
 /***********************    GLOBAL VARIABLES    ************************/
 GantryModule *gc;
 std::string driver_path, driver_name;
 void *driver_handle;
+create_t *create_gm;
+destroy_t *destroy_gm;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 
@@ -64,20 +67,20 @@ GantryModule * loadDriver(std::string file) {
     dlerror();
     ROS_INFO_STREAM("Successfully loaded gantry controller driver from " <<\
                     file);
-    // void* test = dlsym(driver_handle, "maker");
-    // if((error = dlerror()) != NULL) {
-        // ROS_ERROR_STREAM("Function maker() not found in specified \
-    // driver at " << file);
-        // ROS_ERROR_STREAM(error);
-    // }
-    // GantryModule *(*maker)() = reinterpret_cast<GantryModule*(*)()>(dlsym(driver_handle, "maker"));
-    //*GantryModule (*maker) = reinterpret_cast<GantryModule(*)()>(mkr);
-    create_t *create_gm = (create_t*)dlsym(driver_handle, "create");
-    if((error = dlerror()) != NULL){
+    create_gm = (create_t*)dlsym(driver_handle, "create");
+    if((error = dlerror()) != NULL) {
         ROS_ERROR_STREAM("Error loading maker function.\n " << error);
         dlerror();
     }
     GantryModule *gm = create_gm();
+
+    destroy_gm = (destroy_t*)dlsym(driver_handle, "destroy");
+    if((error = dlerror()) != NULL) {
+        ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
+        dlerror();
+    }
+
+
     return gm;
 }
 
@@ -124,7 +127,6 @@ void loadParams(ros::NodeHandle &nh) {
                                 Initializing gantry controller with default value " <<\
                         gc->getIPAddress());
     }
-    ROS_WARN_STREAM(" IP = " << gc->getIPAddress());
 
 
 
@@ -134,84 +136,135 @@ void loadParams(ros::NodeHandle &nh) {
                                 Initializing gantry controller with default value " <<\
                         gc->getPort());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getTimeoutRef())) {
-        nh.getParam("/gcdefaults/port", gc->getTimeoutRef());
+    if(!nh.getParam("/gc_conf/timeout", gc->getTimeoutRef())) {
+        nh.getParam("/gcdefaults/timeout", gc->getTimeoutRef());
         ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getTimeout());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getBufferSizeRef())) {
-        nh.getParam("/gcdefaults/port", gc->getBufferSizeRef());
+    if(!nh.getParam("/gc_conf/buffer_size", gc->getBufferSizeRef())) {
+        nh.getParam("/gcdefaults/buffer_size", gc->getBufferSizeRef());
         ROS_WARN_STREAM("No parameter \"buffer_size\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getBufferSize());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getUnitsRef())) {
-        nh.getParam("/gcdefaults/port", gc->getUnitsRef());
+    if(!nh.getParam("/gc_conf/units", gc->getUnitsRef())) {
+        nh.getParam("/gcdefaults/units", gc->getUnitsRef());
         ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getUnits());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getTraverseVelocityRef())) {
-        nh.getParam("/gcdefaults/port", gc->getTraverseVelocityRef());
+    if(!nh.getParam("/gc_conf/traverse_velocity", gc->getTraverseVelocityRef())) {
+        nh.getParam("/gcdefaults/traverse_velocity", gc->getTraverseVelocityRef());
         ROS_WARN_STREAM("No parameter \"traverse_velocity\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getTraverseVelocity());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getRapidFeedVelocityRef())) {
-        nh.getParam("/gcdefaults/port", gc->getRapidFeedVelocityRef());
+    if(!nh.getParam("/gc_conf/rapid_feed_velocity", gc->getRapidFeedVelocityRef())) {
+        nh.getParam("/gcdefaults/rapid_feed_velocity", gc->getRapidFeedVelocityRef());
         ROS_WARN_STREAM("No parameter \"rapid_feed_velocity\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
+         Initializing gantry controller with default value " <<\
                         gc->getRapidFeedVelocity());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getXPosMinRef())) {
-        nh.getParam("/gcdefaults/port", gc->getXPosMinRef());
+    if(!nh.getParam("/gc_conf/xpos_min", gc->getXPosMinRef())) {
+        nh.getParam("/gcdefaults/xpos_min", gc->getXPosMinRef());
         ROS_WARN_STREAM("No parameter \"xpos_min\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getXPosMin());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getXPosMaxRef())) {
-        nh.getParam("/gcdefaults/port", gc->getXPosMaxRef());
+    if(!nh.getParam("/gc_conf/xpos_max", gc->getXPosMaxRef())) {
+        nh.getParam("/gcdefaults/xpos_max", gc->getXPosMaxRef());
         ROS_WARN_STREAM("No parameter \"xpos_max\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getXPosMax());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getYPosMinRef())) {
-        nh.getParam("/gcdefaults/port", gc->getYPosMinRef());
+    if(!nh.getParam("/gc_conf/ypos_min", gc->getYPosMinRef())) {
+        nh.getParam("/gcdefaults/ypos_min", gc->getYPosMinRef());
         ROS_WARN_STREAM("No parameter \"ypos_min\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getYPosMin());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getYPosMaxRef())) {
-        nh.getParam("/gcdefaults/port", gc->getYPosMaxRef());
+    if(!nh.getParam("/gc_conf/ypos_max", gc->getYPosMaxRef())) {
+        nh.getParam("/gcdefaults/ypos_max", gc->getYPosMaxRef());
         ROS_WARN_STREAM("No parameter \"ypos_max\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getYPosMax());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getZPosMinRef())) {
-        nh.getParam("/gcdefaults/port", gc->getZPosMinRef());
+    if(!nh.getParam("/gc_conf/zpos_min", gc->getZPosMinRef())) {
+        nh.getParam("/gcdefaults/zpos_min", gc->getZPosMinRef());
         ROS_WARN_STREAM("No parameter \"zpos_min\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getZPosMin());
     }
-    if(!nh.getParam("/gc_conf/port", gc->getZPosMaxRef())) {
-        nh.getParam("/gcdefaults/port", gc->getZPosMaxRef());
+    if(!nh.getParam("/gc_conf/zpos_max", gc->getZPosMaxRef())) {
+        nh.getParam("/gcdefaults/zpos_max", gc->getZPosMaxRef());
         ROS_WARN_STREAM("No parameter \"zpos_max\" found in configuration file.\
                                 Initializing gantry controller with default value " <<\
                         gc->getZPosMax());
+    }
+    std::string tmp = "";
+    if(!nh.getParam("/gc_conf/move_mode", tmp)) {
+        nh.getParam("/gcdefaults/move_mode", tmp);
+        ROS_WARN_STREAM("No parameter \"move_mode\" found in configuration file.\
+                                Initializing gantry controller with default value " <<\
+                        tmp);
+    }
+    if(tmp == "relative") {
+        gc->setMoveMode(1);
+    } else {
+        gc->setMoveMode(0);
     }
 }
 
 
 
 
-void gcPubCallback(const cdxbot::gc_cmd msg) {
+void gcPubCallback(const cdxbot::gc_cmd &msg) {
+    gc->setMoveMode(0);
+    //std::cout << "Got message: " << msg.cmd << msg.x << msg.y << msg.z << msg.vel << std::endl;
+
+    if(msg.cmd == "move") {
+        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
+            gc->moveAbsolute(msg.x, msg.y, msg.z);
+        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
+            gc->moveRelative(msg.x, msg.y, msg.z);
+        }
+    }
+    if(msg.cmd == "wait") {
+        gc->dwell(msg.time);
+    }
+    if(msg.cmd == "movexy") {
+        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
+            gc->moveAbsolute(msg.x, msg.y, 0);
+        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
+            gc->moveRelative(msg.x, msg.y, 0);
+        }
+    }
+    if (msg.cmd == "movez") {
+        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
+            gc->moveAbsolute(0, 0, msg.z);
+        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
+            gc->moveRelative(0, 0, msg.z);
+        }
+    }
+    if(msg.cmd == "setvel") {
+        gc->setTraverseVelocity(msg.vel);
+    }
+    if(msg.cmd == "estop") {
+        gc->emergencyStop();
+    }
+    if(msg.cmd == "estoprst") {
+        gc->emergencyStopReset();
+    }
+    if(msg.cmd == "home") {
+        gc->home();
+    }
 
 }
 
 //ros::Subscriber shutdown = nh.subscribe("shutdown", 100, shutdownCallback);
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO_STREAM("GantryControllerNode: Received shutdown directive.");
+    ROS_INFO_STREAM("GantryControllerNode: Received shutdown directive from CDXBotnode.");
     gc->deinit();
     ros::shutdown();
 }
@@ -225,7 +278,7 @@ int main(int argc, char **argv) {
     loadParams(nh);
     gc->init();
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
-    ros::Subscriber sub = nh.subscribe("gc_pub", 100, gcPubCallback);
+    ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Rate rate(100);
     std::cout << "Initialized gc with addr: " << &gc << std::endl;

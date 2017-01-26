@@ -51,8 +51,11 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     gc_cmd.msg
+    gc_out.msg
     pc_cmd.msg
+    pc_out.msg
     vc_cmd.msg
+    vc_out.msg
     )
 
 ## Generate services in the 'srv' folder
@@ -174,6 +177,10 @@ target_link_libraries(pipetterControllerNode
     )
 target_link_libraries(visionControllerNode
     ${catkin_LIBRARIES}
+    )
+target_link_libraries(smoothie
+    ${catkin_LIBRARIES}
+    pthread
     )
 
 SET(GCC_LINKER_FLAGS "-l -E")

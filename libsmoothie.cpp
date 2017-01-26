@@ -41,14 +41,42 @@ LICENSE:
 
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
-SmoothieModule::SmoothieModule(){}
-SmoothieModule::~SmoothieModule(){}
+
+/*************************************************************************
+* Function :   maker()
+* Purpose  :   Returns a pointer to a new GantryModule instance
+* Input    :   void
+* Returns  :   GantryModule*
+*************************************************************************/
 
 
+extern "C" GantryModule *create(void) {
+    return new SmoothieModule;
+}
+
+extern "C" void destroy(GantryModule *gc) {
+    delete gc;
+}
+
+extern "C" void *thread_func(void *arg) {
+    int n;
+    thread_params_t *tp = (thread_params_t *)arg;
+    while(1) {
+        n = 0;
+        std::memset(tp->buffer, 0, NETBUFSIZE);
+        if((n = read(tp->sockfd, tp->buffer, NETBUFSIZE - 1) > 0)) {
+            tp->buffer[n]= '\0';
+            printf("LIBSMOOTHIE::WORKER THREAD: %s\n", tp->buffer);
+
+        }
+    }
+}
+
+SmoothieModule::SmoothieModule() {}
+SmoothieModule::~SmoothieModule() {}
 
 int SmoothieModule::init(void) {
     /* Clear out needed memory */
-    std::cout << "Init smoothiemodule with ip " << _ip_address << std::endl;
     std::memset(_buffer, 0, NETBUFSIZE);
     std::memset(&_remote, 0, sizeof(_remote));
     /* Fill in required details in the socket structure */
@@ -56,7 +84,7 @@ int SmoothieModule::init(void) {
     _remote.sin_port = htons(_port);
     _remote.sin_addr.s_addr = inet_addr(_ip_address.c_str());
     /* Create a socket */
-    std::cout <<"DEBUG: Connecting to" << _ip_address << ":" << _port << std::endl;
+    std::cout <<"LIBSMOOTHIE: Connecting to " << _ip_address << ":" << _port << std::endl;
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if(_sockfd < 0) {
         perror("socket");
@@ -67,12 +95,24 @@ int SmoothieModule::init(void) {
         perror("connect");
         return -1;
     }
+    thread_params.sockfd = _sockfd;
+    thread_params.buffer = _buffer;
+    thread_params.timeout = _netTimeoutMS;
+    thread_params.remote = _remote;
+    /* Configure attributes for creation of detached state thread. */
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    //pthread_create(&thread_id, &attr, &thread_func, &thread_params);
+    pthread_attr_destroy(&attr);
     return 0;
 }
 
 int SmoothieModule::deinit(void) {
     close(_sockfd);
-    printf("LIBSMOOTHIE: Successfully shut down driver.\n");
+    printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
+    pthread_exit(&thread_id);
+    printf("LIBSMOOTHIE: Killed worker thread.\n");
     PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
 }
 
@@ -90,7 +130,7 @@ void SmoothieModule::dwell(int t) {
     sendCommand(ret);
 }
 
-void SmoothieModule::emergencyStop() {
+void SmoothieModule::emergencyStop(void) {
     std::string ret = "M112";
     sendCommand(ret);
 }
@@ -124,8 +164,13 @@ int SmoothieModule::home(unsigned int axis) {
 
 
 int SmoothieModule::sendCommand(const std::string s) {
+    std::cout << "LIBSMOOTHIE: Sending command: " << s.c_str() << std::endl;
+    char buf[128];
+    memset(buf, 0, 128);
+    int len = s.size();
+    sprintf(buf, s.c_str());
     int n = 0;
-    n = write(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote));
+    n = write(_sockfd, buf, len);
     if(n < 0) {
         perror("Error writing to socket.\n");
         return -1;
@@ -184,11 +229,17 @@ int SmoothieModule::motorsEnable(void) {
 int SmoothieModule::moveAbsolute(float x, float y, float z) {
     std::string ret = "G90"; // Set absolute mode (modal)
     sendCommand(ret);
-    ret = std::string("G0") + \
-          std::string(" X") + std::to_string(x) + \
-          std::string(" Y") + std::to_string(y) + \
-          std::string(" Z") + std::to_string(z) + \
-          std::string(" F") + std::to_string(_traverse_velocity);
+    ret = std::string("G0");
+    if(x > 0) {
+        ret += std::string(" X") + std::to_string(x);
+    }
+    if(y > 0) {
+        ret += std::string(" Y") + std::to_string(y);
+    }
+    if(z > 0) {
+        ret += std::string(" Z") + std::to_string(z);
+    }
+    ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
     return 0;
 }
@@ -196,11 +247,17 @@ int SmoothieModule::moveAbsolute(float x, float y, float z) {
 int SmoothieModule::moveRelative(float x, float y, float z) {
     std::string ret = "G91"; // Set relative mode (modal)
     sendCommand(ret);
-    ret = std::string("G0") + \
-          std::string(" X") + std::to_string(x) + \
-          std::string(" Y") + std::to_string(y) + \
-          std::string(" Z") + std::to_string(z) + \
-          std::string(" F") + std::to_string(_traverse_velocity);
+    ret = std::string("G0");
+    if(x > 0) {
+        ret += std::string(" X") + std::to_string(x);
+    }
+    if(y > 0) {
+        ret += std::string(" Y") + std::to_string(y);
+    }
+    if(z > 0) {
+        ret += std::string(" Z") + std::to_string(z);
+    }
+    ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
     return 0;
 }
@@ -242,21 +299,6 @@ int SmoothieModule::setAxisStepsPerMM(unsigned int axis, unsigned int steps) {
 
 
 
-/*************************************************************************
-* Function :   maker()
-* Purpose  :   Returns a pointer to a new GantryModule instance
-* Input    :   void
-* Returns  :   GantryModule*
-*************************************************************************/
-
-
-extern "C" GantryModule *create(void) {
-    return new SmoothieModule;
-}
-
-extern "C" void destroy(GantryModule *gc) {
-    delete gc;
-}
 // int loadConfig(const std::string file) {
 // cfg_t *cfg;
 // cfg_opt_t linearStageOpts[] = {

@@ -51,7 +51,8 @@ LICENSE:
 #define AXIS_X 1
 #define AXIS_Y 2
 #define AXIS_Z 3
-
+#define MOVE_MODE_ABSOLUTE 0
+#define MOVE_MODE_RELATIVE 1
 
 class GantryModule : public CDXModule {
   public:
@@ -73,7 +74,7 @@ class GantryModule : public CDXModule {
     * Input    :   void
     * Returns  :   void
     *************************************************************************/
-    virtual void emergencyStop(void) {};
+    virtual void emergencyStop() {};
 
     /*************************************************************************
     * Function :   emergencyStopReset()
@@ -82,7 +83,7 @@ class GantryModule : public CDXModule {
     * Input    :   void
     * Returns  :   virtual void
     ************************************************************************/
-    virtual void emergencyStopReset(void) {};
+    virtual void emergencyStopReset() {};
 
     /*************************************************************************
     * Function :   home()
@@ -361,6 +362,20 @@ class GantryModule : public CDXModule {
         _pos_max[2] = p;
     }
 
+    void setMoveMode(int m){
+        if(m > 0){ m = 1; }
+        if(m < 0){ m = 0; }
+        _move_mode = m;
+    }
+
+    int getMoveMode(void){
+        return _move_mode;
+    }
+
+    int &getMoveModeRef(void){
+        return _move_mode;
+    }
+
   protected:
     std::string _type = "";
     std::string _units = "";
@@ -376,6 +391,7 @@ class GantryModule : public CDXModule {
     int _port;
     int _timeout;
     int _buffer_size;
+    int _move_mode; /* [0,1] Absolute/Relative
     /*************************************************************************
     * Function :   sendCommand()
     * Purpose  :   Send the G-Code command specified by cmd to the controller.

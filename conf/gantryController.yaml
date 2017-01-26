@@ -19,6 +19,7 @@ gc_conf:
     ypos_max: 440.0
     zpos_min: 0.0
     zpos_max: 440.0
+    move_mode: "absolute"
         # CONFIGURATION SETTINGS FOR CONTROLLERS WITH CHARACTER INTERFACEs
         # path: /dev/usbtty0
 
