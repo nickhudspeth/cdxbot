@@ -1,19 +1,19 @@
 /*************************************************************************
-Title:    PipetterModule.h - Interface Class for CDXBot Pipetter Drivers
+Title:    libeppendorf.h - CDXBot driver for eppendorf hybrid pipetter
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     PipetterModule.h
+File:     libeppendorf.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
 
 DESCRIPTION:
-
+    What does this module do?
 
 USAGE:
 
 
 NOTES:
-
+    
 
 LICENSE:
     Copyright (C) 2017 Nicholas Morrow
@@ -44,34 +44,30 @@ LICENSE:
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include "CDXModule.h"
+#include <time.h>
+#include "PipetterModule.h"
+
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-
-
-/***********************    FUNCTION PROTOTYPES    ***********************/
-class PipetterModule : public CDXModule {
+class EppendorfModule : PipetterModule {
   public:
-    PipetterModule (void) {};
-    virtual ~PipetterModule (void) {};
-
-    virtual void moveZDrive(double pos, double vel) {};
-
-    virtual void pickUpTip(void) {};
-
-    virtual void ejectTip(void) {};
-
-    virtual void aspirate(double vol) {};
-
-    virtual void dispense(double vol) {};
-
-
-  protected:
-    bool _z_axis_mobile;
-    double _zpos;
-    double _zpos_min;
-    double _zpos_max;
+    EppendorfModule();
+    ~EppendorfModule();
+    void ejectTip(void);
+    void aspirate(double vol);
+    void dispense(double vol);
+  private:
+    int _fd = -1;
+    int _speed = 115200;
+    char _retbuf[32];
+    int retcnt;
+    std::string _portname = "/dev/TTYACM0";
+    int set_interface_attribs(int fd, int speed, int parity);
+    void set_blocking(int fd, int should_block);
+    void sendCommand(std::string &s);
     /* data */
 };
+
+/***********************    FUNCTION PROTOTYPES    ***********************/
+

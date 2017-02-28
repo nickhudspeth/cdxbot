@@ -167,7 +167,7 @@ extern "C" {
         std::queue<struct can_frame> fifo;
     };
 
-    class ZeusModule :public PipetterModule {
+    class ZeusModule : public PipetterModule {
       public:
         int _read_can_port;
 
@@ -189,6 +189,21 @@ extern "C" {
         double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
+
+        void CANOpenPort(void);
+        void CANClosePort(void);
+        void CANReadPort(void);
+        void CANWritePort(void);
+        int getSockFD(void) {
+            return _sockfd;
+        }
+        std::queue<struct can_frame>& getFIFO(void) {
+            return _fifo;
+        }
+
+        void setMsgReadyFlag(int i) {
+            _msg_ready_flag = i;
+        }
 
       private:
         int initCANBus(void);

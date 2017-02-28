@@ -112,7 +112,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     # INCLUDE_DIRS include
-    LIBRARIES smoothie zeus
+    LIBRARIES smoothie zeus eppendorf
     #  CATKIN_DEPENDS other_catkin_pkg
     # DEPENDS system_lib
     CATKIN_DEPENDS message_runtime
@@ -140,9 +140,13 @@ add_library(cdxbot
 add_library(zeus
     libzeus.cpp)
 
+add_library(eppendorf
+    libeppendorf.cpp)
+
 add_library(smoothie
     libsmoothie.cpp
     GantryController.cpp)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

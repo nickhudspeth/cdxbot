@@ -55,29 +55,32 @@ extern "C" void destroy(PipetterModule *gc) {
 }
 
 extern "C" void *thread_func(void *arg) {
+    /* Check to see if there is any incoming data on the CAN bus.
+     * If so, push the data to a FIFO.*/
     struct can_frame ret;
     int n = 0;  // Number of received bytes
     ZeusModule *zm = (ZeusModule *)arg;
-    _read_can_port = 1;
-    while(_read_can_port) {
+    int soc = zm->getSockFD();
+    zm-> _read_can_port = 1;
+    while(zm->_read_can_port) {
         struct timeval timeout = {1,0};
         fd_set readSet;
         FD_ZERO(&readSet);
-        FD_SET(_sockfd, &readSet);
-        if(select((_sockfd + 1), &readSet, NULL, NULL, &timeout) >= 0) {
-            if(!_read_can_port) {
+        FD_SET(soc, &readSet);
+        if(select((soc + 1), &readSet, NULL, NULL, &timeout) >= 0) {
+            if(!(zm->_read_can_port)) {
                 break;
             }
-            if(FD_ISSET(_sockfd, &readSet)) {
-                n = read(_sockfd, &ret, sizeof(struct can_frame));
+            if(FD_ISSET(soc, &readSet)) {
+                n = read(soc, &ret, sizeof(struct can_frame));
                 if(n) {
                     if(n < 0) {
                         printf("LIBZEUS: Error reading from CAN socket.\n");
                     } else if(n < sizeof(struct can_frame)) {
                         printf("LIBZEUS: Incomplete frame read from CAN socket.\n");
                     } else {
-                        _fifo.push(ret);
-                        _msg_ready_flag = 1;
+                        (zm->getFIFO()).push(ret);
+                        zm->setMsgReadyFlag(1);
                     }
 
                 }
@@ -85,6 +88,7 @@ extern "C" void *thread_func(void *arg) {
         }
 
     }
+    return 0;
 }
 
 extern "C" std::string zfill(std::string s, int len) {
