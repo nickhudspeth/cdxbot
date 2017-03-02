@@ -45,8 +45,10 @@ LICENSE:
 EppendorfModule::EppendorfModule(void) {
     _fd = open(_portname.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if(_fd < 0) {
-        //error_message("error %d opening %s: %s", errno, _portname, strerror(errno));
-        return;
+        std::cout << "error" << errno << " opening " << _portname << " : " << strerror(errno) << std::endl;
+        exit(-1);
+    } else {
+        // std::cout << "Opened interface with file descriptor " << _fd << std::endl;
     }
     /* set speed to 115, 200 bps, 8n1 (no parity)*/
     set_interface_attribs(_fd, B115200, 0);
@@ -55,55 +57,25 @@ EppendorfModule::EppendorfModule(void) {
 
 EppendorfModule::~EppendorfModule(void) {
     close(_fd);
+    // std::cout << "Closed interface." << std::endl;
 }
 
-void EppendorfModule::sendCommand(std::string &s) {
-    memset(_retbuf, 0, sizeof(_retbuf));
-    int stat = 0;
-    // Wait until pipetter is ready.
-    time_t start = time(NULL);
-    while(time(NULL) < (start + 1)) {
-        write(_fd, "s\r\n", 3);
-        usleep((10) * CHAR_TRANSMIT_TIME_US);  // Wait for outgoing chars + received chars
-        if(read(_fd, _retbuf, sizeof(_retbuf))) {
-            stat = atoi(_retbuf);
-            if(stat == 1) {
-                write(_fd, s.c_str(), (sizeof(s.c_str())/sizeof(char)));
-                usleep((10) * CHAR_TRANSMIT_TIME_US);  // Wait for outgoing chars + received chars
-            }
-        }
-    }
-}
 void EppendorfModule::ejectTip(void) {
-    std::string s = "e\r\n";
-    sendCommand(s);
-    /*
-     * memset(_retbuf, 0, sizeof(_retbuf));
-     * int stat = 0;
-     * // Wait until pipetter is ready.
-     * time_t start = time();
-     * while(time() < (start + 1)) {
-     *     write(_fd, "s\r\n", 3);
-     *     usleep((10) * CHAR_TRANSMIT_TIME_US);  // Wait for outgoing chars + received chars
-     *     if(read(_fd, _retbuf, sizeof(_retbuf))) {
-     *         stat = atoi(_retbuf);
-     *         if(stat == 1) {
-     *             write(_fd, "e\r\n", 3);
-     *             usleep((10) * CHAR_TRANSMIT_TIME_US);  // Wait for outgoing chars + received chars
-     *         }
-     *     }
-     * }
-     */
+    write(_fd, "e\r\n", 3);
 }
 
 void EppendorfModule::aspirate(double vol) {
-    std::string s = "f" + std::to_string(vol);
-    sendCommand(s);
+    memset(_retbuf, '0', sizeof(_retbuf));
+    int n = sprintf(_retbuf,"f%.2f\r\n", vol);
+    waitForStatus();
+    write(_fd, _retbuf, n);
 }
 
 void EppendorfModule::dispense(double vol) {
-    std::string s = "f" + std::to_string(vol);
-    sendCommand(s);
+    memset(_retbuf, '0', sizeof(_retbuf));
+    int n = sprintf(_retbuf,"d%.2f\r\n", vol);
+    waitForStatus();
+    write(_fd, _retbuf, n);
 }
 
 int EppendorfModule::set_interface_attribs(int fd, int speed, int parity) {
@@ -152,4 +124,23 @@ void EppendorfModule::set_blocking(int fd, int should_block) {
     if(tcsetattr(fd, TCSANOW, &tty) != 0) {
         //error_message("error %d setting term attributes", errno);
     }
+}
+
+void EppendorfModule::waitForStatus(void) {
+    char *tmp = (char *)calloc(4, sizeof(char));
+    time_t start = time(NULL);
+    while(time(NULL) < (start + 3)) {
+        write(_fd,"s\r\n", 3);
+        usleep((10) * CHAR_TRANSMIT_TIME_US);  // Wait for outgoing chars + received chars
+        if(read(_fd, tmp, sizeof(tmp)) > 0) {
+            usleep(10000);
+            if(atoi(tmp) == 1) {
+                free(tmp);
+                return;
+            }
+        }
+    }
+    std::cout << " Timed out waiting for status " << std::endl;
+    free(tmp);
+    exit(1);
 }

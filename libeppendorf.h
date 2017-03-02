@@ -42,11 +42,15 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
+#include <boost/format.hpp>
+#include <iomanip>
+#include <sstream>
 #include "PipetterModule.h"
 
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
@@ -62,10 +66,10 @@ class EppendorfModule : PipetterModule {
     int _speed = 115200;
     char _retbuf[32];
     int retcnt;
-    std::string _portname = "/dev/TTYACM0";
+    std::string _portname = "/dev/ttyACM0";
     int set_interface_attribs(int fd, int speed, int parity);
     void set_blocking(int fd, int should_block);
-    void sendCommand(std::string &s);
+    void waitForStatus(void);
     /* data */
 };
 
