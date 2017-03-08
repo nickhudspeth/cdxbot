@@ -55,6 +55,7 @@ extern "C" void destroy(PipetterModule *gc) {
 }
 
 extern "C" void *thread_func(void *arg) {
+    char retbuf[8];
     printf("Entered thread function.\n");
     /* Check to see if there is any incoming data on the CAN bus.
      * If so, push the data to a FIFO.*/
@@ -65,6 +66,7 @@ extern "C" void *thread_func(void *arg) {
     int soc = zm->getSockFD();
     printf("ZM socket filedescriptor = %d\n", soc);
     zm-> _read_can_port = 1;
+    memset(&ret, 0, sizeof(struct can_frame));
     while(zm->_read_can_port) {
         struct timeval timeout = {1,0};
         fd_set readSet;
@@ -75,6 +77,7 @@ extern "C" void *thread_func(void *arg) {
                 break;
             }
             if(FD_ISSET(soc, &readSet)) {
+                memset(&ret, 0, sizeof(struct can_frame));
                 n = read(soc, &ret, sizeof(struct can_frame));
                 if(n != 0) {
                     if(n < 0) {
@@ -82,12 +85,29 @@ extern "C" void *thread_func(void *arg) {
                     } else if(n < sizeof(struct can_frame)) {
                         printf("LIBZEUS: Incomplete frame read from CAN socket.\n");
                     } else {
-                        if(!strcmp((const char*)ret.data,"")) {
-                            /* Data field is empty. This is a remote request.*/
-                            printf("Received remote request.\n");
+                        if(ret.can_id & KICK_MASK) {
+                            /* Received kick frame. */
+                            //zm->setKickFlag(1);
+                            zm->sendRemoteFrame(1);
+                            // printf("Received kick frame with byte %04X.\n", ret.data[7]);
+                        } else if(!strcmp((const char*)ret.data,"")) {
+                            /* Data field is empty, but this is not a kick frame.
+                             *  This must be  a remote request.*/
+                            // printf("Received remote request with byte %04X.\n", ret.data[7]);
                             zm->setRemoteFlag(1);
                         } else {
-                            printf("Read a frame from da socket with DLC %d\n and data %s\n", ret.can_dlc, ret.data);
+                            // printf("Received data frame with byte %04X\n", ret.data[7]);
+                            memset(&retbuf, 0, sizeof(retbuf));
+                            snprintf(retbuf, 7,"%s", ret.data);
+                            msg.append(retbuf);
+                            // printf("Received message: %s\n", msg.c_str());
+                            if((ret.data[7] & (1 << 7))){
+                                printf("Received message: %s\n", msg.c_str());
+                                msg.clear();
+                            }else{
+                                zm->sendRemoteFrame(8);
+                            }
+                            // printf("Read a frame from da socket with DLC %d\n and data %s\n", ret.can_dlc, ret.data);
                         }
                         // (zm->getFIFO()).push(ret);
                         // for(int i = 0; i < ret.can_dlc; i++) {
@@ -123,15 +143,19 @@ ZeusModule::ZeusModule(int id) {
     /* TODO: nam - Start thread_func() here using pthread_create().
      * Mon 06 Mar 2017 11:07:02 AM MST */
     _id = id;
+    struct can_frame f;
+    memset(&f, 0, sizeof(struct can_frame));
+    setLastFrame(f);
     if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
         printf("ERROR: LibZeus: Could not create mutex.\n");
         // Unable to create mutex. Throw error.
     }
     initCANBus();
     pthread_create(&_thread_id, NULL, &thread_func, this);
+    printf("Thread function created.\n");
     initZDrive();
     initDosingDrive();
-    printf("Thread function created.\n");
+    // getFirmwareVersion();
 }
 ZeusModule::~ZeusModule() {
     /* TODO: nam - Kill thread_func() here. Mon 06 Mar 2017 11:07:23 AM MST */
@@ -305,6 +329,11 @@ int ZeusModule::initZDrive(void) {
     return 0;
 }
 
+void ZeusModule::getFirmwareVersion(void) {
+    // std::string cmd = cmdHeader("RF");
+    sendCommand("RF");
+}
+
 void ZeusModule::setAutoResponse(void) {}
 
 
@@ -320,33 +349,102 @@ canid_t ZeusModule::assembleIdentifier(unsigned int type) {
     return identifier;
 }
 
-void ZeusModule::sendRemoteFrame(unsigned int dlc) {}
+void ZeusModule::sendRemoteFrame(unsigned int dlc) {
+    // printf("Sending remote frame.\n");
+    struct can_frame f;
+    memset(&f, 0, sizeof(struct can_frame));
+    // f.can_id = assembleIdentifier(CAN_MSG_DATA);
+    //f.can_id = 20;
+    f.can_id |= _id;
+    f.can_id = 0x20;
+    if(_master_id > 0) {
+        f.can_id |= (_master_id << 5);
+    }
+    f.can_id |= CAN_RTR_FLAG;
+    f.can_dlc = dlc;
+    sendFrame(f);
+}
 
 bool ZeusModule::waitForRemoteFrame(void) {
-    while(!getRemoteFlag());
-    return 1;
+    unsigned int n = 0;
+    /* Wait REMOTE_TIMEOUT seconds for remote frame. If no remote frame is
+     * received within the allotted time, resend the previously sent frame. Try
+     * this up to _transmission_retries times. */
+    for(n = 0; n < _transmission_retries; n++) {
+        time_t start = time(NULL);
+        while((time(NULL) - start) < REMOTE_TIMEOUT) {
+            if(getRemoteFlag()) {
+                setRemoteFlag(0);
+                return 1;
+            }
+        }
+        /* Resend the last sent frame if no remote frame is received */
+        printf("LIBZEUS: Timeout waiting for remote response.\
+                    issuing retry %u of %d.\n", n+1, _transmission_retries);
+        sendFrame(_last_sent_frame);
+    }
+    printf("ERROR: No remote frame received from device.\n");
+    exit(1);
+    return 0;
 }
 
 void ZeusModule::sendKickFrame(void) {
+    // printf("Sending kick frame. \n");
     struct can_frame frame;
+    memset(&frame, 0, sizeof(struct can_frame));
     frame.can_id = assembleIdentifier(CAN_MSG_KICK);
-    frame.can_dlc = 1;
-    int nbytes = write(_sockfd, &frame, sizeof(struct can_frame));
+    frame.can_dlc = 8;
+    sendFrame(frame);
+}
+
+int ZeusModule::sendFrame(struct can_frame f) {
+    int nbytes = write(_sockfd, &f, sizeof(struct can_frame));
     if(nbytes < 0) {
         perror("Error writing to CAN bus.");
         printf("%d\n", errno);
+        exit(1);
     }
+    setLastFrame(f);
+    return nbytes;
 }
 
-bool ZeusModule::waitForKickFrame(void) {}
+bool ZeusModule::waitForKickFrame(void) {
+    unsigned int n = 0;
+    /* Wait REMOTE_TIMEOUT seconds for remote frame. If no remote frame is
+     * received within the allotted time, resend the previously sent frame. Try
+     * this up to _transmission_retries times. */
+    for(n = 0; n < _transmission_retries; n++) {
+        time_t start = time(NULL);
+        while((time(NULL) - start) < REMOTE_TIMEOUT) {
+            if(getKickFlag()) {
+                setKickFlag(0);
+                return 1;
+            }
+        }
+        /* Resend the last sent frame if no remote frame is received */
+        printf("LIBZEUS: Timeout waiting for remote response.\
+                    issuing retry %u of %d.\n", n+1, _transmission_retries);
+        sendFrame(getLastFrame());
+    }
+    printf("ERROR: No remote frame received from device.\n");
+    exit(1);
+    return 0;
+}
+
+void ZeusModule::setLastFrame( struct can_frame &f ) {
+    _last_sent_frame = f;
+}
+
+struct can_frame & ZeusModule::getLastFrame(void) {
+    return _last_sent_frame;
+}
 
 void ZeusModule::sendDataObject(unsigned int i, unsigned int cmd_len, int data) {}
 
 void ZeusModule::sendCommand(std::string cmd) {
     std::vector<std::string> substrings;
     size_t sbegin = 0;
-    char byte = 0;
-    int nbytes = 0;
+
     /* Split incoming string into substrings of length 7 bytes or less. */
     do {
         std::string s = cmd.substr(sbegin, 7);
@@ -354,18 +452,27 @@ void ZeusModule::sendCommand(std::string cmd) {
         sbegin += 7;
     } while(sbegin < cmd.size());
     /* Transmit each 7 bytes as a separate CAN frame */
+    sendKickFrame();
+    waitForRemoteFrame();
     for(size_t i = 0; i < substrings.size(); i++) {
+        char byte = 0;
         // printf("writing CAN frame with content %s\n",substrings[i].data());
         struct can_frame frame;
+        memset(&frame, 0, sizeof(struct can_frame));
         frame.can_id = assembleIdentifier(CAN_MSG_DATA);
         frame.can_dlc = substrings[i].size();
         /* Copy string data byte-by-byte into can data field. */
         for(size_t j = 0; j < substrings[i].size(); j++) {
             frame.data[j] = substrings[i][j];
         }
-
+        if(frame.can_dlc < 8) {
+            for(int k = frame.can_dlc; k < 7; k++) {
+                frame.data[k] = 0;
+            }
+        }
         /* Append EOM bit to byte if this is the last frame in the message.*/
-        if(i == (cmd.size() - 1)) {
+        if(i == (substrings.size() - 1)) {
+            // printf("Appending EOM bit to byte\n");
             byte |= (1 << 7);
         }
 
@@ -373,27 +480,17 @@ void ZeusModule::sendCommand(std::string cmd) {
         byte |= substrings[i].size() << 4;
         byte |= ((i + 1) %31);
         frame.data[7] = byte;
-        frame.can_dlc++;
+        // frame.can_dlc++;
+        frame.can_dlc = 8;
 
-        sendKickFrame();
-        /* Try to send each frame up to (_transmission_retries) times. */
-        for(size_t j = 0; j < _transmission_retries; j++) {
-            nbytes = write(_sockfd, &frame, sizeof(struct can_frame));
-            if(nbytes < 0) {
-                perror("Error writing to CAN bus.");
-                printf("%d\n", errno);
-            }
-            if((frame.data[7] & EOM_MASK) == 1) {
-                return;
-            }
-            if(waitForRemoteFrame() == 1) {
-                break;
-            } else {
-                printf("LIBZEUS: Timeout waiting for remote response.\
-                    issuing retry %lu of %d.\n", j+1, _transmission_retries);
-            }
-            waitForKickFrame();
+        sendFrame(frame);
+        if(byte & (1 << 7)) {
+            /* Instead of this, set a 'ready for new command' flag after error
+             * parsing the returned string in thread_func() */
+            usleep(1000000);
+            return;
         }
+        waitForRemoteFrame();
     }
 }
 
@@ -758,8 +855,9 @@ void ZeusModule::CANClosePort() {
 void ZeusModule::CANReadPort() {
     struct can_frame ret;
     int n = 0;  // Number of received bytes
-
     int read_can_port = 1;
+
+    memset(&ret, 0, sizeof(struct can_frame));
     while(_read_can_port) {
         struct timeval timeout = {1,0};
         fd_set readSet;

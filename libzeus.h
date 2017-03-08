@@ -71,6 +71,7 @@ LICENSE:
 #define CAN_MSG_KICK 1
 
 #define NETBUFSIZE 64
+#define REMOTE_TIMEOUT 1
 
 typedef struct {
     int sockfd;
@@ -182,6 +183,7 @@ extern "C" {
         void aspirate(double vol);
         void dispense(double vol);
         bool getTipStatus(void);
+        void getFirmwareVersion(void);
         double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
@@ -207,18 +209,20 @@ extern "C" {
             _received_msg = s;
             pthread_mutex_unlock(&_lock_msg);
         }
-        void setRemoteFlag(bool state){
+        void setRemoteFlag(bool state) {
             _remote_flag = state;
         };
-        void setKickFlag(bool state){
+        void setKickFlag(bool state) {
             _kick_flag = state;
         };
-        bool getRemoteFlag(void){
+        bool getRemoteFlag(void) {
             return _remote_flag;
         };
-        bool getKickFlag(void){
+        bool getKickFlag(void) {
             return _kick_flag;
         }
+
+        void sendRemoteFrame(unsigned int dlc);
 
       private:
         int initCANBus(void);
@@ -229,12 +233,12 @@ extern "C" {
         std::string cmdHeader(std::string hdr);
         canid_t assembleIdentifier(unsigned int type);
 
-        void sendRemoteFrame(unsigned int dlc);
         bool waitForRemoteFrame(void);
         void sendKickFrame(void);
         bool waitForKickFrame(void);
         void sendDataObject(unsigned int i, unsigned int cmd_len, int data);
         void sendCommand(std::string cmd);
+        int sendFrame(struct can_frame f);
         std::string parseErrors(std::string error);
 
         std::string on_message_received();
@@ -246,9 +250,11 @@ extern "C" {
         bool msgIsLast(struct can_frame f);
         bool parseMsgID(int id, const char frame);
         struct can_frame getNextMessage(void);
+        void setLastFrame(struct can_frame &f);
+        struct can_frame & getLastFrame(void);
 
         /* data */
-        int _id;
+        int _id = 1;
         int _sockfd; // SocketCAN file descriptor
         std::string _interface = "can0";
         unsigned int _remote_timeout = 1000;
@@ -314,17 +320,17 @@ extern "C" {
         unsigned int _master_id = 0;
 
         void *parent;
-        bool _remote_flag;
-        bool _waiting_for_remote_flag;
-        bool _kick_flag;
-        bool waiting_for_kick_flag;
-        bool data_flag;
-        bool _msg_complete_flag;
-        bool _msg_ready_flag;
+        bool _remote_flag = 0;
+        bool _waiting_for_remote_flag = 0;
+        bool _kick_flag = 0;
+        bool waiting_for_kick_flag = 0;
+        bool data_flag = 0;
+        bool _msg_complete_flag = 0;
+        bool _msg_ready_flag = 0;
         std::string _received_msg;
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> _fifo;
-
+        struct can_frame _last_sent_frame;
         pthread_mutex_t _lock_msg;
         pthread_t _thread_id;
         thread_params_t _thread_params;
