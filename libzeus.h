@@ -60,7 +60,7 @@ LICENSE:
 #include <linux/can/raw.h>
 
 #include <pthread.h>
-
+#include <sys/stat.h>
 #include "PipetterModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define KICK_MASK 0b10000000000
@@ -79,9 +79,6 @@ typedef struct {
     struct sockaddr_can remote;
 } thread_params_t;
 
-
-pthread_t thread_id;
-thread_params_t thread_params;
 
 
 /* The 'extern "C"' keyword must be used here to force the compiler to use
@@ -152,6 +149,7 @@ extern "C" {
         bool getRemoteFlag(void);
         bool getKickFlag(void);
         struct can_frame getNextMessage(void);
+        std::string _received_msg;
 
       private:
         void *parent;
@@ -162,19 +160,17 @@ extern "C" {
         bool data_flag;
         bool _msg_complete_flag;
         bool _msg_ready_flag;
-        std::string _received_msg;
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> fifo;
     };
 
     class ZeusModule : public PipetterModule {
       public:
-        int _read_can_port;
+        int _read_can_port = 1;
 
-        ZeusModule (void);
+        ZeusModule (int id = 1);
         virtual ~ZeusModule ();
         int init(void);
-
         int deinit(void);
         int lconf(void);
         void seterrfunc(void(*ef)(std::string s)) {
@@ -189,7 +185,6 @@ extern "C" {
         double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
-
         void CANOpenPort(void);
         void CANClosePort(void);
         void CANReadPort(void);
@@ -205,6 +200,26 @@ extern "C" {
             _msg_ready_flag = i;
         }
 
+        /* This method is accessed from *thread_func(), so data access
+         * must be protected from collisions by a mutex.*/
+        void setReceivedMsg(std::string s) {
+            pthread_mutex_lock(&_lock_msg);
+            _received_msg = s;
+            pthread_mutex_unlock(&_lock_msg);
+        }
+        void setRemoteFlag(bool state){
+            _remote_flag = state;
+        };
+        void setKickFlag(bool state){
+            _kick_flag = state;
+        };
+        bool getRemoteFlag(void){
+            return _remote_flag;
+        };
+        bool getKickFlag(void){
+            return _kick_flag;
+        }
+
       private:
         int initCANBus(void);
         int initDosingDrive(void );
@@ -212,7 +227,7 @@ extern "C" {
 
         void setAutoResponse(void);
         std::string cmdHeader(std::string hdr);
-        int assembleIdentifier(unsigned int type);
+        canid_t assembleIdentifier(unsigned int type);
 
         void sendRemoteFrame(unsigned int dlc);
         bool waitForRemoteFrame(void);
@@ -222,7 +237,6 @@ extern "C" {
         void sendCommand(std::string cmd);
         std::string parseErrors(std::string error);
 
-
         std::string on_message_received();
         bool remoteReceived(void);
         void setLastTransmited(struct can_frame lt);
@@ -231,20 +245,14 @@ extern "C" {
         bool dataReceived(void);
         bool msgIsLast(struct can_frame f);
         bool parseMsgID(int id, const char frame);
-        void setRemoteFlag(bool state);
-        void setKickFlag(bool state);
-        bool getRemoteFlag(void);
-        bool getKickFlag(void);
         struct can_frame getNextMessage(void);
-
-
 
         /* data */
         int _id;
         int _sockfd; // SocketCAN file descriptor
-        std::string _interface;
-        unsigned int _remote_timeout;
-        unsigned int _transmission_retries;
+        std::string _interface = "can0";
+        unsigned int _remote_timeout = 1000;
+        unsigned int _transmission_retries = 5;
         std::map<std::string, std::string> _error_table = {
             {"20", "No communication to EEPROM."},
             {"30", "Undefined command."},
@@ -303,12 +311,12 @@ extern "C" {
         double _mix_vol;
         double _mix_flow_rate;
         double _mix_cycles;
-        unsigned int _master_id;
+        unsigned int _master_id = 0;
 
         void *parent;
         bool _remote_flag;
         bool _waiting_for_remote_flag;
-        bool kick_flag;
+        bool _kick_flag;
         bool waiting_for_kick_flag;
         bool data_flag;
         bool _msg_complete_flag;
@@ -317,6 +325,9 @@ extern "C" {
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> _fifo;
 
+        pthread_mutex_t _lock_msg;
+        pthread_t _thread_id;
+        thread_params_t _thread_params;
     };
 
 }

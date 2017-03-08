@@ -55,12 +55,15 @@ extern "C" void destroy(PipetterModule *gc) {
 }
 
 extern "C" void *thread_func(void *arg) {
+    printf("Entered thread function.\n");
     /* Check to see if there is any incoming data on the CAN bus.
      * If so, push the data to a FIFO.*/
     struct can_frame ret;
     int n = 0;  // Number of received bytes
-    ZeusModule *zm = (ZeusModule *)arg;
+    ZeusModule *zm = static_cast<ZeusModule *>(arg);
+    std::string msg;
     int soc = zm->getSockFD();
+    printf("ZM socket filedescriptor = %d\n", soc);
     zm-> _read_can_port = 1;
     while(zm->_read_can_port) {
         struct timeval timeout = {1,0};
@@ -73,23 +76,41 @@ extern "C" void *thread_func(void *arg) {
             }
             if(FD_ISSET(soc, &readSet)) {
                 n = read(soc, &ret, sizeof(struct can_frame));
-                if(n) {
+                if(n != 0) {
                     if(n < 0) {
                         printf("LIBZEUS: Error reading from CAN socket.\n");
                     } else if(n < sizeof(struct can_frame)) {
                         printf("LIBZEUS: Incomplete frame read from CAN socket.\n");
                     } else {
-                        (zm->getFIFO()).push(ret);
-                        zm->setMsgReadyFlag(1);
+                        if(!strcmp((const char*)ret.data,"")) {
+                            /* Data field is empty. This is a remote request.*/
+                            printf("Received remote request.\n");
+                            zm->setRemoteFlag(1);
+                        } else {
+                            printf("Read a frame from da socket with DLC %d\n and data %s\n", ret.can_dlc, ret.data);
+                        }
+                        // (zm->getFIFO()).push(ret);
+                        // for(int i = 0; i < ret.can_dlc; i++) {
+                        // printf("%d", ret.data[i]);
+                        // msg.append(reinterpret_cast<const char*>(ret.data[i]));
+                        // }
+                        // printf("\n");
                     }
-
                 }
             }
         }
-
+        /*If frame data contains EOM flag, process the returned string. */
+        if(ret.data[ret.can_dlc] & (1 << 7)) {
+            printf("Received message: %s\n", msg.c_str());
+            zm->setReceivedMsg(msg);
+            zm->setMsgReadyFlag(1);
+            msg.clear();
+        }
     }
+    printf("Exiting thread loop.\n");
     return 0;
 }
+
 
 extern "C" std::string zfill(std::string s, int len) {
     s.insert(s.begin(), len - s.length(), '0');
@@ -97,14 +118,42 @@ extern "C" std::string zfill(std::string s, int len) {
 }
 
 
-ZeusModule::ZeusModule() {}
-ZeusModule::~ZeusModule() {}
 
-int ZeusModule::init(void) {
+ZeusModule::ZeusModule(int id) {
+    /* TODO: nam - Start thread_func() here using pthread_create().
+     * Mon 06 Mar 2017 11:07:02 AM MST */
+    _id = id;
+    if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
+        printf("ERROR: LibZeus: Could not create mutex.\n");
+        // Unable to create mutex. Throw error.
+    }
     initCANBus();
+    pthread_create(&_thread_id, NULL, &thread_func, this);
     initZDrive();
     initDosingDrive();
+    printf("Thread function created.\n");
+}
+ZeusModule::~ZeusModule() {
+    /* TODO: nam - Kill thread_func() here. Mon 06 Mar 2017 11:07:23 AM MST */
+    close(_sockfd);
+    // printf("Closed socket.\n");
+    pthread_cancel(_thread_id);
+    pthread_join(_thread_id, NULL);
+    // printf("Killed thread function.\n");
+    pthread_mutex_destroy(&_lock_msg);
+    // printf("Destroyed mutex.\n");
+    printf("fin.\n");
+}
 
+
+/* TODO: nam - Is there a good reason not to move this to the class
+ * constructor? Mon 06 Mar 2017 11:06:21 AM MST */
+
+int ZeusModule::init(void) {
+    // initCANBus();
+    // initZDrive();
+    // initDosingDrive();
+    // printf("Exited init()\n");
     return 0;
 }
 
@@ -112,7 +161,6 @@ int ZeusModule::deinit(void) {
     // Send switchOff command
     std::string cmd = cmdHeader("AV");
     sendCommand(cmd);
-
     return 0;
 }
 
@@ -186,31 +234,54 @@ void ZeusModule::dispense(double vol) {
 }
 
 int ZeusModule::initCANBus(void) {
+    /*
+     * We first need to run the init_can.sh script to set up the CAN bus
+     * for communications. Check if the script exists, and if so, run it. Else,
+     * throw an error and exit.
+     */
     int nbytes;
     struct sockaddr_can addr;
     struct can_frame frame;
     struct ifreq ifr;
-    const char *ifname =_interface.c_str();
 
-    if((_sockfd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-        /* TODO: nam -   Mon 23 Jan 2017 12:05:08 PM MST */
-        // Maybe consider placing return from socket() call in function-local
-        // variable first to check if return < 0, and only assigning to
-        // _sockfd if the return value is valid. This way _sockfd will never
-        // be assigned an invalid value other than the initialization value.
-        perror("LIBZEUS: Error while opening socket.\n");
-        return -1;
+    char cwd[1024];
+    struct stat buffer;
+    if(getcwd(cwd, sizeof(cwd)) != NULL) {
+        std::string cur_dir(cwd);
+        cur_dir += "/init_can.sh";
+        // printf("cur_dir = %s \n", cur_dir.c_str());
+        std::string cmd = "sudo bash " + cur_dir;
+        if(stat(cur_dir.c_str(), &buffer) == 0) {
+            if(system(cmd.c_str()) != 0) {
+                perror("error running init_can.sh");
+                exit(1);
+            }
+        }
+    } else {
+        perror("getcwd() error");
+        exit(1);
     }
 
-    strcpy(ifr.ifr_name, ifname);
-    ioctl(_sockfd, SIOCGIFINDEX, &ifr);
+    /* Open and bind to a socket for CAN bus communications */
+    if((_sockfd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+        perror("ERROR:LIBZEUS - Error while opening socket.\n");
+        exit(1);
+    }
+    // printf("Opened CAN socket with file descriptor %d\n", _sockfd);
 
     addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
+    strcpy(ifr.ifr_name, _interface.c_str());
+    if(ioctl(_sockfd, SIOCGIFINDEX, &ifr) < 0) {
+        perror("IOCTL error.");
+        exit(1);
+    }
 
+    addr.can_ifindex = ifr.ifr_ifindex;
+    fcntl(_sockfd, F_SETFL, O_NONBLOCK);
     if(bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("LIBZEUS: Error while attempting to bind to socket.\n");
-        return -2;
+        perror("ERROR:LIBZEUS - Error while attempting to bind to socket.\n");
+        close(_sockfd);
+        exit(2);
     }
     return 0;
 }
@@ -237,8 +308,8 @@ int ZeusModule::initZDrive(void) {
 void ZeusModule::setAutoResponse(void) {}
 
 
-int ZeusModule::assembleIdentifier(unsigned int type) {
-    int identifier = 0;
+canid_t ZeusModule::assembleIdentifier(unsigned int type) {
+    canid_t identifier = 0;
     identifier |= _id;
     if(_master_id > 0) {
         identifier |= (_master_id << 5);
@@ -251,9 +322,21 @@ int ZeusModule::assembleIdentifier(unsigned int type) {
 
 void ZeusModule::sendRemoteFrame(unsigned int dlc) {}
 
-bool ZeusModule::waitForRemoteFrame(void) {}
+bool ZeusModule::waitForRemoteFrame(void) {
+    while(!getRemoteFlag());
+    return 1;
+}
 
-void ZeusModule::sendKickFrame(void) {}
+void ZeusModule::sendKickFrame(void) {
+    struct can_frame frame;
+    frame.can_id = assembleIdentifier(CAN_MSG_KICK);
+    frame.can_dlc = 1;
+    int nbytes = write(_sockfd, &frame, sizeof(struct can_frame));
+    if(nbytes < 0) {
+        perror("Error writing to CAN bus.");
+        printf("%d\n", errno);
+    }
+}
 
 bool ZeusModule::waitForKickFrame(void) {}
 
@@ -263,30 +346,43 @@ void ZeusModule::sendCommand(std::string cmd) {
     std::vector<std::string> substrings;
     size_t sbegin = 0;
     char byte = 0;
-    size_t nbytes = 0;
-    //Split incoming string into substrings of length 7 bytes or less.
+    int nbytes = 0;
+    /* Split incoming string into substrings of length 7 bytes or less. */
     do {
         std::string s = cmd.substr(sbegin, 7);
         substrings.push_back(s);
         sbegin += 7;
     } while(sbegin < cmd.size());
-    // Transmit each 7 bytes as a separate CAN frame
-    for(size_t i = 0; i < (substrings.size() - 1); i++) {
+    /* Transmit each 7 bytes as a separate CAN frame */
+    for(size_t i = 0; i < substrings.size(); i++) {
+        // printf("writing CAN frame with content %s\n",substrings[i].data());
         struct can_frame frame;
         frame.can_id = assembleIdentifier(CAN_MSG_DATA);
-        for(size_t j = 0; j < (substrings[i].size() - 1); j++) {
+        frame.can_dlc = substrings[i].size();
+        /* Copy string data byte-by-byte into can data field. */
+        for(size_t j = 0; j < substrings[i].size(); j++) {
             frame.data[j] = substrings[i][j];
         }
+
+        /* Append EOM bit to byte if this is the last frame in the message.*/
         if(i == (cmd.size() - 1)) {
             byte |= (1 << 7);
         }
+
+        /* Append message length and index data to byte */
         byte |= substrings[i].size() << 4;
         byte |= ((i + 1) %31);
         frame.data[7] = byte;
+        frame.can_dlc++;
 
         sendKickFrame();
+        /* Try to send each frame up to (_transmission_retries) times. */
         for(size_t j = 0; j < _transmission_retries; j++) {
             nbytes = write(_sockfd, &frame, sizeof(struct can_frame));
+            if(nbytes < 0) {
+                perror("Error writing to CAN bus.");
+                printf("%d\n", errno);
+            }
             if((frame.data[7] & EOM_MASK) == 1) {
                 return;
             }
