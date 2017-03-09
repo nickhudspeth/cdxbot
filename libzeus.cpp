@@ -56,7 +56,7 @@ extern "C" void destroy(PipetterModule *gc) {
 
 extern "C" void *thread_func(void *arg) {
     char retbuf[8];
-    printf("Entered thread function.\n");
+    // printf("Entered thread function.\n");
     /* Check to see if there is any incoming data on the CAN bus.
      * If so, push the data to a FIFO.*/
     struct can_frame ret;
@@ -64,7 +64,7 @@ extern "C" void *thread_func(void *arg) {
     ZeusModule *zm = static_cast<ZeusModule *>(arg);
     std::string msg;
     int soc = zm->getSockFD();
-    printf("ZM socket filedescriptor = %d\n", soc);
+    // printf("ZM socket filedescriptor = %d\n", soc);
     zm-> _read_can_port = 1;
     memset(&ret, 0, sizeof(struct can_frame));
     while(zm->_read_can_port) {
@@ -102,7 +102,8 @@ extern "C" void *thread_func(void *arg) {
                             msg.append(retbuf);
                             // printf("Received message: %s\n", msg.c_str());
                             if((ret.data[7] & (1 << 7))){
-                                printf("Received message: %s\n", msg.c_str());
+                                // printf("Received message: %s\n", msg.c_str());
+                                printf("%s\n", zm->parseErrors(msg).c_str());
                                 msg.clear();
                             }else{
                                 zm->sendRemoteFrame(8);
@@ -133,6 +134,9 @@ extern "C" void *thread_func(void *arg) {
 
 
 extern "C" std::string zfill(std::string s, int len) {
+    if(!(s.length() < len)){
+        return s;
+    }
     s.insert(s.begin(), len - s.length(), '0');
     return s;
 }
@@ -155,6 +159,7 @@ ZeusModule::ZeusModule(int id) {
     printf("Thread function created.\n");
     initZDrive();
     initDosingDrive();
+    aspirate(5);
     // getFirmwareVersion();
 }
 ZeusModule::~ZeusModule() {
@@ -226,7 +231,7 @@ void ZeusModule::discardTip(void) {
 
 void ZeusModule::aspirate(double vol) {
     std::string cmd = cmdHeader("GA");
-    cmd += "ai" + zfill(std::to_string(vol), 5) +\
+    cmd += "ai" + zfill(std::to_string(static_cast<unsigned int>(vol)), 5) +\
            "ge" + zfill(std::to_string(_cgt_index), 2) +\
            "go" + zfill(std::to_string(_dgt_index), 2) +\
            "lq" + zfill(std::to_string(_lct_index), 2) +\
@@ -442,6 +447,7 @@ struct can_frame & ZeusModule::getLastFrame(void) {
 void ZeusModule::sendDataObject(unsigned int i, unsigned int cmd_len, int data) {}
 
 void ZeusModule::sendCommand(std::string cmd) {
+    printf("Sending command: %s\n", cmd.c_str());
     std::vector<std::string> substrings;
     size_t sbegin = 0;
 
@@ -524,15 +530,15 @@ std::string ZeusModule::parseErrors(std::string error) {
     if(error.length() == 0) {
         return "NONE";
     }
-    cmd = error.substr(0,1);
+    cmd = error.substr(0,2);
     eidx = error.find("er");
     if(eidx == std::string::npos) {
-        return "NONE";
+        return cmd + ": " + "NONE";
     }
-    ec = error.substr((eidx + 2), (eidx + 4));
+    ec = error.substr((eidx + 2), 2);
 
     if(ec == "00") {
-        return "NONE";
+        return cmd + ": " + "NONE";
     }
     if(cmd == "DI") {
         std::vector<std::string> codes = {"00", "30", "35", "36", "40", "50",
@@ -540,9 +546,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+            return  cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+            return  cmd + ": " + default_error + "(" + ec + ")";
         }
     }
 
@@ -552,9 +558,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+            return  cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+            return  cmd + ": " + default_error;
         }
     }
 
@@ -564,9 +570,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+            return  cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+            return  cmd + ": " + default_error;
         }
     }
 
@@ -577,9 +583,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+            return  cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -590,9 +596,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -605,9 +611,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -620,9 +626,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -634,9 +640,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -644,9 +650,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "30"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -654,9 +660,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "30"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -664,9 +670,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -676,9 +682,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -686,9 +692,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -697,9 +703,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -707,9 +713,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -717,9 +723,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -727,9 +733,9 @@ std::string ZeusModule::parseErrors(std::string error) {
         std::vector<std::string> codes = {"00", "20", "30", "31", "32"};
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -738,9 +744,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -749,9 +755,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -760,9 +766,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -771,9 +777,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -782,9 +788,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -793,9 +799,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -804,9 +810,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -815,9 +821,9 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
@@ -826,14 +832,14 @@ std::string ZeusModule::parseErrors(std::string error) {
                                          };
         std::vector<std::string>::iterator it = find(codes.begin(), codes.end(), ec);
         if(it != codes.end()) {
-            return _error_table[*it];
+             return cmd + ": " + _error_table[*it];
         } else {
-            return default_error;
+             return cmd + ": " + default_error;
         }
     }
 
     else {
-        return "Error code returned corresponds to unknown command.";
+        return  cmd + ": " + "Error code returned corresponds to unknown command.";
     }
 
 }

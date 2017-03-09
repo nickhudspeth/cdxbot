@@ -223,6 +223,7 @@ extern "C" {
         }
 
         void sendRemoteFrame(unsigned int dlc);
+        std::string parseErrors(std::string error);
 
       private:
         int initCANBus(void);
@@ -239,7 +240,6 @@ extern "C" {
         void sendDataObject(unsigned int i, unsigned int cmd_len, int data);
         void sendCommand(std::string cmd);
         int sendFrame(struct can_frame f);
-        std::string parseErrors(std::string error);
 
         std::string on_message_received();
         bool remoteReceived(void);
@@ -302,21 +302,21 @@ extern "C" {
             {"85", "No communication to the digital potentiometer."},
         };
 
-        int _tt_index;
-        int _dg_index;
-        int _cgt_index;
-        int _dgt_index;
-        int _lct_index;
-        bool _gpm;
-        int _qpm;
-        bool _lld;
-        double _lld_search_pos;
-        double _liquid_surface;
-        int _search_bottom_mode;
+        int _tt_index = 0;
+        int _dg_index = 0;
+        int _cgt_index = 0;
+        int _dgt_index = 0;
+        int _lct_index = 0;
+        bool _gpm = 0;
+        int _qpm = 0;
+        bool _lld = 1;
+        unsigned int _lld_search_pos = 0;
+        unsigned int _liquid_surface = 500;
+        int _search_bottom_mode = 0;
         // Mixing parameters
-        double _mix_vol;
-        double _mix_flow_rate;
-        double _mix_cycles;
+        unsigned int _mix_vol = 0;
+        unsigned int _mix_flow_rate = 0;
+        unsigned int _mix_cycles = 0;
         unsigned int _master_id = 0;
 
         void *parent;
