@@ -70,6 +70,8 @@ LICENSE:
 #define CAN_MSG_DATA 0
 #define CAN_MSG_KICK 1
 
+#define ZPOS_MIN 0
+#define ZPOS_MAX 1800
 #define NETBUFSIZE 64
 #define REMOTE_TIMEOUT 1
 
@@ -194,6 +196,7 @@ extern "C" {
         int getSockFD(void) {
             return _sockfd;
         }
+        void getLastFaultyParameter(void);
         std::queue<struct can_frame>& getFIFO(void) {
             return _fifo;
         }
@@ -224,6 +227,8 @@ extern "C" {
 
         void sendRemoteFrame(unsigned int dlc);
         std::string parseErrors(std::string error);
+
+        unsigned int _error_flag = 0;
 
       private:
         int initCANBus(void);
@@ -302,21 +307,21 @@ extern "C" {
             {"85", "No communication to the digital potentiometer."},
         };
 
-        int _tt_index = 0;
-        int _dg_index = 0;
-        int _cgt_index = 0;
-        int _dgt_index = 0;
-        int _lct_index = 0;
+        int _tt_index = 1;
+        int _dg_index = 1;
+        int _cgt_index = 1;
+        int _dgt_index = 1;
+        int _lct_index = 1;
         bool _gpm = 0;
         int _qpm = 0;
-        bool _lld = 1;
+        bool _lld = 0;
         unsigned int _lld_search_pos = 0;
         unsigned int _liquid_surface = 500;
         int _search_bottom_mode = 0;
         // Mixing parameters
-        unsigned int _mix_vol = 0;
-        unsigned int _mix_flow_rate = 0;
-        unsigned int _mix_cycles = 0;
+        unsigned int _mix_vol = 100;
+        unsigned int _mix_flow_rate = 20;
+        unsigned int _mix_cycles = 25;
         unsigned int _master_id = 0;
 
         void *parent;
