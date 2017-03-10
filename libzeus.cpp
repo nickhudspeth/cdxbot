@@ -159,7 +159,7 @@ ZeusModule::ZeusModule(int id) {
     }
     initCANBus();
     pthread_create(&_thread_id, NULL, &thread_func, this);
-    printf("Thread function created.\n");
+    // printf("Thread function created.\n");
     initZDrive();
     initDosingDrive();
     getFirmwareVersion();
@@ -167,8 +167,16 @@ ZeusModule::ZeusModule(int id) {
     // moveZDrive(0, 1);
     // moveZDrive(750, 1);
     // moveZDrive(0, 1);
+    struct deck_geometry_t d;
+    d.index = 0;
+    d.end_traverse_pos = 500;
+    d.botpp = 1000;
+    d.potdp = 1200;
+    setDeckGeometryParams(d);
+    getDeckGeometryParams(0);
     pickUpTip();
-    // aspirate(5);
+    aspirate(2);
+    getLastFaultyParameter();
     // dispense(0);
     // getLastFaultyParameter();
     if(_error_flag) {
@@ -233,7 +241,7 @@ void ZeusModule::moveZDrive(double pos, double vel) {
 
 void ZeusModule::pickUpTip(void) {
     std::string cmd = cmdHeader("GT");
-    cmd += "tt" + zfill(std::to_string(_tt_index), 2) + "go" +\
+    cmd += "tt" + zfill(std::to_string(_tt_index), 1) + "go" +\
            zfill(std::to_string(_dg_index), 2);
     sendCommand(cmd);
 }
@@ -541,6 +549,66 @@ void ZeusModule::emergencyStop(void) {
 void ZeusModule::emergencyStopReset(void) {
     std::string cmd = "AW";
     sendCommand(cmd);
+}
+
+void ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {
+    /* Validate struct members */
+    if((d.index > 9999) || (d.end_traverse_pos > 2800) || (d.botpp > 1800) ||\
+            (d.potdp > 2800)) {
+        printf("ERROR: Deck geometry definition contains out of range\
+               parameter.\n");
+        return;
+    }
+    std::string cmd = cmdHeader("GO") +
+                      "go" + zfill(std::to_string(d.index), 2) + \
+                      "te" + zfill(std::to_string(d.end_traverse_pos), 4) + \
+                      "tm" + zfill(std::to_string(d.botpp), 4) + \
+                      "tr" + zfill(std::to_string(d.potdp), 4);
+    sendCommand(cmd);
+}
+
+void ZeusModule::getDeckGeometryParams(unsigned int index) {
+    if(index > 99) {
+        printf("ERROR: Requested deck geometry table index is out of range.\n");
+        return;
+    }
+    std::string cmd = cmdHeader("GR") + \
+                      "go" + zfill(std::to_string(index), 2);
+    sendCommand(cmd);
+}
+
+void ZeusModule::setContainerGeometryParams(struct container_geometry_t c) {
+    /* Validate bounds on struct members*/
+    if((c.index > 99) || (c.diameter > 999) || (c.bottom_height > 1800) ||
+            (c.bottom_section > 10000) || (c.bottom_pos > 2800) ||
+            (c.immersion_depth > 1800) || (c.leaving_height > 1800) ||
+            (c.jet_height > 1800) || (c.sohbs > 1800) || (c.dhabs > 1800)) {
+        printf("ERROR: Container geometry definition contains out of range\
+               parameter.\n");
+    }
+    std::string cmd = cmdHeader("GC") + \
+                      "ge" + zfill(std::to_string(c.index), 2) + \
+                      "cb" + zfill(std::to_string(c.diameter), 3) + \
+                      "bg" + zfill(std::to_string(c.bottom_height), 4) + \
+                      "gx" + zfill(std::to_string(c.bottom_section), 5) + \
+                      "ce" + zfill(std::to_string(c.bottom_pos), 4) + \
+                      "ie" + zfill(std::to_string(c.immersion_depth), 4) + \
+                      "yq" + zfill(std::to_string(c.leaving_height), 4) + \
+                      "yr" + zfill(std::to_string(c.jet_height), 4) + \
+                      "ch" + zfill(std::to_string(c.sohbs), 4) + \
+                      "ci" + zfill(std::to_string(c.dhabs), 4);
+    sendCommand(cmd);
+}
+
+void ZeusModule::getContainerGeometryParams(unsigned int index) {
+    if(index > 99){
+        printf("ERROR: Requested deck geometry table index is out of range.\n");
+        return;
+    }
+    std::string cmd = cmdHeader("GB") + \
+                      "ge" + zfill(std::to_string(index), 2);
+    sendCommand(cmd);
+
 }
 
 std::string ZeusModule::parseErrors(std::string error) {

@@ -89,23 +89,24 @@ typedef struct {
  * name and causes dlsym to not be able to locate any symbols in the library.*/
 extern "C" {
 
-    typedef struct {
+    struct container_geometry_t{
         unsigned int index;
         double diameter;
         double bottom_height;
+        double bottom_section;
         double bottom_pos;
         double immersion_depth;
         double leaving_height;
         double jet_height;
         double sohbs; // Start Of Height Bottom Search
         double dhabs; // Dispense Height After Bottom Search
-    } container_geometry_t;
+    };
 
-    typedef struct {
-        unsigned int indes;
-        double end_traverse_pos;
-        double botpp; // Beginning of Tip Picking Position
-        double potdp; // Position of Tip Deposit Process
+    struct deck_geometry_t{
+        unsigned int index;
+        unsigned int end_traverse_pos;
+        unsigned int botpp; // Beginning of Tip Picking Position
+        unsigned int potdp; // Position of Tip Deposit Process
     } deck_geometry_t;
 
     typedef struct {
@@ -189,6 +190,11 @@ extern "C" {
         double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
+
+        void setDeckGeometryParams(struct deck_geometry_t d);
+        void getDeckGeometryParams(unsigned int index);
+        void setContainerGeometryParams(struct container_geometry_t c);
+        void getContainerGeometryParams(unsigned int index);
         void CANOpenPort(void);
         void CANClosePort(void);
         void CANReadPort(void);
@@ -307,10 +313,10 @@ extern "C" {
             {"85", "No communication to the digital potentiometer."},
         };
 
-        int _tt_index = 1;
+        int _tt_index = 7;
         int _dg_index = 1;
         int _cgt_index = 1;
-        int _dgt_index = 1;
+        int _dgt_index = 0;
         int _lct_index = 1;
         bool _gpm = 0;
         int _qpm = 0;
@@ -319,9 +325,9 @@ extern "C" {
         unsigned int _liquid_surface = 500;
         int _search_bottom_mode = 0;
         // Mixing parameters
-        unsigned int _mix_vol = 100;
-        unsigned int _mix_flow_rate = 20;
-        unsigned int _mix_cycles = 25;
+        unsigned int _mix_vol = 0;
+        unsigned int _mix_flow_rate = 0;
+        unsigned int _mix_cycles = 0;
         unsigned int _master_id = 0;
 
         void *parent;
