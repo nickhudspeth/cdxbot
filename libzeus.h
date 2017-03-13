@@ -136,37 +136,37 @@ extern "C" {
     } liquid_class_t;
 
 
-    class remoteFrameListener {
-      public:
-        remoteFrameListener (void);
-        virtual ~remoteFrameListener ();
-        std::string on_message_received();
-        bool remoteReceived(void);
-        void setLastTransmited(struct can_frame lt);
-        struct can_frame getLastTransmitted(void);
-        bool kickReceived(void);
-        bool dataReceived(void);
-        bool msgIsLast(struct can_frame f);
-        bool parseMsgID(int id, const char frame);
-        void setRemoteFlag(bool state);
-        void setKickFlag(bool state);
-        bool getRemoteFlag(void);
-        bool getKickFlag(void);
-        struct can_frame getNextMessage(void);
-        std::string _received_msg;
+    // class remoteFrameListener {
+      // public:
+        // remoteFrameListener (void);
+        // virtual ~remoteFrameListener ();
+        // std::string on_message_received();
+        // bool remoteReceived(void);
+        // void setLastTransmited(struct can_frame lt);
+        // struct can_frame getLastTransmitted(void);
+        // bool kickReceived(void);
+        // bool dataReceived(void);
+        // bool msgIsLast(struct can_frame f);
+        // bool parseMsgID(int id, const char frame);
+        // void setRemoteFlag(bool state);
+        // void setKickFlag(bool state);
+        // bool getRemoteFlag(void);
+        // bool getKickFlag(void);
+        // struct can_frame getNextMessage(void);
+        // std::string _received_msg;
 
-      private:
-        void *parent;
-        bool _remote_flag;
-        bool _waiting_for_remote_flag;
-        bool kick_flag;
-        bool waiting_for_kick_flag;
-        bool data_flag;
-        bool _msg_complete_flag;
-        bool _msg_ready_flag;
-        struct can_frame _last_transmitted;
-        std::queue<struct can_frame> fifo;
-    };
+      // private:
+        // void *parent;
+        // bool _remote_flag;
+        // bool _waiting_for_remote_flag;
+        // bool kick_flag;
+        // bool waiting_for_kick_flag;
+        // bool data_flag;
+        // bool _msg_complete_flag;
+        // bool _msg_ready_flag;
+        // struct can_frame _last_transmitted;
+        // std::queue<struct can_frame> fifo;
+    // };
 
     class ZeusModule : public PipetterModule {
       public:
