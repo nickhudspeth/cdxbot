@@ -74,6 +74,11 @@ LICENSE:
 #define ZPOS_MAX 1800
 #define NETBUFSIZE 64
 #define REMOTE_TIMEOUT 1
+#define INIT_SUCCESS 1
+#define INIT_FAILURE 0
+
+#define CONTAINER_GEOMETRY_ROUND  0
+#define CONTAINER_GEOMETRY_SQUARE 1
 
 typedef struct {
     int sockfd;
@@ -88,85 +93,53 @@ typedef struct {
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
 extern "C" {
-
-    struct container_geometry_t{
+    struct container_geometry_t {
         unsigned int index;
-        double diameter;
-        double bottom_height;
-        double bottom_section;
-        double bottom_pos;
-        double immersion_depth;
-        double leaving_height;
-        double jet_height;
-        double sohbs; // Start Of Height Bottom Search
-        double dhabs; // Dispense Height After Bottom Search
+        bool geometry;
+        unsigned int diameter;
+        unsigned int x_length;
+        unsigned int y_length;
+        unsigned int second_height;
+        unsigned int second_section;
+        unsigned int minimum_height;
+        unsigned int sohbs; // Start Of Height Bottom Search
+        unsigned int dhabs; // Dispense Height After Bottom Search
     };
 
-    struct deck_geometry_t{
+    struct deck_geometry_t {
         unsigned int index;
-        unsigned int end_traverse_pos;
+        unsigned int min_traverse_height;
+        unsigned int min_z_pos;
         unsigned int botpp; // Beginning of Tip Picking Position
+        unsigned int eotpp; // End of Tip Picking Position
         unsigned int potdp; // Position of Tip Deposit Process
-    } deck_geometry_t;
+    };
 
-    typedef struct {
+    struct liquid_class_t {
         unsigned int id;
         unsigned int index;
         bool lcfft; // Liquid Class For Filter Tips
         unsigned int aspiration_mode;
-        double aspiration_flow_rate;
-        double over_aspirated_vol;
-        double aspiration_transport_vol;
-        double blowout_air_vol;
-        double aspiration_swap_speed;
-        double aspiration_settling_time;
-        double lld;
-        double clld_sens;
-        double plld_sens;
-        double ads;
-        double dispensing_mode;
-        double dispensing_flow_rate;
-        double stop_flow_rate;
-        double stop_back_vol;
-        double dispensing_trnasport_vol;
-        double acceleration;
-        double dispensing_swap_speed;
-        double dispensing_settling_time;
-        double flow_rate_transport_vol;
-    } liquid_class_t;
-
-
-    // class remoteFrameListener {
-      // public:
-        // remoteFrameListener (void);
-        // virtual ~remoteFrameListener ();
-        // std::string on_message_received();
-        // bool remoteReceived(void);
-        // void setLastTransmited(struct can_frame lt);
-        // struct can_frame getLastTransmitted(void);
-        // bool kickReceived(void);
-        // bool dataReceived(void);
-        // bool msgIsLast(struct can_frame f);
-        // bool parseMsgID(int id, const char frame);
-        // void setRemoteFlag(bool state);
-        // void setKickFlag(bool state);
-        // bool getRemoteFlag(void);
-        // bool getKickFlag(void);
-        // struct can_frame getNextMessage(void);
-        // std::string _received_msg;
-
-      // private:
-        // void *parent;
-        // bool _remote_flag;
-        // bool _waiting_for_remote_flag;
-        // bool kick_flag;
-        // bool waiting_for_kick_flag;
-        // bool data_flag;
-        // bool _msg_complete_flag;
-        // bool _msg_ready_flag;
-        // struct can_frame _last_transmitted;
-        // std::queue<struct can_frame> fifo;
-    // };
+        unsigned int aspiration_flow_rate;
+        unsigned int over_aspirated_vol;
+        unsigned int aspiration_transport_vol;
+        unsigned int blowout_air_vol;
+        unsigned int aspiration_swap_speed;
+        unsigned int aspiration_settling_time;
+        unsigned int lld;
+        unsigned int clld_sens;
+        unsigned int plld_sens;
+        unsigned int adc;
+        unsigned int dispensing_mode;
+        unsigned int dispensing_flow_rate;
+        unsigned int stop_flow_rate;
+        unsigned int stop_back_vol;
+        unsigned int dispensing_transport_vol;
+        unsigned int acceleration;
+        unsigned int dispensing_swap_speed;
+        unsigned int dispensing_settling_time;
+        unsigned int flow_rate_transport_vol;
+    };
 
     class ZeusModule : public PipetterModule {
       public:
@@ -187,14 +160,17 @@ extern "C" {
         void dispense(double vol);
         bool getTipStatus(void);
         void getFirmwareVersion(void);
-        double getZPos(void);
+        unsigned int getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
+        unsigned int getInitializationStatus(void);
 
         void setDeckGeometryParams(struct deck_geometry_t d);
         void getDeckGeometryParams(unsigned int index);
         void setContainerGeometryParams(struct container_geometry_t c);
         void getContainerGeometryParams(unsigned int index);
+        void setLiquidClassParams(struct liquid_class_t l);
+        void getLiquidClassParams(unsigned int index);
         void CANOpenPort(void);
         void CANClosePort(void);
         void CANReadPort(void);
@@ -218,6 +194,12 @@ extern "C" {
             _received_msg = s;
             pthread_mutex_unlock(&_lock_msg);
         }
+        std::string getReceivedMsg(void) {
+            pthread_mutex_lock(&_lock_msg);
+            std::string ret = _received_msg;
+            pthread_mutex_unlock(&_lock_msg);
+            return ret;
+        }
         void setRemoteFlag(bool state) {
             _remote_flag = state;
         };
@@ -230,25 +212,29 @@ extern "C" {
         bool getKickFlag(void) {
             return _kick_flag;
         }
+        void setWaitingForMsgFlag(bool s) {
+            _waiting_for_msg_flag = s;
+        }
+        bool getWaitingForMsgFlag(void) {
+            return _waiting_for_msg_flag;
+        }
 
         void sendRemoteFrame(unsigned int dlc);
         std::string parseErrors(std::string error);
 
         unsigned int _error_flag = 0;
-
-      private:
-        int initCANBus(void);
         int initDosingDrive(void );
         int initZDrive(void);
 
-        void setAutoResponse(void);
+      private:
+        int initCANBus(void);
+
         std::string cmdHeader(std::string hdr);
         canid_t assembleIdentifier(unsigned int type);
 
         bool waitForRemoteFrame(void);
         void sendKickFrame(void);
         bool waitForKickFrame(void);
-        void sendDataObject(unsigned int i, unsigned int cmd_len, int data);
         void sendCommand(std::string cmd);
         int sendFrame(struct can_frame f);
 
@@ -314,7 +300,7 @@ extern "C" {
         };
 
         int _tt_index = 7;
-        int _dg_index = 1;
+        int _dg_index = 0;
         int _cgt_index = 1;
         int _dgt_index = 0;
         int _lct_index = 1;
@@ -338,6 +324,7 @@ extern "C" {
         bool data_flag = 0;
         bool _msg_complete_flag = 0;
         bool _msg_ready_flag = 0;
+        bool _waiting_for_msg_flag = 0;
         std::string _received_msg;
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> _fifo;
@@ -346,6 +333,5 @@ extern "C" {
         pthread_t _thread_id;
         thread_params_t _thread_params;
     };
-
 }
 /***********************    FUNCTION PROTOTYPES    ***********************/
