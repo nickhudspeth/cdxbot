@@ -254,16 +254,16 @@ class GantryModule : public CDXModule {
         _buffer_size = p;
     }
 
-    std::string getUnits() {
+    bool getUnits() {
         return _units;
     }
 
-    std::string &getUnitsRef() {
+    bool &getUnitsRef() {
         return _units;
     }
 
-    void setUnits(std::string s) {
-        _units = s;
+    void setUnits(bool u) {
+        _units = u;
     }
 
     double getTraverseVelocity(void) {
@@ -378,7 +378,8 @@ class GantryModule : public CDXModule {
 
   protected:
     std::string _type = "";
-    std::string _units = "";
+    // std::string _units = "";
+    bool _units = UNITS_MM;
     double _traverse_velocity;
     double _rapid_feed_velocity;
 
