@@ -1,11 +1,11 @@
 cdxbot:
-    num_containers: 6
     origin_x: 0.00
     origin_y: 0.00
     origin_z: 0.00
     extent_x: 440.00
     extent_y: 440.00
     extent_z: 440.00 
+    num_containers: 6
     containers:
         # Container Properties
         c0:              # Container ID Number

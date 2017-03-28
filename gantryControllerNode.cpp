@@ -37,7 +37,7 @@ LICENSE:
 #include <iostream>
 #include <atomic>
 #include "std_msgs/String.h"
-#include "GantryController.h"
+// #include "GantryController.h"
 #include "GantryModule.h"
 #include "cdxbot/gc_cmd.h"
 /*********************    CONSTANTS AND MACROS    **********************/
@@ -80,7 +80,6 @@ GantryModule * loadDriver(std::string file) {
         dlerror();
     }
 
-
     return gm;
 }
 
@@ -88,9 +87,9 @@ GantryModule * loadDriver(std::string file) {
 
 /*************************************************************************
 * Function :   loadParams()
-* Purpose  :   Loads the pipetter configuration parameters from the
+* Purpose  :   Loads the gantry controller configuration parameters from the
 *              parameter server.
-* Input    :   PipetterController gc
+* Input    :   ros::NodeHandle &nh
 * Returns  :   void
 *************************************************************************/
 void loadParams(ros::NodeHandle &nh) {
@@ -148,12 +147,11 @@ void loadParams(ros::NodeHandle &nh) {
                                 Initializing gantry controller with default value " <<\
                         gc->getBufferSize());
     }
-    if(!nh.getParam("/gc_conf/units", gc->getUnitsRef())) {
-        nh.getParam("/gcdefaults/units", gc->getUnitsRef());
-        ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getUnits());
-    }
+    // if(!nh.getParam("/gc_conf/units", gc->getUnitsRef())) {
+        // ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
+                                // Initializing gantry controller with default value " <<\
+                        // gc->getUnits());
+    // }
     if(!nh.getParam("/gc_conf/traverse_velocity", gc->getTraverseVelocityRef())) {
         nh.getParam("/gcdefaults/traverse_velocity", gc->getTraverseVelocityRef());
         ROS_WARN_STREAM("No parameter \"traverse_velocity\" found in configuration file.\
@@ -230,33 +228,37 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
             gc->moveRelative(msg.x, msg.y, msg.z);
         }
     }
-    if(msg.cmd == "wait") {
+    else if(msg.cmd == "wait") {
         gc->dwell(msg.time);
     }
-    if(msg.cmd == "movexy") {
+    else if(msg.cmd == "movexy") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(msg.x, msg.y, 0);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(msg.x, msg.y, 0);
         }
     }
-    if (msg.cmd == "movez") {
+    else if (msg.cmd == "movez") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(0, 0, msg.z);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(0, 0, msg.z);
         }
     }
-    if(msg.cmd == "setvel") {
+    else if(msg.cmd == "setvel") {
+        if(msg.vel < 0){
+            gc->setTraverseVelocity(gc->getRapidFeedVelocity());
+        }
         gc->setTraverseVelocity(msg.vel);
+        printf("Setting velocity to %f\n", gc->getTraverseVelocity());
     }
-    if(msg.cmd == "estop") {
+    else if(msg.cmd == "estop") {
         gc->emergencyStop();
     }
-    if(msg.cmd == "estoprst") {
+    else if(msg.cmd == "estoprst") {
         gc->emergencyStopReset();
     }
-    if(msg.cmd == "home") {
+    else if(msg.cmd == "home") {
         gc->home();
     }
 
@@ -276,7 +278,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
     loadParams(nh);
-    gc->init();
+    std::cout << "GC Init return code: " << gc->init() << std::endl;
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
@@ -291,7 +293,6 @@ int main(int argc, char **argv) {
         pos_pub.publish(msg);
         rate.sleep();
     }
-
 
     return 0;
 }

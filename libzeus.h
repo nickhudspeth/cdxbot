@@ -153,14 +153,14 @@ extern "C" {
         void seterrfunc(void(*ef)(std::string s)) {
             PRINT_ERROR = ef;
         }
-        void moveZDrive(double pos, double vel);
+        void moveZ(double pos, double vel);
         void pickUpTip(void);
         void discardTip(void);
         void aspirate(double vol);
         void dispense(double vol);
         bool getTipStatus(void);
         void getFirmwareVersion(void);
-        unsigned int getZPos(void);
+        double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
         unsigned int getInitializationStatus(void);
@@ -251,7 +251,7 @@ extern "C" {
         struct can_frame & getLastFrame(void);
 
         /* data */
-        int _id = 1;
+        const int _id = 1;
         int _sockfd; // SocketCAN file descriptor
         std::string _interface = "can0";
         unsigned int _remote_timeout = 1000;

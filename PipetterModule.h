@@ -57,9 +57,9 @@ class PipetterModule : public CDXModule {
     PipetterModule (void) {};
     virtual ~PipetterModule (void) {};
 
-    virtual void moveZDrive(double pos, double vel) {};
+    virtual void moveZ(double pos, double vel) {};
 
-    virtual void pickUpTip(void) {};
+    virtual void pickUpTip(int index) {};
 
     virtual void ejectTip(void) {};
 
@@ -67,11 +67,32 @@ class PipetterModule : public CDXModule {
 
     virtual void dispense(double vol) {};
 
+    double getZPos(void){
+        return _zpos;
+    }
+    double &getZPosRef(void){
+        return _zpos;
+    }
+    bool getZAxisEnabled(void){
+        return _z_axis_enabled;
+    }
+    bool &getZAxisEnabledRef(void){
+        return _z_axis_enabled;
+    }
+
+    std::string type;
+    std::string driver_name;
+    std::string driver_path;
 
   protected:
-    bool _z_axis_mobile;
     double _zpos;
     double _zpos_min;
     double _zpos_max;
+    bool _z_axis_enabled;
     /* data */
 };
+
+
+typedef PipetterModule *create_t();
+typedef void destroy_t(PipetterModule *);
+

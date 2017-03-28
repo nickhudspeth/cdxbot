@@ -70,6 +70,38 @@ class PipetterController {
     int loadDriver(std::string file);
 
     /*************************************************************************
+    * Function :   moveZ()
+    * Purpose  :   Move the end effector to the position specified by x.
+    * Input    :   double x
+    * Returns  :   void
+    *************************************************************************/
+    void moveZ(double x);
+   
+    /*************************************************************************
+    * Function :   pickUpTip()
+    * Purpose  :   Picks up a tip of type specified by index
+    * Input    :   int index
+    * Returns  :   void
+    *************************************************************************/
+    void pickUpTip(int index);
+
+    /*************************************************************************
+    * Function :   aspirate()
+    * Purpose  :   Aspirates a volume of fluid specified by vol
+    * Input    :   double vol
+    * Returns  :   void
+    *************************************************************************/
+    void aspirate(double vol);
+    
+    /*************************************************************************
+    * Function :   dispense()
+    * Purpose  :   Dispenses a volume of fluid specified by vol
+    * Input    :   double vol
+    * Returns  :   void
+    *************************************************************************/
+    void dispense(double vol);
+    
+    /*************************************************************************
     * Function :   getZPos()
     * Purpose  :   What does this function do?
     * Input    :   void
@@ -80,6 +112,7 @@ class PipetterController {
     std::string type;
     std::string driver_name;
     std::string driver_path;
+    bool z_axis_enabled;
 
     int (*driver_init)(void);
     int (*driver_deinit)(void);

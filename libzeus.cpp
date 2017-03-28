@@ -148,9 +148,18 @@ extern "C" std::string zfill(std::string s, int len) {
 
 
 ZeusModule::ZeusModule(int id) {
+}
+ZeusModule::~ZeusModule() {
+}
+
+
+/* TODO: nam - Is there a good reason not to move this to the class
+ * constructor? Mon 06 Mar 2017 11:06:21 AM MST */
+
+int ZeusModule::init(void) {
     /* TODO: nam - Start thread_func() here using pthread_create().
      * Mon 06 Mar 2017 11:07:02 AM MST */
-    _id = id;
+    // _id = id;
     struct can_frame f;
     memset(&f, 0, sizeof(struct can_frame));
     setLastFrame(f);
@@ -161,15 +170,10 @@ ZeusModule::ZeusModule(int id) {
     initCANBus();
     pthread_create(&_thread_id, NULL, &thread_func, this);
     // printf("Thread function created.\n");
-    // getInitializationStatus();
-    // initZDrive();
-    // initDosingDrive();
+    initZDrive();
+    initDosingDrive();
     // getInitializationStatus();
     // getFirmwareVersion();
-    // moveZDrive(500, 1);
-    // moveZDrive(0, 1);
-    // moveZDrive(750, 1);
-    // moveZDrive(0, 1);
     struct deck_geometry_t d;
     d.index = 0;
     d.min_traverse_height = 10;
@@ -178,44 +182,6 @@ ZeusModule::ZeusModule(int id) {
     d.potdp = 900;
     setDeckGeometryParams(d);
     getDeckGeometryParams(0);
-    // moveZDrive(500, 1);
-//    pickUpTip();
-    // aspirate(2);
-    // getLastFaultyParameter();
-    // dispense(0);
-    // getLastFaultyParameter();
-    // getLiquidClassParams(10);
-    // getZPos();
-    // if(_error_flag) {
-        // getLastFaultyParameter();
-        // _error_flag = 0;
-    // }
-    // for(int i = 0; i < 25; i++){
-    // getLiquidClassParams(i);
-    // }
-    // getFirmwareVersion();
-}
-ZeusModule::~ZeusModule() {
-    /* TODO: nam - Kill thread_func() here. Mon 06 Mar 2017 11:07:23 AM MST */
-    close(_sockfd);
-    // printf("Closed socket.\n");
-    pthread_cancel(_thread_id);
-    pthread_join(_thread_id, NULL);
-    // printf("Killed thread function.\n");
-    pthread_mutex_destroy(&_lock_msg);
-    // printf("Destroyed mutex.\n");
-    printf("fin.\n");
-}
-
-
-/* TODO: nam - Is there a good reason not to move this to the class
- * constructor? Mon 06 Mar 2017 11:06:21 AM MST */
-
-int ZeusModule::init(void) {
-    // initCANBus();
-    // initZDrive();
-    // initDosingDrive();
-    // printf("Exited init()\n");
     return 0;
 }
 
@@ -223,6 +189,14 @@ int ZeusModule::deinit(void) {
     // Send switchOff command
     std::string cmd = cmdHeader("AV");
     sendCommand(cmd);
+    close(_sockfd);
+    // printf("Closed socket.\n");
+    pthread_cancel(_thread_id);
+    pthread_join(_thread_id, NULL);
+    // printf("Killed thread function.\n");
+    pthread_mutex_destroy(&_lock_msg);
+    // printf("Destroyed mutex.\n");
+    // printf("fin.\n");
     return 0;
 }
 
@@ -230,7 +204,7 @@ int ZeusModule::lconf(void) {
     return 0;
 }
 
-void ZeusModule::moveZDrive(double pos, double vel) {
+void ZeusModule::moveZ(double pos, double vel) {
     std::string cmd = cmdHeader("GZ");
     if((_zpos > ZPOS_MAX) || (_zpos < ZPOS_MIN)) {
         printf("LIBZEUS: Requested z-position %f out of range.\
@@ -360,7 +334,7 @@ int ZeusModule::initCANBus(void) {
         perror("ERROR:LIBZEUS - Error while opening socket.\n");
         exit(1);
     }
-    // printf("Opened CAN socket with file descriptor %d\n", _sockfd);
+    printf("Opened CAN socket with file descriptor %d\n", _sockfd);
 
     addr.can_family = AF_CAN;
     strcpy(ifr.ifr_name, _interface.c_str());
@@ -371,6 +345,8 @@ int ZeusModule::initCANBus(void) {
 
     addr.can_ifindex = ifr.ifr_ifindex;
     fcntl(_sockfd, F_SETFL, O_NONBLOCK);
+    sprintf(cwd, "sockfd = %d\n", _sockfd);
+    perror(cwd);
     if(bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("ERROR:LIBZEUS - Error while attempting to bind to socket.\n");
         close(_sockfd);
@@ -381,7 +357,7 @@ int ZeusModule::initCANBus(void) {
 
 std::string ZeusModule::cmdHeader(std::string cmd) {
     std::string ret;
-    ret = cmd + "id" + zfill(std::to_string(_id), 4);
+    ret = cmd + "id" + zfill("1", 4);
     return ret;
 }
 
@@ -580,14 +556,14 @@ bool ZeusModule::getTipStatus(void) {
     return stoi(ret);
 }
 
-unsigned int ZeusModule::getZPos(void) {
+double ZeusModule::getZPos(void) {
     std::string cmd = cmdHeader("RZ");
     setWaitingForMsgFlag(1);
     sendCommand(cmd);
     while(getWaitingForMsgFlag() == 1) {}
     std::string z_str = getReceivedMsg().substr(getReceivedMsg().find("gy")+2, 3);
     // printf("ZPOS is: %d\n", stoi(z_str));
-    return stoi(z_str);
+    return stod(z_str);
 }
 
 void ZeusModule::emergencyStop(void) {

@@ -52,10 +52,11 @@ LICENSE:
 // #include "common.h"
 #include <dlfcn.h>
 #include <pthread.h>
-#include "GantryController.h"
+// #include "GantryController.h"
 #include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define NETBUFSIZE 64
+#define UNITS_MM 0
 
 typedef struct {
     int sockfd;
@@ -88,7 +89,7 @@ extern "C" {
         int motorsEnable(void);
         int moveAbsolute(float x, float y, float z);
         int moveRelative(float x, float y, float z);
-        int setUnits(unsigned int u);
+        int setUnits(unsigned int u = UNITS_MM);
         int setAxisStepsPerMM(unsigned int axis, unsigned int steps);
         int getSocket(void) {
             return _sockfd;
@@ -98,15 +99,16 @@ extern "C" {
         }
 
       private:
-        int sendCommand(const std::string s);
+        int sendCommand(std::string s);
         int readResponse(void);
+        bool _units = UNITS_MM;
         /* Networking configuration */
-        std::string _host_ip = "";
-        unsigned int _host_port = 0;
+        std::string _host_ip = "192.168.169.99";
+        unsigned int _host_port = 23;
         int _sockfd = 0;
         char _buffer[NETBUFSIZE];
         double _netTimeoutMS = 0.0;
-        struct sockaddr_in _remote;
+        // struct sockaddr_in _remote;
     };
 
 }

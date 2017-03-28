@@ -46,11 +46,13 @@ LICENSE:
 double Container::getGlobalCoords(const char axis, unsigned int row, unsigned int col) {
     double ret = 0;
     if(row > _rows) {
+        printf("ERROR: Specified row index \"%d\" is out of range for container.\n", row);
         // Throw error: specified row index out of range for container.
         return 0;
     }
     if(col > _cols) {
         // Throw error: specified column index out of range for container.
+        printf("ERROR: Specified column index \"%d\" is out of range for container.\n", col);
         return 0;
     }
 
@@ -69,6 +71,7 @@ double Container::getGlobalCoords(const char axis, unsigned int row, unsigned in
 
     default:
         // Throw error: unspecified axis selected
+        printf("ERROR: Specified axis \"%c\" is invalid.\n", axis);
         break;
     }
     return ret;

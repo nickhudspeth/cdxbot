@@ -76,9 +76,10 @@ SmoothieModule::SmoothieModule() {}
 SmoothieModule::~SmoothieModule() {}
 
 int SmoothieModule::init(void) {
+    struct sockaddr_in _remote;
     /* Clear out needed memory */
     std::memset(_buffer, 0, NETBUFSIZE);
-    std::memset(&_remote, 0, sizeof(_remote));
+    std::memset(&_remote, 0, sizeof(struct sockaddr_in));
     /* Fill in required details in the socket structure */
     _remote.sin_family = AF_INET;
     _remote.sin_port = htons(_port);
@@ -87,14 +88,18 @@ int SmoothieModule::init(void) {
     std::cout <<"LIBSMOOTHIE: Connecting to " << _ip_address << ":" << _port << std::endl;
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if(_sockfd < 0) {
+        std::cout << "err 1" << std::endl;
         perror("socket");
         return -1;
     }
+    std::cout << "sockfd = " << _sockfd <<std::endl;
     /* Connect to remote host */
     if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
+        std::cout << "err 2" << std::endl;
         perror("connect");
         return -1;
     }
+    std::cout <<"LIBSMOOTHIE: Connected to " << _ip_address << ":" << _port << std::endl;
     thread_params.sockfd = _sockfd;
     thread_params.buffer = _buffer;
     thread_params.timeout = _netTimeoutMS;
@@ -105,6 +110,7 @@ int SmoothieModule::init(void) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     //pthread_create(&thread_id, &attr, &thread_func, &thread_params);
     pthread_attr_destroy(&attr);
+    home(AXIS_ALL);
     return 0;
 }
 
@@ -163,12 +169,13 @@ int SmoothieModule::home(unsigned int axis) {
 }
 
 
-int SmoothieModule::sendCommand(const std::string s) {
+int SmoothieModule::sendCommand(std::string s) {
+    s += "\r\n";
     std::cout << "LIBSMOOTHIE: Sending command: " << s.c_str() << std::endl;
     char buf[128];
     memset(buf, 0, 128);
     int len = s.size();
-    sprintf(buf, s.c_str());
+    sprintf(buf, "%s", s.c_str());
     int n = 0;
     n = write(_sockfd, buf, len);
     if(n < 0) {
@@ -227,6 +234,10 @@ int SmoothieModule::motorsEnable(void) {
 }
 
 int SmoothieModule::moveAbsolute(float x, float y, float z) {
+
+    /* TODO: nam - Modify function such that x,y,z destinations less than zero are
+     * supported. Tue 28 Mar 2017 11:08:51 AM MDT */
+
     std::string ret = "G90"; // Set absolute mode (modal)
     sendCommand(ret);
     ret = std::string("G0");

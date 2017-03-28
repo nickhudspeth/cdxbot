@@ -115,8 +115,7 @@ catkin_package(
     LIBRARIES smoothie zeus eppendorf
     #  CATKIN_DEPENDS other_catkin_pkg
     # DEPENDS system_lib
-    CATKIN_DEPENDS message_runtime
-    )
+    CATKIN_DEPENDS message_runtime)
 
 ###########
 ## Build ##
@@ -144,8 +143,7 @@ add_library(eppendorf
     libeppendorf.cpp)
 
 add_library(smoothie
-    libsmoothie.cpp
-    GantryController.cpp)
+    libsmoothie.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -153,15 +151,17 @@ add_library(smoothie
 # add_dependencies(cdxbot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(gantryControllerNode gantryControllerNode.cpp GantryController.cpp)
-add_executable(pipetterControllerNode pipetterControllerNode.cpp
-    PipetterController.cpp)
+add_executable(gantryControllerNode gantryControllerNode.cpp)
+add_executable(pipetterControllerNode pipetterControllerNode.cpp)
 add_executable(visionControllerNode visionControllerNode.cpp)
-add_executable(CDXBotNode Container.cpp CDXBot.cpp CDXBotNode.cpp )
+add_executable(CDXBotNode Container.cpp CDXBot.cpp CDXBotNode.cpp)
 
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
+add_dependencies(gantryControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(pipetterControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(visionControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(CDXBotNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against

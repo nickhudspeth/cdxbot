@@ -9,9 +9,9 @@ gc_conf:
     buffer_size: 100
 
         # DRIVE CONFIGURATION SETTINGS
-    units: "mm"
-    traverse_velocity: 50
-    rapid_feed_velocity: 100
+    units: 1
+    traverse_velocity: 50000
+    rapid_feed_velocity: 150000
 
     xpos_min: 0.0
     xpos_max: 440.0

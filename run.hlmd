@@ -1,7 +1,7 @@
 estop
 estoprst
 home
-move, 100, 200, 20
+move, 1, 5, 2
 wait, 100, 150
-move, 100, 200
+move, 1, 5, 10
 end

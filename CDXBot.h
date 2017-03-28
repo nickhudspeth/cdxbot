@@ -88,6 +88,11 @@ class CDXBot {
         return _feed_plane;
     }
     void setFeedPlaneHeight(double z);
+
+    std::vector<class Container> &getContainersRef(void) {
+        return _containers;
+    }
+
   private:
     double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
@@ -104,7 +109,8 @@ class CDXBot {
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);
     /* data */
-    std::map<unsigned int, class Container> _containers; // List of deck containers.
+    // std::map<unsigned int, class Container> _containers; // List of deck containers.
+    std::vector<class Container> _containers;
 };
 
 struct action {

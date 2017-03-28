@@ -71,7 +71,10 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
                         Initializing cdxbot with default value %s",\
                  cd.getNumContainers());
     }
+    printf("NUM CONTAINERS = %d\n", cd.getNumContainers());
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
+        cd.getContainersRef().emplace_back();
+
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
             nh.getParam("/cdxbot_defaults/type",cd.getContainer(i).getTypeRef());
@@ -202,6 +205,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
     }
 
+    printf("Container map contains %lu elements.\n",cd.getContainersRef().size());
 
     ROS_INFO_STREAM(ros::this_node::getName() << "Loaded configuration parameters.");
     return 0;
@@ -234,12 +238,12 @@ void parseAction(CDXBot cd, const struct action a) {
         /* Convert CRC (Container, Row, Column) coords to XYZ Coordinates. */
         // if(a.args[1] > cd.getNumContainers()) {
         //    THROW ERROR: CONTAINER INDEX OUT OF RANGE.
-            // return;
+        // return;
         // }
         double x = cd.getContainer(a.args[1]).getGlobalCoords('x', a.args[2], a.args[3]);
         double y = cd.getContainer(a.args[1]).getGlobalCoords('y', a.args[2], a.args[3]);
         double z = cd.getContainer(a.args[1]).getGlobalCoords('z', a.args[2], a.args[3]);
-
+        std::cout << "moving to coordinates (x, y, z) = (" << x << ", " << y << ", " << z << ")" << std::endl;
         /* Move tip to feed plane */
         gmsg.cmd = "movez";
         gmsg.z = z;
@@ -247,7 +251,8 @@ void parseAction(CDXBot cd, const struct action a) {
 
         /* Rapid feed to calculated coordinates in feed plane */
         gmsg.cmd = "setvel";
-        gmsg.vel = -1;     /* Feed at maximum velocity */
+        gmsg.vel = -1;   //  [> Feed at maximum velocity <]
+        // gmsg.vel = 150000;     [> Feed at maximum velocity <]
         gc_pub.publish(gmsg);
 
         gmsg.cmd = "movexy";
@@ -257,7 +262,8 @@ void parseAction(CDXBot cd, const struct action a) {
 
         /* Set velocity to plunge velocity */
         gmsg.cmd = "setvel";
-        gmsg.vel = -1;     /* Feed at maximum velocity */
+        // gmsg.vel = -1;     [> Feed at maximum velocity <]
+        gmsg.vel = 150000;//     [> Feed at maximum velocity <]
         gc_pub.publish(gmsg);
 
         /* Move to top of container cell */
@@ -310,19 +316,17 @@ void parseAction(CDXBot cd, const struct action a) {
         /* Eject tip from pipetter */
 
         /* Move to home position? */
-    } else if(a.cmd == "wait"){
+    } else if(a.cmd == "wait") {
         gmsg.cmd = "wait";
         gmsg.time = a.args[0];
         gc_pub.publish(gmsg);
-    }else if(a.cmd == "home"){
+    } else if(a.cmd == "home") {
         gmsg.cmd = "home";
         gc_pub.publish(gmsg);
-    }
-    else if (a.cmd == "estop"){
+    } else if (a.cmd == "estop") {
         gmsg.cmd = "estop";
         gc_pub.publish(gmsg);
-    }
-    else if(a.cmd == "estoprst"){
+    } else if(a.cmd == "estoprst") {
         gmsg.cmd = "estoprst";
         gc_pub.publish(gmsg);
     }
