@@ -59,11 +59,12 @@ add_message_files(
     )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+    FILES
+    gc_cmd_s.srv
+    pc_cmd_s.srv
+    vc_cmd_s.srv
+    )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -76,9 +77,6 @@ add_message_files(
 generate_messages(
     DEPENDENCIES
     std_msgs  # Or other packages containing msgs
-    # gc_cmd.msg
-    # pc_cmd.msg
-    # vc_cmd.msg
     )
 
 ################################################

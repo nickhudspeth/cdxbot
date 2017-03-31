@@ -70,18 +70,17 @@ class CDXBot {
         return _containers.size();
     }
     void setNumContainers(unsigned int i) {
-        _num_containers = i;
+        if(_containers.size() < i) {
+            for(int j = 0; j < (_containers.size() - i); j++) {
+                _containers.push_back(Container());
+            }
+        }
     }
-
-    int& getNumContainersRef(void) {
-        return _num_containers;
-    }
-
-    // unsigned int getNumContainers(void) {
-    // return _num_containers;
-    // }
 
     Container& getContainer(unsigned int index) {
+        if(index > _containers.size()){
+            printf("Requested container index %d is out of range [%d, %zu ]!", index, 0, _containers.size());
+        }
         return _containers[index];
     };
     double getFeedPlaneHeight(void) {
@@ -97,7 +96,6 @@ class CDXBot {
     double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
     unsigned int _runStatus = 0;
-    int _num_containers;
     double origin_x = 0.0;
     double origin_y = 0.0;
     double origin_z = 0.0;

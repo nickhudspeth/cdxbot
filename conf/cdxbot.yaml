@@ -9,7 +9,7 @@ cdxbot:
     containers:
         # Container Properties
         c0:              # Container ID Number
-            type: "well"        # Container type [tip/well]
+            type: "tip"        # Container type [tip/well]
             length: 150         # Container Exterior Length
             width:  100         # Container Exterior Width
             height: 50          # Container Exterior Height
@@ -24,7 +24,7 @@ cdxbot:
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c1:              # Container ID Number
-            type: "well"        # Container type [tip/well]
+            type: "tip"        # Container type [tip/well]
             length: 150         # Container Exterior Length
             width:  100         # Container Exterior Width
             height: 50          # Container Exterior Height
@@ -35,8 +35,8 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
+            offset_x: 200        # X-offset Between Container Origin and Deck Origin
+            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c2:              # Container ID Number
             type: "well"        # Container type [tip/well]
@@ -50,7 +50,7 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
+            offset_x: 300        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c3:              # Container ID Number
@@ -66,7 +66,7 @@ cdxbot:
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
+            offset_y: 100        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c4:              # Container ID Number
             type: "well"        # Container type [tip/well]
@@ -80,8 +80,8 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
+            offset_x: 200        # X-offset Between Container Origin and Deck Origin
+            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c5:              # Container ID Number
             type: "well"        # Container type [tip/well]
@@ -95,7 +95,7 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
+            offset_x: 300        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c6:              # Container ID Number
@@ -111,7 +111,7 @@ cdxbot:
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
+            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
         c7:              # Container ID Number
             type: "well"        # Container type [tip/well]

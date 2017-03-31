@@ -148,9 +148,9 @@ void loadParams(ros::NodeHandle &nh) {
                         gc->getBufferSize());
     }
     // if(!nh.getParam("/gc_conf/units", gc->getUnitsRef())) {
-        // ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
-                                // Initializing gantry controller with default value " <<\
-                        // gc->getUnits());
+    // ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
+    // Initializing gantry controller with default value " <<\
+    // gc->getUnits());
     // }
     if(!nh.getParam("/gc_conf/traverse_velocity", gc->getTraverseVelocityRef())) {
         nh.getParam("/gcdefaults/traverse_velocity", gc->getTraverseVelocityRef());
@@ -227,38 +227,32 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(msg.x, msg.y, msg.z);
         }
-    }
-    else if(msg.cmd == "wait") {
+    } else if(msg.cmd == "wait") {
         gc->dwell(msg.time);
-    }
-    else if(msg.cmd == "movexy") {
+    } else if(msg.cmd == "movexy") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(msg.x, msg.y, 0);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(msg.x, msg.y, 0);
         }
-    }
-    else if (msg.cmd == "movez") {
+    } else if (msg.cmd == "movez") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(0, 0, msg.z);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(0, 0, msg.z);
         }
-    }
-    else if(msg.cmd == "setvel") {
-        if(msg.vel < 0){
+    } else if(msg.cmd == "setvel") {
+        if(msg.vel < 0) {
             gc->setTraverseVelocity(gc->getRapidFeedVelocity());
+        } else {
+            gc->setTraverseVelocity(msg.vel);
         }
-        gc->setTraverseVelocity(msg.vel);
         printf("Setting velocity to %f\n", gc->getTraverseVelocity());
-    }
-    else if(msg.cmd == "estop") {
+    } else if(msg.cmd == "estop") {
         gc->emergencyStop();
-    }
-    else if(msg.cmd == "estoprst") {
+    } else if(msg.cmd == "estoprst") {
         gc->emergencyStopReset();
-    }
-    else if(msg.cmd == "home") {
+    } else if(msg.cmd == "home") {
         gc->home();
     }
 
@@ -280,7 +274,7 @@ int main(int argc, char **argv) {
     loadParams(nh);
     std::cout << "GC Init return code: " << gc->init() << std::endl;
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
-    ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
+    ros::Subscriber sub = nh.subscribe("/gc_pub", 1000, &gcPubCallback);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Rate rate(100);
     std::cout << "Initialized gc with addr: " << &gc << std::endl;

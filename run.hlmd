@@ -1,7 +1,12 @@
-estop
-estoprst
-home
-move, 1, 5, 2
-wait, 100, 150
-move, 1, 5, 10
+move, 1, 2, 2
+wait, 300
+move, 2, 1, 6
+wait, 500
+move, 3, 4, 3
+wait, 300
+move, 4, 3, 7
+wait, 400
+move, 5, 5, 8
+wait, 800
+move, 6, 1, 2
 end

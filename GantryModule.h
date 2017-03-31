@@ -392,7 +392,7 @@ class GantryModule : public CDXModule {
     int _port;
     int _timeout;
     int _buffer_size;
-    int _move_mode; /* [0,1] Absolute/Relative
+    int _move_mode = MOVE_MODE_ABSOLUTE; /* [0,1] Absolute/Relative
     /*************************************************************************
     * Function :   sendCommand()
     * Purpose  :   Send the G-Code command specified by cmd to the controller.

@@ -44,6 +44,7 @@ LICENSE:
 
 
 double Container::getGlobalCoords(const char axis, unsigned int row, unsigned int col) {
+    // printf("Getting global coords for container axis %c with %d rows and %d cols.\n", axis, _rows, _cols);
     double ret = 0;
     if(row > _rows) {
         printf("ERROR: Specified row index \"%d\" is out of range for container.\n", row);

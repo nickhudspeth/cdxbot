@@ -108,8 +108,10 @@ extern "C" void *thread_func(void *arg) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
                                 zm->setWaitingForMsgFlag(0);
-                                printf("Received message: %s -> ", msg.c_str());
-                                printf("%s\n", zm->parseErrors(msg).c_str());
+                                if(PRINT_OUTPUT) {
+                                    printf("Received message: %s -> ", msg.c_str());
+                                    printf("%s\n", zm->parseErrors(msg).c_str());
+                                }
                                 msg.clear();
                             } else {
                                 zm->sendRemoteFrame(8);
@@ -495,7 +497,9 @@ struct can_frame & ZeusModule::getLastFrame(void) {
 }
 
 void ZeusModule::sendCommand(std::string cmd) {
-    printf("Sending command: %s. -> ", cmd.c_str());
+    if(PRINT_OUTPUT) {
+        printf("Sending command: %s. -> ", cmd.c_str());
+    }
     std::vector<std::string> substrings;
     size_t sbegin = 0;
 

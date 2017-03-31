@@ -119,7 +119,7 @@ int SmoothieModule::deinit(void) {
     printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
     pthread_exit(&thread_id);
     printf("LIBSMOOTHIE: Killed worker thread.\n");
-    PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
+    // PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
 }
 
 int SmoothieModule::lconf(void) {
@@ -132,7 +132,7 @@ void SmoothieModule::seterrfunc(void(*ef)(std::string s)) {
 
 void SmoothieModule::dwell(int t) {
     std::string ret = "G4 P";
-    ret += t;
+    ret += std::to_string(t);
     sendCommand(ret);
 }
 
@@ -165,6 +165,9 @@ int SmoothieModule::home(unsigned int axis) {
         break;
     }
     sendCommand(ret);
+    _pos[0] =  0;
+    _pos[1] = 0;
+    _pos[2] = 0;
     return 0;
 }
 
@@ -237,27 +240,48 @@ int SmoothieModule::moveAbsolute(float x, float y, float z) {
 
     /* TODO: nam - Modify function such that x,y,z destinations less than zero are
      * supported. Tue 28 Mar 2017 11:08:51 AM MDT */
-
-    std::string ret = "G90"; // Set absolute mode (modal)
-    sendCommand(ret);
+    std::string ret;
+    int move_times[] = {0, 0, 0};
+    double tvel = _traverse_velocity / 60.0f;
+    if (_move_mode != MOVE_MODE_ABSOLUTE) {
+        ret = "G90"; // Set absolute mode (modal)
+        sendCommand(ret);
+        _move_mode = MOVE_MODE_ABSOLUTE;
+    }
     ret = std::string("G0");
     if(x > 0) {
         ret += std::string(" X") + std::to_string(x);
+        double diff = std::abs(x - _pos[0]);
+        move_times[0] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+        _pos[0] = x;
     }
     if(y > 0) {
         ret += std::string(" Y") + std::to_string(y);
+        double diff = std::abs(y - _pos[1]);
+        move_times[1] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+        _pos[1] = y;
     }
     if(z > 0) {
         ret += std::string(" Z") + std::to_string(z);
+        double diff = std::abs(z - _pos[2]);
+        move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+        _pos[2] = z;
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
+    // int stime = *std::max_element(move_times, move_times+3);
+    // printf("SLEEPING %d MICROSECONDS...\n", stime);
+    // usleep(stime);
     return 0;
 }
 
 int SmoothieModule::moveRelative(float x, float y, float z) {
-    std::string ret = "G91"; // Set relative mode (modal)
-    sendCommand(ret);
+    std::string ret;
+    if (_move_mode != MOVE_MODE_RELATIVE) {
+        ret = "G91"; // Set absolute mode (modal)
+        sendCommand(ret);
+        _move_mode = MOVE_MODE_RELATIVE;
+    }
     ret = std::string("G0");
     if(x > 0) {
         ret += std::string(" X") + std::to_string(x);

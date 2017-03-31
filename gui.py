@@ -6,11 +6,11 @@ from std_msgs.msg import String
 import kivy
 # kivy.require('1.0.6')
 from kivy.config import Config
-Config.set('graphics', 'resizable', 0)  # Disable window resizing
-Config.set('graphics', 'borderless', 1)  # Disable window bordering
+#  Config.set('graphics', 'resizable', 0)  # Disable window resizing
+#  Config.set('graphics', 'borderless', 1)  # Disable window bordering
 # from kivy.core.window import Window
 # Window.size = (500, 300)
-Config.set('graphics', 'fullscreen', 'auto')  # Set window to match screen res
+#  Config.set('graphics', 'fullscreen', 'auto')  # Set window to match screen res
 Config.set('kivy', 'window_icon', './res/cdxicon.png')
 Config.set('kivy','exit_on_escape', 0)
 from kivy.app import App

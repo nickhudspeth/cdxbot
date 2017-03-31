@@ -52,6 +52,9 @@ LICENSE:
 // #include "common.h"
 #include <dlfcn.h>
 #include <pthread.h>
+#include <vector>
+#include <cmath>
+#include <algorithm>
 // #include "GantryController.h"
 #include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
@@ -108,6 +111,7 @@ extern "C" {
         int _sockfd = 0;
         char _buffer[NETBUFSIZE];
         double _netTimeoutMS = 0.0;
+        double _pos[3] = {0, 0, 0};
         // struct sockaddr_in _remote;
     };
 

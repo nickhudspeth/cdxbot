@@ -63,6 +63,9 @@ LICENSE:
 #include <sys/stat.h>
 #include "PipetterModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+#define PRINT_OUTPUT 0
+
+
 #define KICK_MASK 0b10000000000
 #define SENDER_ID_MASK 0x03E0
 #define RECEIVER_ID_MASK 0x001F

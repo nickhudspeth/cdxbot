@@ -41,8 +41,12 @@ LICENSE:
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include "cdxbot/gc_cmd.h"
+#include "cdxbot/gc_cmd_s.h"
 #include "cdxbot/pc_cmd.h"
+#include "cdxbot/pc_cmd_s.h"
 #include "cdxbot/vc_cmd.h"
+#include "cdxbot/vc_cmd_s.h"
+
 #include "CDXBot.h"
 
 
@@ -62,19 +66,26 @@ ros::Publisher vc_pub;
 ros::Publisher shutdown_pub;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
-int loadConfig(ros::NodeHandle nh, CDXBot cd) {
+int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
     char buf[64];
     memset(buf, ' ',64);
-    if(!nh.getParam("/cdxbot/num_containers", cd.getNumContainersRef())) {
-        nh.getParam("/cdxbot_defaults/num_containers", cd.getNumContainersRef());
+    int ret = 0;
+    nh.getParam("/cdxbot/num_containers", ret);
+    printf("Read value of %d for num_containers.\n", ret);
+    if(!nh.getParam("/cdxbot/num_containers", ret)) {
+        nh.getParam("/cdxbot_defaults/num_containers", ret);
         ROS_WARN("No parameter 'num_containers' found in configuration file.\
                         Initializing cdxbot with default value %s",\
                  cd.getNumContainers());
     }
-    printf("NUM CONTAINERS = %d\n", cd.getNumContainers());
+    cd.setNumContainers(ret);
+    // if(!nh.getParam("/cdxbot/num_containers", cd.getNumContainersRef())) {
+    // nh.getParam("/cdxbot_defaults/num_containers", cd.getNumContainersRef());
+    // ROS_WARN("No parameter 'num_containers' found in configuration file.\
+    // Initializing cdxbot with default value %s",\
+    // cd.getNumContainers());
+    // }
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
-        cd.getContainersRef().emplace_back();
-
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
             nh.getParam("/cdxbot_defaults/type",cd.getContainer(i).getTypeRef());
@@ -82,6 +93,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
                         Initializing cdxbot with default value %s",\
                      i, cd.getContainer(i).getType());
         }
+        printf("Container %d initialized with type %s.\n", i, cd.getContainer(i).getType().c_str());
 
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/length", i);
@@ -205,8 +217,6 @@ int loadConfig(ros::NodeHandle nh, CDXBot cd) {
         }
     }
 
-    printf("Container map contains %lu elements.\n",cd.getContainersRef().size());
-
     ROS_INFO_STREAM(ros::this_node::getName() << "Loaded configuration parameters.");
     return 0;
 }
@@ -229,7 +239,7 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
     }
 }
 
-void parseAction(CDXBot cd, const struct action a) {
+void parseAction(CDXBot &cd, const struct action a) {
     cdxbot::gc_cmd gmsg;
     cdxbot::pc_cmd pmsg;
     cdxbot::vc_cmd vmsg;
@@ -237,12 +247,16 @@ void parseAction(CDXBot cd, const struct action a) {
     if(a.cmd == "move") {
         /* Convert CRC (Container, Row, Column) coords to XYZ Coordinates. */
         // if(a.args[1] > cd.getNumContainers()) {
-        //    THROW ERROR: CONTAINER INDEX OUT OF RANGE.
+        // THROW ERROR: CONTAINER INDEX OUT OF RANGE.
+        // ROS_ERROR("Container index (%d) out of range [0, %d].\n", a.args[1], cd.getNumContainers());
         // return;
         // }
-        double x = cd.getContainer(a.args[1]).getGlobalCoords('x', a.args[2], a.args[3]);
-        double y = cd.getContainer(a.args[1]).getGlobalCoords('y', a.args[2], a.args[3]);
-        double z = cd.getContainer(a.args[1]).getGlobalCoords('z', a.args[2], a.args[3]);
+        printf("CDXBotNode: Parsing move command.\n");
+        unsigned int cidx = (int)a.args[0];
+        printf("Calculating coordinates of container... %d\n", cidx);
+        double x = cd.getContainer(cidx).getGlobalCoords('x', a.args[1], a.args[2]);
+        double y = cd.getContainer(cidx).getGlobalCoords('y', a.args[1], a.args[2]);
+        double z = cd.getContainer(cidx).getGlobalCoords('z', a.args[1], a.args[2]);
         std::cout << "moving to coordinates (x, y, z) = (" << x << ", " << y << ", " << z << ")" << std::endl;
         /* Move tip to feed plane */
         gmsg.cmd = "movez";
@@ -252,7 +266,6 @@ void parseAction(CDXBot cd, const struct action a) {
         /* Rapid feed to calculated coordinates in feed plane */
         gmsg.cmd = "setvel";
         gmsg.vel = -1;   //  [> Feed at maximum velocity <]
-        // gmsg.vel = 150000;     [> Feed at maximum velocity <]
         gc_pub.publish(gmsg);
 
         gmsg.cmd = "movexy";
@@ -262,8 +275,7 @@ void parseAction(CDXBot cd, const struct action a) {
 
         /* Set velocity to plunge velocity */
         gmsg.cmd = "setvel";
-        // gmsg.vel = -1;     [> Feed at maximum velocity <]
-        gmsg.vel = 150000;//     [> Feed at maximum velocity <]
+        gmsg.vel = -1;    // [> Feed at maximum velocity <]
         gc_pub.publish(gmsg);
 
         /* Move to top of container cell */
@@ -340,6 +352,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
     ros::Rate rate(100);
+    loadConfig(nh, cd);
     /* Subscribe to GUI topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
@@ -348,9 +361,16 @@ int main(int argc, char **argv) {
     gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
     pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
     vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
+    
+    ros::ServiceClient gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
+    ros::ServiceClient pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
+    ros::ServiceClient vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
     //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
 
     /* Check for and load/parse HLMD file */
+
+    /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */
+
     if(!cd.parseHLMDFile(cd.HLMDFileLocation)) {
         ROS_INFO_STREAM(ros::this_node::getName() << "Found HLMD file at " << cd.HLMDFileLocation <<".");
         ROS_DEBUG_STREAM(ros::this_node::getName() << cd.actionMap.size() << "items pushed into actionmap.");
@@ -365,7 +385,6 @@ int main(int argc, char **argv) {
     } else {
         ROS_INFO_STREAM(ros::this_node::getName() << "Error reading HLMD file.");
     }
-    loadConfig(nh, cd);
     /* Process commands in HLMD file. */
     while(ros::ok()) {
         if(cd.getRunStatus() == 1) {
@@ -375,7 +394,6 @@ int main(int argc, char **argv) {
                 ROS_INFO_STREAM("DONE!");
                 cd.setRunStatus(0);
             } else {
-                ROS_INFO_STREAM("Got action: " << a.cmd);
                 parseAction(cd, a);
             }
         } else {

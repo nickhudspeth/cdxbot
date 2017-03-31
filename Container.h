@@ -465,17 +465,17 @@ class Container {
     }
 
   private:
-    std::string _type;      // Type of container.(tip rack, well plate, etc.)
-    double _length;
-    double _width;
-    double _height;
-    int _rows;
-    int _cols;
-    double _row_spacing;
-    double _col_spacing;
-    double _well_depth;     // Well depth measured from top of deck (mm)
-    double _offset_x;       // Container origin offset from gantry origin (mm)
-    double _offset_y;
-    double _offset_z;
+    std::string _type = "tip";      // Type of container.(tip rack, well plate, etc.)
+    double _length = 0;
+    double _width = 0;
+    double _height = 0;
+    int _rows = 0;
+    int _cols = 0;
+    double _row_spacing = 0;
+    double _col_spacing = 0;
+    double _well_depth = 0;     // Well depth measured from top of deck (mm)
+    double _offset_x = 0;       // Container origin offset from gantry origin (mm)
+    double _offset_y = 0;
+    double _offset_z = 0;
     std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
 };
