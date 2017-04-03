@@ -464,6 +464,45 @@ class Container {
         return _cells;
     }
 
+    /*************************************************************************
+    * Function :   setTrayOffset()
+    * Purpose  :   What does this function do?
+    * Input    :   unsigned axis, const double val
+    * Returns  :   void
+    *************************************************************************/
+    void setTrayOffset(const unsigned int axis, const double val) {
+        if(axis > 2) {
+            return;
+        }
+        _tray_offsets[axis] = val;
+    }
+
+    /*************************************************************************
+    * Function :   getTrayOffset()
+    * Purpose  :   What does this function do?
+    * Input    :   const unsigned int axis
+    * Returns  :   double
+    *************************************************************************/
+    double getTrayOffset(const unsigned int axis) {
+        if(axis > 2) {
+            return 0.0;
+        }
+        return _tray_offsets[axis];
+    }
+
+    /*************************************************************************
+    * Function :   getTrayOffsetRef()
+    * Purpose  :   What does this function do?
+    * Input    :   const unsigned int axis
+    * Returns  :   double &
+    *************************************************************************/
+    double &getTrayOffsetRef(const unsigned int axis) {
+        if(axis > 2) {
+            return _tray_offsets[0];
+        }
+        return _tray_offsets[axis];
+    }
+
   private:
     std::string _type = "tip";      // Type of container.(tip rack, well plate, etc.)
     double _length = 0;
@@ -477,5 +516,6 @@ class Container {
     double _offset_x = 0;       // Container origin offset from gantry origin (mm)
     double _offset_y = 0;
     double _offset_z = 0;
+    double _tray_offsets[3] = {0, 0, 0};
     std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
 };

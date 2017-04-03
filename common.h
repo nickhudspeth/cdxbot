@@ -42,9 +42,9 @@ LICENSE:
 #include <cstdlib>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 
-#define AXIS_X   1
-#define AXIS_Y   2
-#define AXIS_Z   3
+#define AXIS_X   0
+#define AXIS_Y   1
+#define AXIS_Z   2
 
 #define UNITS_MM 0
 #define UNITS_IN 1

@@ -23,6 +23,9 @@ cdxbot:
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c1:              # Container ID Number
             type: "tip"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -38,6 +41,9 @@ cdxbot:
             offset_x: 200        # X-offset Between Container Origin and Deck Origin
             offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c2:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -53,6 +59,9 @@ cdxbot:
             offset_x: 300        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c3:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -68,6 +77,9 @@ cdxbot:
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
             offset_y: 100        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c4:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -83,6 +95,9 @@ cdxbot:
             offset_x: 200        # X-offset Between Container Origin and Deck Origin
             offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c5:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -98,6 +113,9 @@ cdxbot:
             offset_x: 300        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c6:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -113,6 +131,9 @@ cdxbot:
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
             offset_y: 200        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
         c7:              # Container ID Number
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
@@ -128,3 +149,8 @@ cdxbot:
             offset_x: 50        # X-offset Between Container Origin and Deck Origin
             offset_y: 50        # Y-offset Between Container Origin and Deck Origin
             offset_z: 50        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
+
+

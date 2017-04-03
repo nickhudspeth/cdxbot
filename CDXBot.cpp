@@ -86,12 +86,21 @@ void CDXBot::setRunStatus(unsigned int s) {
 }
 
 int CDXBot::getNextAction(struct action &a) {
-    if(actionMap.begin() != actionMap.end()) {
-        a.cmd = actionMap[0].cmd;
-        a.args = actionMap[0].args;
-        actionMap.erase(actionMap.begin());
-        return 0;
+    // if(actionMap.begin() != actionMap.end()) {
+    // a.cmd = actionMap[0].cmd;
+    // a.args = actionMap[0].args;
+    // actionMap.erase(actionMap.begin());
+    // return 0;
 
+    // } else {
+    // return -1;
+    // }
+    unsigned int idx = getActionIndex();
+    if(idx < (actionMap.size() - 1)) {
+        a.cmd = actionMap[idx].cmd;
+        a.args = actionMap[idx].args;
+        setActionIndex(++idx);
+        return 0;
     } else {
         return -1;
     }

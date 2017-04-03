@@ -46,7 +46,7 @@ LICENSE:
 #include "cdxbot/pc_cmd_s.h"
 #include "cdxbot/vc_cmd.h"
 #include "cdxbot/vc_cmd_s.h"
-
+#include "common.h"
 #include "CDXBot.h"
 
 
@@ -185,6 +185,33 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         Initializing cdxbot with default value %s",\
                      i, cd.getContainer(i).getOffsetZRef());
         }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_x", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_X))) {
+            nh.getParam("/cdxbot_defaults/tray_offset_x", cd.getContainer(i).getTrayOffsetRef(AXIS_X));
+            ROS_WARN("No parameter containers:%d:tray_offset_x found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getTrayOffset(AXIS_X));
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_y", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_Y))) {
+            nh.getParam("/cdxbot_defaults/tray_offset_y", cd.getContainer(i).getTrayOffsetRef(AXIS_Y));
+            ROS_WARN("No parameter containers:%d:tray_offset_y found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getTrayOffset(AXIS_Y));
+        }
+
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_z", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_Z))) {
+            nh.getParam("/cdxbot_defaults/tray_offset_z", cd.getContainer(i).getTrayOffsetRef(AXIS_Z));
+            ROS_WARN("No parameter containers:%d:tray_offset_z found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getTrayOffset(AXIS_Z));
+        }
         /* INITIALIZE CONTAINER CELL MATRIX */
         for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
             std::vector<struct container_cell> newRow;
@@ -228,7 +255,7 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
     } else if (s->data == "STOP") {
         cd.setRunStatus(0);
     }
-    if(s->data == "SHUTDOWN") {
+    else if(s->data == "SHUTDOWN") {
         cd.setRunStatus(0);
         std_msgs::String msg;
         std::stringstream ss;
@@ -237,6 +264,11 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
         shutdown_pub.publish(msg);
         ros::shutdown();
     }
+    else if(s->data == "RESET"){
+        cd.setRunStatus(0);
+        cd.setActionIndex(0);
+        cd.setRunStatus(1);
+    } 
 }
 
 void parseAction(CDXBot &cd, const struct action a) {

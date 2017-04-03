@@ -92,10 +92,19 @@ class CDXBot {
         return _containers;
     }
 
+    void setActionIndex(unsigned int index){
+        _action_index = index;
+    }
+
+    unsigned int getActionIndex(void){
+        return _action_index;
+    }
+
   private:
     double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
     unsigned int _runStatus = 0;
+    unsigned int _action_index = 0;
     double origin_x = 0.0;
     double origin_y = 0.0;
     double origin_z = 0.0;
