@@ -69,8 +69,6 @@ EZStepperModule::EZStepperModule(unsigned int id) {
     if(tcsetattr(_USB, TCSANOW, &tty) !=0) {
         std::cout << "Error: " << errno << " from tcsetattr." << std::endl;
     }
-
-
 }
 
 EZStepperModule::~EZStepperModule(void) {

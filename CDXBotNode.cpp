@@ -40,6 +40,7 @@ LICENSE:
 #include <stdbool.h>
 #include <ros/ros.h>
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/gc_cmd_s.h"
 #include "cdxbot/pc_cmd.h"
@@ -215,7 +216,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         /* INITIALIZE CONTAINER CELL MATRIX */
         for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
             std::vector<struct container_cell> newRow;
-            cd.getContainer(i).getCellsVecRef().push_back(newRow);
+            // cd.getContainer(i).getCellsVecRef().push_back(newRow);
             for(unsigned int k=0; k < cd.getContainer(i).getCols(); k++) {
                 struct container_cell c;
                 c.test_type = " ";
@@ -239,8 +240,10 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                                  i, c.depth);
                     }
                 }
-                cd.getContainer(i).getCellsVecRef()[j].push_back(c);
+                // cd.getContainer(i).getCellsVecRef()[j].push_back(c);
+                newRow.push_back(c);
             }
+            cd.getContainer(i).getCellsVecRef().push_back(newRow);
         }
     }
 
@@ -254,8 +257,7 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
         cd.setRunStatus(1);
     } else if (s->data == "STOP") {
         cd.setRunStatus(0);
-    }
-    else if(s->data == "SHUTDOWN") {
+    } else if(s->data == "SHUTDOWN") {
         cd.setRunStatus(0);
         std_msgs::String msg;
         std::stringstream ss;
@@ -263,12 +265,11 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
         msg.data = ss.str();
         shutdown_pub.publish(msg);
         ros::shutdown();
-    }
-    else if(s->data == "RESET"){
+    } else if(s->data == "RESET") {
         cd.setRunStatus(0);
         cd.setActionIndex(0);
         cd.setRunStatus(1);
-    } 
+    }
 }
 
 void parseAction(CDXBot &cd, const struct action a) {
@@ -315,8 +316,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         gmsg.z = z;
         gc_pub.publish(gmsg);
 
-    } else if(a.cmd == "fill") {
-        /* FILL PIPETTE TIP FROM WELL; TO FILL WELL, USE DISPENSE COMMAND*/
+    } else if(a.cmd == "aspirate") {
         /* Check to see if current well volume < commanded fill volume */
         unsigned int row = static_cast<unsigned int>(a.args[1]);
         unsigned int col = static_cast<unsigned int>(a.args[2]);
@@ -337,8 +337,14 @@ void parseAction(CDXBot &cd, const struct action a) {
         gmsg.z =cd.getContainer(a.args[0]).getCell(a.args[1],a.args[2]).depth;
         gc_pub.publish(gmsg);
 
-        /* Aspirate */
-
+        /* Here, we should wait until gantry is in position before moving
+         * pipette head. CDXBotNode  should provide a status update service
+         * so that here we may wait until the gantry is in place. */
+        while(cd.getGantryStatus() > 0) {}
+        pmsg.cmd = "aspirate";
+        pmsg.vol = a.args[3];
+        pmsg.type = a.args[4];
+        pc_pub.publish(pmsg);
     } else if(a.cmd == "dispense") {
         /* Check to see if current well volume + commanded dispensing
          * volume is greater than maximum well volume */
@@ -380,6 +386,16 @@ void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO_STREAM("CDXBotNode: Received shutdown directive.");
     ros::shutdown();
 }
+
+void gantryStatusCallback(const std_msgs::Bool &msg) {
+    if(msg.data > 0) {
+        ROS_INFO_STREAM("CDXBotNode: Gantry status updated to 1");
+    } else {
+        ROS_INFO_STREAM("CDXBotNode: Gantry status updated to 0");
+    }
+    cd.setGantryStatus(msg.data);
+}
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
@@ -388,12 +404,12 @@ int main(int argc, char **argv) {
     /* Subscribe to GUI topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
-
+    ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
     /* Create publishers for the various controller */
     gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
     pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
     vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
-    
+
     ros::ServiceClient gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
     ros::ServiceClient pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
     ros::ServiceClient vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");

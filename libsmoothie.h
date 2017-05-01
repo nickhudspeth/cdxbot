@@ -41,25 +41,31 @@ LICENSE:
 *************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <cstdlib>
-#include <boost/timer.hpp>
-#include <cstring>
-#include <iostream>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-// #include "common.h"
-#include <dlfcn.h>
-#include <pthread.h>
-#include <vector>
-#include <cmath>
 #include <algorithm>
-// #include "GantryController.h"
+#include <arpa/inet.h>
+#include <boost/timer.hpp>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <dlfcn.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <iostream>
+#include <mutex>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <termios.h>
+#include <unistd.h>
+#include <vector>
 #include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-#define NETBUFSIZE 64
+#define NETBUFSIZE 128
 #define UNITS_MM 0
+#define CONN_USB 0
+#define CONN_ETHER 1
 
 typedef struct {
     int sockfd;
@@ -72,6 +78,8 @@ typedef struct {
 pthread_t thread_id;
 thread_params_t thread_params;
 
+bool ready_flag = 1;
+std::mutex ready_flag_mutex;
 /* The 'extern "C"' keyword must be used here to force the compiler to use
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
@@ -100,18 +108,28 @@ extern "C" {
         char *getBuffer(void) {
             return _buffer;
         }
-
+        void setConnectionMethod(bool con){
+            _connect = con;
+        }
+        bool getReadyFlag(void){ return _ready_flag; }
+        bool setReadyFlag(bool f) { _ready_flag = f; }
       private:
-        int sendCommand(std::string s);
+        int sendCommand(std::string s, bool wfr = 1);
         int readResponse(void);
+        void waitForOK(void);
         bool _units = UNITS_MM;
         /* Networking configuration */
+        bool _connect = CONN_ETHER;
         std::string _host_ip = "192.168.169.99";
+        std::string _usb_addr = "/dev/ttyACM0";
         unsigned int _host_port = 23;
+        speed_t _usb_baud = B115200;
         int _sockfd = 0;
+        int _usbfd = 0;
         char _buffer[NETBUFSIZE];
         double _netTimeoutMS = 0.0;
         double _pos[3] = {0, 0, 0};
+        bool _ready_flag = 1;
         // struct sockaddr_in _remote;
     };
 

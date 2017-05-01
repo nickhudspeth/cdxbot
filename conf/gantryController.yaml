@@ -11,14 +11,14 @@ gc_conf:
         # DRIVE CONFIGURATION SETTINGS
     units: 1
     traverse_velocity: 1000
-    rapid_feed_velocity: 10000
+    rapid_feed_velocity: 5000
 
     xpos_min: 0.0
-    xpos_max: 440.0
+    xpos_max: 395.0
     ypos_min: 0.0
-    ypos_max: 440.0
+    ypos_max: 395.0
     zpos_min: 0.0
-    zpos_max: 440.0
+    zpos_max: 300.0
     move_mode: "absolute"
         # CONFIGURATION SETTINGS FOR CONTROLLERS WITH CHARACTER INTERFACEs
         # path: /dev/usbtty0

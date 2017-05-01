@@ -58,16 +58,52 @@ extern "C" void destroy(GantryModule *gc) {
     delete gc;
 }
 
+// extern "C" void *thread_func(void *arg) {
+// int n = 0;
+// thread_params_t *tp = (thread_params_t *)arg;
+// char buffer[NETBUFSIZE];
+// std::memset(buffer, 0, NETBUFSIZE);
+// std::string s;
+// while(1) {
+// n = 0;
+// std::memset(buffer, 0, NETBUFSIZE);
+// if((n = read(tp->sockfd, buffer, NETBUFSIZE - 1) > 0)) {
+// s += std::string(buffer);
+// if(s.find("ok") != std::string::npos)  {
+// printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s.c_str());
+// s.clear();
+// std::lock_guard<std::mutex> lock(ready_flag_mutex);
+// ready_flag = 1;
+// }
+// }
+// }
+// }
+
 extern "C" void *thread_func(void *arg) {
-    int n;
+    char buffer[NETBUFSIZE];
+    std::memset(buffer, 0, NETBUFSIZE);
     thread_params_t *tp = (thread_params_t *)arg;
     while(1) {
-        n = 0;
-        std::memset(tp->buffer, 0, NETBUFSIZE);
-        if((n = read(tp->sockfd, tp->buffer, NETBUFSIZE - 1) > 0)) {
-            tp->buffer[n]= '\0';
-            printf("LIBSMOOTHIE::WORKER THREAD: %s\n", tp->buffer);
+        read(tp->sockfd, buffer, (NETBUFSIZE - 1));
+    }
+}
 
+void SmoothieModule::waitForOK(void) {
+    int n = 0;
+    std::string s;
+    char buffer[NETBUFSIZE];
+    std::memset(buffer, 0, NETBUFSIZE);
+    while(1) {
+        n = 0;
+        std::memset(buffer, 0, NETBUFSIZE);
+        if((n = read(_sockfd, buffer, NETBUFSIZE - 1) > 0)) {
+            s += std::string(buffer);
+            if(s.find("ok") != std::string::npos)  {
+                printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s.c_str());
+                s.clear();
+                std::lock_guard<std::mutex> lock(ready_flag_mutex);
+                return;
+            }
         }
     }
 }
@@ -75,31 +111,67 @@ extern "C" void *thread_func(void *arg) {
 SmoothieModule::SmoothieModule() {}
 SmoothieModule::~SmoothieModule() {}
 
+
 int SmoothieModule::init(void) {
     struct sockaddr_in _remote;
-    /* Clear out needed memory */
-    std::memset(_buffer, 0, NETBUFSIZE);
-    std::memset(&_remote, 0, sizeof(struct sockaddr_in));
-    /* Fill in required details in the socket structure */
-    _remote.sin_family = AF_INET;
-    _remote.sin_port = htons(_port);
-    _remote.sin_addr.s_addr = inet_addr(_ip_address.c_str());
-    /* Create a socket */
-    std::cout <<"LIBSMOOTHIE: Connecting to " << _ip_address << ":" << _port << std::endl;
-    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(_sockfd < 0) {
-        std::cout << "err 1" << std::endl;
-        perror("socket");
-        return -1;
+    if(_connect == CONN_ETHER) {
+        /* Clear out needed memory */
+        std::memset(_buffer, 0, NETBUFSIZE);
+        std::memset(&_remote, 0, sizeof(struct sockaddr_in));
+        /* Fill in required details in the socket structure */
+        _remote.sin_family = AF_INET;
+        _remote.sin_port = htons(_port);
+        _remote.sin_addr.s_addr = inet_addr(_ip_address.c_str());
+        /* Create a socket */
+        std::cout <<"LIBSMOOTHIE: Connecting to " << _ip_address << ":" << _port << std::endl;
+        _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if(_sockfd < 0) {
+            std::cout << "err 1" << std::endl;
+            perror("socket");
+            return -1;
+        }
+        std::cout << "sockfd = " << _sockfd <<std::endl;
+        /* Set socket options */
+        int i = 1;
+        setsockopt(_sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&i, sizeof(i));
+        /* Connect to remote host */
+        if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
+            std::cout << "err 2" << std::endl;
+            perror("connect");
+            return -1;
+        }
+        std::cout <<"LIBSMOOTHIE: Connected to " << _ip_address << ":" << _port << std::endl;
+    } else if (_connect == CONN_USB) {
+        /* Open USB Device */
+        _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+        std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
+        struct termios tty;
+        struct termios tty_old;
+        if(tcgetattr(_usbfd, &tty) != 0) {
+            std::cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+        }
+        tty_old = tty;
+        /* Set baud rate */
+        cfsetospeed(&tty, (speed_t)_usb_baud);
+        cfsetispeed(&tty, (speed_t)_usb_baud);
+
+        tty.c_cflag &= ~PARENB;
+        tty.c_cflag &= ~CSTOPB;
+        tty.c_cflag &= ~CSIZE;
+        tty.c_cflag |= CS8;
+        tty.c_cflag &= ~CRTSCTS;
+        tty.c_cc[VMIN] = 1;
+        tty.c_cc[VTIME] = 5;
+        tty.c_cflag |= CREAD | CLOCAL;
+        /* Make raw */
+        cfmakeraw(&tty);
+        /* Flush port then apply attributes */
+        tcflush(_usbfd, TCIFLUSH);
+        if(tcsetattr(_usbfd, TCSANOW, &tty) !=0) {
+            std::cout << "Error: " << errno << " from tcsetattr." << std::endl;
+        }
     }
-    std::cout << "sockfd = " << _sockfd <<std::endl;
-    /* Connect to remote host */
-    if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
-        std::cout << "err 2" << std::endl;
-        perror("connect");
-        return -1;
-    }
-    std::cout <<"LIBSMOOTHIE: Connected to " << _ip_address << ":" << _port << std::endl;
+    /* Create a listener thread */
     thread_params.sockfd = _sockfd;
     thread_params.buffer = _buffer;
     thread_params.timeout = _netTimeoutMS;
@@ -108,14 +180,20 @@ int SmoothieModule::init(void) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    //pthread_create(&thread_id, &attr, &thread_func, &thread_params);
+    pthread_create(&thread_id, &attr, &thread_func, &thread_params);
     pthread_attr_destroy(&attr);
+
     home(AXIS_ALL);
+
     return 0;
 }
 
 int SmoothieModule::deinit(void) {
-    close(_sockfd);
+    if(_connect == CONN_ETHER) {
+        close(_sockfd);
+    } else {
+        close(_usbfd);
+    }
     printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
     pthread_exit(&thread_id);
     printf("LIBSMOOTHIE: Killed worker thread.\n");
@@ -147,7 +225,7 @@ void SmoothieModule::emergencyStopReset(void) {
 }
 
 int SmoothieModule::home(unsigned int axis) {
-    std::string ret = "G28";
+    std::string ret = "$H";
     switch (axis) {
     case AXIS_ALL:
         break;
@@ -172,19 +250,47 @@ int SmoothieModule::home(unsigned int axis) {
 }
 
 
-int SmoothieModule::sendCommand(std::string s) {
+int SmoothieModule::sendCommand(std::string s, bool wfr) {
     s += "\r\n";
-    std::cout << "LIBSMOOTHIE: Sending command: " << s.c_str() << std::endl;
-    char buf[128];
-    memset(buf, 0, 128);
-    int len = s.size();
-    sprintf(buf, "%s", s.c_str());
+    // std::cout << "LIBSMOOTHIE: Sending command: " << s.c_str() << std::endl;
     int n = 0;
-    n = write(_sockfd, buf, len);
-    if(n < 0) {
-        perror("Error writing to socket.\n");
-        return -1;
+    // if(wfr) {
+    // while(!ready_flag) {
+    // usleep(1000);
+    // }
+    // }
+    if(_connect == CONN_USB) {
+        n = write(_sockfd, s.c_str(), sizeof(s.c_str()) - 1);
+        usleep((n+25) * 100);
+    } else if (_connect == CONN_ETHER) {
+        // char buf[256];
+        // memset(buf, 0, 256);
+        // int len = s.size();
+        // sprintf(buf, "%s", s.c_str());
+        // n = write(_sockfd, buf, len);
+        // fflush((FILE*)(&_sockfd));
+        // waitForOK();
+        std::string py = "python /home/cdx/catkin_ws/src/cdxbot/sendcommand.py ";
+        py += " -i ";
+        py += _ip_address;
+        py += " -p 23 ";
+        py += "\"";
+        py += s;
+        py += "\"";
+        std::cout << " BASH: " << py << std::endl;
+        system(py.c_str());
+
     }
+    // if(n < 0) {
+        // perror("Error writing to socket.\n");
+        // return -1;
+    // } else {
+        // std::cout << n << " bytes written to device. " << std::endl;
+    // }
+    // if(wfr) {
+    // std::lock_guard<std::mutex> lock(ready_flag_mutex);
+    // ready_flag = 0;
+    // }
     return n;
 }
 

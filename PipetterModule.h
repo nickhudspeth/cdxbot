@@ -88,7 +88,7 @@ class PipetterModule : public CDXModule {
     double _zpos;
     double _zpos_min;
     double _zpos_max;
-    bool _z_axis_enabled;
+    bool _z_axis_enabled = 1;
     /* data */
 };
 

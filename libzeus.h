@@ -58,12 +58,13 @@ LICENSE:
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <time.h>
 
 #include <pthread.h>
 #include <sys/stat.h>
 #include "PipetterModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-#define PRINT_OUTPUT 0
+#define PRINT_OUTPUT 1
 
 
 #define KICK_MASK 0b10000000000
@@ -82,6 +83,9 @@ LICENSE:
 
 #define CONTAINER_GEOMETRY_ROUND  0
 #define CONTAINER_GEOMETRY_SQUARE 1
+
+#define TOP 0
+#define BOTTOM 1
 
 typedef struct {
     int sockfd;
@@ -159,13 +163,14 @@ extern "C" {
         void moveZ(double pos, double vel);
         void pickUpTip(void);
         void discardTip(void);
-        void aspirate(double vol);
-        void dispense(double vol);
-        bool getTipStatus(void);
-        void getFirmwareVersion(void);
+        void aspirate(double vol, bool mode);
+        void dispense(double vol, bool mode);
         double getZPos(void);
         void emergencyStop(void);
         void emergencyStopReset(void);
+
+        bool getTipStatus(void);
+        void getFirmwareVersion(void);
         unsigned int getInitializationStatus(void);
 
         void setDeckGeometryParams(struct deck_geometry_t d);
@@ -174,10 +179,6 @@ extern "C" {
         void getContainerGeometryParams(unsigned int index);
         void setLiquidClassParams(struct liquid_class_t l);
         void getLiquidClassParams(unsigned int index);
-        void CANOpenPort(void);
-        void CANClosePort(void);
-        void CANReadPort(void);
-        void CANWritePort(void);
         int getSockFD(void) {
             return _sockfd;
         }
@@ -328,6 +329,8 @@ extern "C" {
         bool _msg_complete_flag = 0;
         bool _msg_ready_flag = 0;
         bool _waiting_for_msg_flag = 0;
+
+        bool _ready_for_new_command = 1;
         std::string _received_msg;
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> _fifo;

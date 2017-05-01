@@ -46,8 +46,8 @@ class MyScreen(GridLayout):
         self.shutdown_button = Button(text='SHUTDOWN')
         self.shutdown_button.bind(on_press=shutdownCallback)
         self.add_widget(self.shutdown_button)
-        self.shutdown_button = Button(text='RESET')
-        self.shutdown_button.bind(on_press=buttonPressCallback)
+        self.reset_button = Button(text='RESET')
+        self.reset_button.bind(on_press=buttonPressCallback)
         self.add_widget(self.reset_button)
 
 

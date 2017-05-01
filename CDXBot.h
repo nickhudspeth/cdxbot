@@ -78,7 +78,7 @@ class CDXBot {
     }
 
     Container& getContainer(unsigned int index) {
-        if(index > _containers.size()){
+        if(index > _containers.size()) {
             printf("Requested container index %d is out of range [%d, %zu ]!", index, 0, _containers.size());
         }
         return _containers[index];
@@ -92,12 +92,20 @@ class CDXBot {
         return _containers;
     }
 
-    void setActionIndex(unsigned int index){
+    void setActionIndex(unsigned int index) {
         _action_index = index;
     }
 
-    unsigned int getActionIndex(void){
+    unsigned int getActionIndex(void) {
         return _action_index;
+    }
+
+    bool setGantryStatus(bool s) {
+        _gantry_status = s;
+    }
+
+    bool getGantryStatus(void) {
+        return _gantry_status;
     }
 
   private:
@@ -112,6 +120,7 @@ class CDXBot {
     double extents_y = 0.0;
     double extents_z = 0.0;
 
+    bool _gantry_status = 0;
     //    std::map<std::string, struct action> actionMap;
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);

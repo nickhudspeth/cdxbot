@@ -37,6 +37,7 @@ LICENSE:
 #include <iostream>
 #include <atomic>
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 // #include "GantryController.h"
 #include "GantryModule.h"
 #include "cdxbot/gc_cmd.h"
@@ -214,6 +215,17 @@ void loadParams(ros::NodeHandle &nh) {
     }
 }
 
+void waitForGantry(const cdxbot::gc_cmd &msg) {
+    double dist[] = {0, 0, 0};
+    dist[0] = abs(gc->getPos('x') - msg.x);
+    dist[1] = abs(gc->getPos('y') - msg.y);
+    dist[2] = abs(gc->getPos('z') - msg.z);
+    double max_dist = *std::max_element(dist, dist + 2);
+    // Multiply by 60 since the velocity is stored in mm/min
+    double travel_time =  (60 * max_dist) / gc->getTraverseVelocity();
+    ROS_WARN_STREAM("Waiting " << travel_time << " seconds for gantry to arrive at destination...");
+    usleep(travel_time * 100000);
+}
 
 
 
@@ -221,25 +233,95 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
     gc->setMoveMode(0);
     //std::cout << "Got message: " << msg.cmd << msg.x << msg.y << msg.z << msg.vel << std::endl;
 
+    /* TODO: nam - Publish gantry status 1, and delay for calculated travel time
+     * so that pipette motion is delayed until gantry is in place. Publish
+     * gantry status 0 after delay. - Mon 10 Apr 2017 03:39:52 PM MDT */
+
+    double coords[3] = {msg.x, msg.y, msg.z};
+    /* Bounds check on all coordinates. If out of bounds, trim coordinate to
+     * range and print error. THIS SHOULD PROBABLY NOT FAIL GRACEFULLY IN THE
+     * PRODUCTION VERSION OF THIS SOFTWARE. */
+    std::string modifier;
+    std::string axis;
+    double orig = 0;
+    bool coord_err = 0;
+
+    if(msg.x < gc->getXPosMin()) {
+        coord_err = 1;
+        orig = coords[0];
+        coords[0] = gc->getXPosMin();
+        axis = "x";
+        modifier = "less";
+    }
+    if(coords[0] > gc->getXPosMax()) {
+        coord_err = 1;
+        orig = coords[0];
+        coords[0] = gc->getXPosMax();
+        axis = "x";
+        modifier = "greater";
+    }
+    if(msg.y < gc->getYPosMin()) {
+        coord_err = 1;
+        orig = coords[1];
+        coords[1] = gc->getYPosMin();
+        axis = "y";
+        modifier = "less";
+    }
+    if(coords[1] > gc->getYPosMax()) {
+        coord_err = 1;
+        orig = coords[1];
+        coords[1] = gc->getYPosMax();
+        axis = "y";
+        modifier = "greater";
+    }
+    if(msg.z < gc->getZPosMin()) {
+        coord_err = 1;
+        orig = coords[2];
+        coords[2] = gc->getZPosMin();
+        axis = "z";
+        modifier = "less";
+    }
+    if(coords[2] > gc->getZPosMax()) {
+        coord_err = 1;
+        orig = coords[2];
+        coords[2] = gc->getZPosMax();
+        axis = "z";
+        modifier = "greater";
+    }
+
+    if(coord_err == 1) {
+        ROS_ERROR_STREAM("GantryControllerNode:: Commanded "<< axis <<
+                         "-coordinate (" << orig << ") is " << modifier 
+                         << " than the maximum allowable " << axis << " coordinate "
+                         << gc->getXPosMin() << "." << std::endl);
+        coord_err = 0;
+    }
+
     if(msg.cmd == "move") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(msg.x, msg.y, msg.z);
+            gc->moveAbsolute(coords[0], coords[1], coords[2]);
+            waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(msg.x, msg.y, msg.z);
+            gc->moveRelative(coords[0], coords[1], coords[2]);
+            waitForGantry(msg);
         }
     } else if(msg.cmd == "wait") {
         gc->dwell(msg.time);
     } else if(msg.cmd == "movexy") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(msg.x, msg.y, 0);
+            gc->moveAbsolute(coords[0], coords[1], 0);
+            waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(msg.x, msg.y, 0);
+            gc->moveRelative(coords[0], coords[1], 0);
+            waitForGantry(msg);
         }
     } else if (msg.cmd == "movez") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(0, 0, msg.z);
+            gc->moveAbsolute(0, 0, coords[2]);
+            waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(0, 0, msg.z);
+            gc->moveRelative(0, 0, coords[2]);
+            waitForGantry(msg);
         }
     } else if(msg.cmd == "setvel") {
         if(msg.vel < 0) {
@@ -247,22 +329,23 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
         } else {
             gc->setTraverseVelocity(msg.vel);
         }
-        printf("Setting velocity to %f\n", gc->getTraverseVelocity());
+        ROS_INFO_STREAM("Setting velocity to "<< gc->getTraverseVelocity() << " mm/min.");
     } else if(msg.cmd == "estop") {
         gc->emergencyStop();
     } else if(msg.cmd == "estoprst") {
         gc->emergencyStopReset();
     } else if(msg.cmd == "home") {
         gc->home();
+        waitForGantry(msg);
     }
-
 }
 
 //ros::Subscriber shutdown = nh.subscribe("shutdown", 100, shutdownCallback);
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO_STREAM("GantryControllerNode: Received shutdown directive from CDXBotnode.");
-    gc->deinit();
+    ROS_INFO_STREAM("GantryControllerNode:\
+                    Received shutdown directive from CDXBotnode.");
     ros::shutdown();
+    gc->deinit();
 }
 
 int main(int argc, char **argv) {
@@ -272,8 +355,13 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
     loadParams(nh);
-    std::cout << "GC Init return code: " << gc->init() << std::endl;
+    if(gc->init() < 0) {
+        std::cout << "GC Init return code: " << gc->init() << std::endl;
+        return -1;
+    }
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
+    ros::Publisher gc_status_pub = nh.advertise<std_msgs::Bool>("gantry_status", 1000);
+
     ros::Subscriber sub = nh.subscribe("/gc_pub", 1000, &gcPubCallback);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Rate rate(100);

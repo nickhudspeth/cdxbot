@@ -108,9 +108,10 @@ extern "C" void *thread_func(void *arg) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
                                 zm->setWaitingForMsgFlag(0);
+                                std::string err_msg = zm->parseErrors(msg);
                                 if(PRINT_OUTPUT) {
                                     printf("Received message: %s -> ", msg.c_str());
-                                    printf("%s\n", zm->parseErrors(msg).c_str());
+                                    printf("%s\n", err_msg.c_str());
                                 }
                                 msg.clear();
                             } else {
@@ -128,11 +129,11 @@ extern "C" void *thread_func(void *arg) {
                 }
             }
         }
-        // if(zm->_error_flag){
-        // printf("Error flag set. Getting last faulty parameter.\n");
-        // zm->getLastFaultyParameter();
-        // zm->_error_flag = 0;
-        // }
+        if(zm->_error_flag) {
+            printf("Error flag set. Getting last faulty parameter.\n");
+            zm->getLastFaultyParameter();
+            zm->_error_flag = 0;
+        }
     }
     printf("Exiting thread loop.\n");
     return 0;
@@ -207,6 +208,7 @@ int ZeusModule::lconf(void) {
 }
 
 void ZeusModule::moveZ(double pos, double vel) {
+    printf("Moving pipetter head to: %f mm.", pos);
     std::string cmd = cmdHeader("GZ");
     if((_zpos > ZPOS_MAX) || (_zpos < ZPOS_MIN)) {
         printf("LIBZEUS: Requested z-position %f out of range.\
@@ -220,7 +222,7 @@ void ZeusModule::moveZ(double pos, double vel) {
         vel = 1.0;
     }
     // printf("LIBZEUS: Moving z-axis from position %f to position %f.", _zpos, pos);
-    cmd += "gy" + zfill(std::to_string(static_cast<unsigned int>(pos)),4) + "gw" + std::to_string(int(vel));
+    cmd += "gy" + zfill(std::to_string(static_cast<unsigned int>(pos + 0.5)),4) + "gw" + std::to_string(int(vel));
     _zpos = pos;
     sendCommand(cmd);
 }
@@ -247,7 +249,7 @@ void ZeusModule::discardTip(void) {
     sendCommand(cmd);
 }
 
-void ZeusModule::aspirate(double vol) {
+void ZeusModule::aspirate(double vol, bool mode) {
 
     /* TODO: nam - Modify function to accept a liquid container structure
      * reference and fetch all paramaters from the struct. On completion, parse
@@ -276,7 +278,7 @@ void ZeusModule::aspirate(double vol) {
     sendCommand(cmd);
 }
 
-void ZeusModule::dispense(double vol) {
+void ZeusModule::dispense(double vol, bool mode) {
 
     /* TODO: nam - Modify function to accept a liquid container structure
      * reference and fetch all paramaters from the struct. On completion, parse
@@ -497,6 +499,9 @@ struct can_frame & ZeusModule::getLastFrame(void) {
 }
 
 void ZeusModule::sendCommand(std::string cmd) {
+    /* At the end of this function, we will block until a return string is sent
+     * from the pipetter to avoid sending simultaneous commands. */
+    _ready_for_new_command = 0;
     if(PRINT_OUTPUT) {
         printf("Sending command: %s. -> ", cmd.c_str());
     }
@@ -541,9 +546,18 @@ void ZeusModule::sendCommand(std::string cmd) {
         frame.can_dlc = 8;
         sendFrame(frame);
         if(byte & (1 << 7)) {
-            /* Instead of this, set a 'ready for new command' flag after error
+            /* Instead of a blind delay, set a 'ready for new command' flag after error
              * parsing the returned string in thread_func() */
-            usleep(1000000);
+
+            /* Wait until command completes, up to a maximum of 1 second. */
+           // time_t start = time(NULL);
+           // while((!_ready_for_new_command) && (time(NULL) < start + 1)) {
+                /* Sleep for 10ms between checks so that this section doesn't
+                 * peg the CPU with calls to time() */
+               // usleep(10000);
+           // }
+        usleep(1000000);
+            _ready_for_new_command = 1;
             return;
         }
         waitForRemoteFrame();
@@ -695,6 +709,9 @@ void ZeusModule::getLiquidClassParams(unsigned int index) {
 }
 
 std::string ZeusModule::parseErrors(std::string error) {
+    /* If we're in this function, the last sent command completed and returned
+     * a string, so we can allow new commands to be sent as of now. */
+    _ready_for_new_command = 1;
     std::string cmd, ec;
     std:: string default_error = "Unknown error code returned.";
     size_t eidx;
@@ -1029,51 +1046,4 @@ struct can_frame ZeusModule::getNextMessage(void) {
     struct can_frame ret = _fifo.front();
     _msg_ready_flag = 0;
     return ret;
-}
-
-void ZeusModule::CANOpenPort() {
-
-}
-
-void ZeusModule::CANClosePort() {
-
-}
-
-void ZeusModule::CANReadPort() {
-    struct can_frame ret;
-    int n = 0;  // Number of received bytes
-    int read_can_port = 1;
-
-    memset(&ret, 0, sizeof(struct can_frame));
-    while(_read_can_port) {
-        struct timeval timeout = {1,0};
-        fd_set readSet;
-        FD_ZERO(&readSet);
-        FD_SET(_sockfd, &readSet);
-        if(select((_sockfd + 1), &readSet, NULL, NULL, &timeout) >= 0) {
-            if(!_read_can_port) {
-                break;
-            }
-            if(FD_ISSET(_sockfd, &readSet)) {
-                n = read(_sockfd, &ret, sizeof(struct can_frame));
-                if(n) {
-                    if(n < 0) {
-                        printf("LIBZEUS: Error reading from CAN socket.\n");
-                    } else if(n < sizeof(struct can_frame)) {
-                        printf("LIBZEUS: Incomplete frame read from CAN socket.\n");
-                    } else {
-                        _fifo.push(ret);
-                        _msg_ready_flag = 1;
-                    }
-
-                }
-            }
-        }
-
-    }
-
-}
-
-void ZeusModule::CANWritePort() {
-
 }

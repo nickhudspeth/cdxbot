@@ -1,12 +1,13 @@
-move, 1, 2, 2
-wait, 300
-move, 2, 1, 6
-wait, 500
-move, 3, 4, 3
-wait, 300
-move, 4, 3, 7
-wait, 400
-move, 5, 5, 8
-wait, 800
-move, 6, 1, 2
+move, 0, 0, 0
+wait, 3000
+move, 0, 11, 7
+wait, 3000
+move, 0, 0, 7
+wait, 3000
+move, 0, 11, 0
+wait, 3000
+move, 0, 3, 4
+wait, 3000
+move, 0, 6, 7
+home
 end

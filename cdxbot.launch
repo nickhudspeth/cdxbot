@@ -2,25 +2,6 @@
 
 <node
 pkg="cdxbot"
-type="CDXBotNode"
-name="cdxbot_node"
-respawn="false"
-output="screen"
-/>
-<rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
-
-
-<node
-pkg="cdxbot"
-type="gui.py"
-name="gui_node"
-respawn="false"
-/>
-<rosparam file ="$(find cdxbot)/conf/gui.yaml" command="load"/>
-
-
-<node
-pkg="cdxbot"
 type="pipetterControllerNode"
 name="pc_node"
 respawn="false"
@@ -37,6 +18,22 @@ output="screen"
 />
 <rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/>
 
+<node
+pkg="cdxbot"
+type="CDXBotNode"
+name="cdxbot_node"
+respawn="false"
+output="screen"
+/>
+<rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
+
+<node
+pkg="cdxbot"
+type="gui.py"
+name="gui_node"
+respawn="false"
+/>
+<rosparam file ="$(find cdxbot)/conf/gui.yaml" command="load"/>
 
 </launch>
 

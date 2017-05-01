@@ -82,8 +82,12 @@ void loadParams(ros::NodeHandle &nh) {
 }
 
 void gcPubCallback(const cdxbot::gc_cmd &msg) {
+    ROS_DEBUG_STREAM("PipetterControllerNode:: Received gc_cmd - " << msg.cmd);
     if(msg.cmd == "movez") {
-        pc->moveZ(msg.z, 1);
+        pc->moveZ((1800 - 219.075 - msg.z), 1);
+    }
+    else if(msg.cmd == "home"){
+        pc->moveZ((1800 - 219.75 - 45), 1);
     }
 }
 
@@ -117,9 +121,7 @@ int main(int argc, char **argv) {
                          "cdxbot/pipetter_zpos", 100);
     ros::Subscriber sub_pc = nh.subscribe("/pc_pub", 100, &pcPubCallback);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
-    if(pc->getZAxisEnabled()) {
-        ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
-    }
+    ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     std::cout << "Initialized pc with addr: " << &pc << std::endl;
 
     ros::Rate rate(100);

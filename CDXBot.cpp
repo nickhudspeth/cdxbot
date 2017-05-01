@@ -42,6 +42,9 @@ LICENSE:
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int CDXBot::parseHLMDFile(const char *fname) {
+
+    /* TODO: nam - Add provision to ignore commented lines - Mon 10 Apr 2017 02:18:09 PM MDT */
+
     std::ifstream infile(fname);
     std::string line;
     std::vector<std::string> v;
