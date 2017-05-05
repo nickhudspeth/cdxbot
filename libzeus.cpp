@@ -166,10 +166,10 @@ int ZeusModule::init(void) {
     struct can_frame f;
     memset(&f, 0, sizeof(struct can_frame));
     setLastFrame(f);
-    if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
-        printf("ERROR: LibZeus: Could not create mutex.\n");
+    // if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
+        // printf("ERROR: LibZeus: Could not create mutex.\n");
         // Unable to create mutex. Throw error.
-    }
+    // }
     initCANBus();
     pthread_create(&_thread_id, NULL, &thread_func, this);
     // printf("Thread function created.\n");
@@ -197,7 +197,7 @@ int ZeusModule::deinit(void) {
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
     // printf("Killed thread function.\n");
-    pthread_mutex_destroy(&_lock_msg);
+    // pthread_mutex_destroy(&_lock_msg);
     // printf("Destroyed mutex.\n");
     // printf("fin.\n");
     return 0;
@@ -210,6 +210,7 @@ int ZeusModule::lconf(void) {
 void ZeusModule::moveZ(double pos, double vel) {
     printf("Moving pipetter head to: %f mm.", pos);
     std::string cmd = cmdHeader("GZ");
+    pos = (1800 - 10*pos) + 370;
     if((_zpos > ZPOS_MAX) || (_zpos < ZPOS_MIN)) {
         printf("LIBZEUS: Requested z-position %f out of range.\
                 Valid range for z-position is [%f,%f]",\
@@ -227,16 +228,43 @@ void ZeusModule::moveZ(double pos, double vel) {
     sendCommand(cmd);
 }
 
-void ZeusModule::pickUpTip(void) {
+void ZeusModule::pickUpTip(struct container_cell c) {
     if((_tt_index > 9) || (_dg_index > 99)) {
         //throw error
         return;
     }
+
+    /* Create a deck geometry struct from the tip properties in the container
+      cell structure and send these parameters to the pipetter */
+
+    /* TODO: nam - Maintain an internal index of deck geometry definitions and
+     * tip types so that new parameters don't have to be set with each call to
+     * this function. Currently, new parameters are set and stored at index 0
+     * each time this function is called. Since the Zeus' internal EEPROM has a
+     * finite number of write cycles, this may cause issues with time unless
+     * the Zeus implements some wear-leveling strategy internally (unknown.)
+     * - Tue 02 May 2017 11:00:23 AM MDT */
+
+    /* NOTE: The ZEUS only supports the use of predefined tip-types, as listed
+     * in section 5.12.4 of the ZEUS (II) Integrator Manual. Custom tip type
+     * definitions are not supported. */
+    struct deck_geometry_t d;
+    d.index = 0;
+    d.min_traverse_height = c.min_traverse_height;
+    d.botpp = c.botpp;
+    d.eotpp = c.eotpp;
+    d.potdp = d.potdp;
+    setDeckGeometryParams(d);
+
     std::string cmd = cmdHeader("GT");
-    cmd += "tt" + zfill(std::to_string(_tt_index), 1) + \
-           "go" + zfill(std::to_string(_dg_index), 2) + \
+    cmd += "tt" + zfill(std::to_string(c.tt_index), 1) + \
+           "go" + zfill(std::to_string(0), 2) + \
            "mt" + std::to_string(0);
     sendCommand(cmd);
+
+    /* Here we should wait for the pipetter to indicate that a tip has been
+     * picked up before returning. */
+    return;
 }
 
 void ZeusModule::discardTip(void) {
@@ -318,9 +346,10 @@ int ZeusModule::initCANBus(void) {
     char cwd[1024];
     struct stat buffer;
     if(getcwd(cwd, sizeof(cwd)) != NULL) {
-        std::string cur_dir(cwd);
+        // std::string cur_dir(cwd);
+        std::string cur_dir = "/home/cdx/catkin_ws/src/cdxbot";
         cur_dir += "/init_can.sh";
-        // printf("cur_dir = %s \n", cur_dir.c_str());
+        printf("cur_dir = %s \n", cur_dir.c_str());
         std::string cmd = "sudo bash " + cur_dir;
         if(stat(cur_dir.c_str(), &buffer) == 0) {
             if(system(cmd.c_str()) != 0) {
@@ -550,13 +579,13 @@ void ZeusModule::sendCommand(std::string cmd) {
              * parsing the returned string in thread_func() */
 
             /* Wait until command completes, up to a maximum of 1 second. */
-           // time_t start = time(NULL);
-           // while((!_ready_for_new_command) && (time(NULL) < start + 1)) {
-                /* Sleep for 10ms between checks so that this section doesn't
-                 * peg the CPU with calls to time() */
-               // usleep(10000);
-           // }
-        usleep(1000000);
+            // time_t start = time(NULL);
+            // while((!_ready_for_new_command) && (time(NULL) < start + 1)) {
+            /* Sleep for 10ms between checks so that this section doesn't
+             * peg the CPU with calls to time() */
+            // usleep(10000);
+            // }
+            usleep(1000000);
             _ready_for_new_command = 1;
             return;
         }

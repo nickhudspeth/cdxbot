@@ -44,14 +44,30 @@ LICENSE:
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <stdbool.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 struct container_cell {
     std::string test_type;
-    unsigned int used; // BOOL
+    bool used;
     double vol;            // Well volume (mL)
     double filled_vol;
     double depth;
+    /* Pipette tip properties */
+    int tt_index; // tip type table index.
+    double min_traverse_height;
+    double min_z_pos;
+    double botpp;
+    double eotpp;
+    double potdp;
 };
+
+// struct tip_params {
+    // double min_traverse_height;
+    // double min_z_pos;
+    // double botpp;
+    // double eotpp;
+    // double potdp;
+// }
 
 class Container {
   public:

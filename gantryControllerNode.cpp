@@ -31,16 +31,25 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <ros/ros.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <stdlib.h>
-#include <iostream>
-#include <atomic>
-#include "std_msgs/String.h"
-#include "std_msgs/Bool.h"
-// #include "GantryController.h"
 #include "GantryModule.h"
+#include "cdxbot/gantryEStopToggle.h"
+#include "cdxbot/gantryGetCurrentPosition.h"
+#include "cdxbot/gantryHome.h"
+#include "cdxbot/gantryMotorsToggle.h"
+#include "cdxbot/gantryMove.h"
+#include "cdxbot/gantrySetAccelerations.h"
+#include "cdxbot/gantrySetAxisStepsPerUnit.h"
+#include "cdxbot/gantrySetFeedrates.h"
+#include "cdxbot/gantrySetUnits.h"
 #include "cdxbot/gc_cmd.h"
+#include "std_msgs/Bool.h"
+#include "std_msgs/String.h"
+#include <atomic>
+#include <geometry_msgs/Vector3Stamped.h>
+#include <iostream>
+#include <ros/ros.h>
+#include <stdlib.h>
+// #include "GantryController.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 #define MOVE_MODE_ABSOLUTE 0
 #define MOVE_MODE_RELATIVE 1
@@ -225,6 +234,7 @@ void waitForGantry(const cdxbot::gc_cmd &msg) {
     double travel_time =  (60 * max_dist) / gc->getTraverseVelocity();
     ROS_WARN_STREAM("Waiting " << travel_time << " seconds for gantry to arrive at destination...");
     usleep(travel_time * 100000);
+    return;
 }
 
 
@@ -291,7 +301,7 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
 
     if(coord_err == 1) {
         ROS_ERROR_STREAM("GantryControllerNode:: Commanded "<< axis <<
-                         "-coordinate (" << orig << ") is " << modifier 
+                         "-coordinate (" << orig << ") is " << modifier
                          << " than the maximum allowable " << axis << " coordinate "
                          << gc->getXPosMin() << "." << std::endl);
         coord_err = 0;
@@ -342,11 +352,165 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
 
 //ros::Subscriber shutdown = nh.subscribe("shutdown", 100, shutdownCallback);
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO_STREAM("GantryControllerNode:\
-                    Received shutdown directive from CDXBotnode.");
-    ros::shutdown();
+    ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
+    ros::shutdown();
 }
+
+bool moveCallback(cdxbot::gantryMove::Request &req,
+                  cdxbot::gantryMove::Response &resp) {
+    /* Should bounds-check coordinates here */
+    if(!req.move_mode) {
+        gc->moveAbsolute(req.x, req.y, req.z);
+    } else {
+        gc->moveRelative(req.x, req.y, req.z);
+    }
+    while(  (gc->getPos('x') != req.x) |
+            (gc->getPos('y') != req.y) |
+            (gc->getPos('z') != req.z)) {
+        /* WAIT FOR GANTRY TO ARIVE */
+    }
+
+    return (resp.ok = true);
+}
+
+bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
+                         cdxbot::gantryEStopToggle::Response &resp) {
+    if(!req.state) {
+        gc->emergencyStopReset();
+    } else {
+        gc->emergencyStop();
+    }
+    return (resp.ok = true);
+}
+
+bool homeCallback(cdxbot::gantryHome::Request &req,
+                  cdxbot::gantryHome::Response &resp) {
+    if(req.x) {
+        gc->home(AXIS_X);
+    }
+    if(req.y) {
+        gc->home(AXIS_Y);
+    }
+    if(req.z) {
+        gc->home(AXIS_Z);
+    }
+    return (resp.ok = true);
+
+}
+
+bool motorsToggleCallback(cdxbot::gantryMotorsToggle::Request &req,
+                          cdxbot::gantryMotorsToggle::Response &resp) {
+    if(!req.x_status) {
+        gc->motorsDisable(AXIS_X);
+    } else {
+        gc->motorsEnable(AXIS_X);
+    }
+    if(!req.y_status) {
+        gc->motorsDisable(AXIS_Y);
+    } else {
+        gc->motorsEnable(AXIS_Y);
+    }
+    if(!req.z_status) {
+        gc->motorsDisable(AXIS_Z);
+    } else {
+        gc->motorsEnable(AXIS_Z);
+    }
+
+}
+
+bool setUnitsCallback(cdxbot::gantrySetUnits::Request &req,
+                      cdxbot::gantrySetUnits::Response &resp) {
+    if(!req.units) {
+        gc->setUnits(UNITS_MM);
+    } else {
+        gc->setUnits(UNITS_IN);
+    }
+
+}
+
+bool setAxisStepsPerUnitCallback(cdxbot::gantrySetAxisStepsPerUnit::Request &req,
+                                 cdxbot::gantrySetAxisStepsPerUnit::Response &resp) {
+    if(req.axis == 0) {
+        gc->setAxisStepsPerUnit(AXIS_X, req.steps);
+    } else if(req.axis == 1) {
+        gc->setAxisStepsPerUnit(AXIS_Y, req.steps);
+    } else if(req.axis == 2) {
+        gc->setAxisStepsPerUnit(AXIS_Z, req.steps);
+    } else if(req.axis == 3) {
+        gc->setAxisStepsPerUnit(AXIS_ALL, req.steps);
+    } else {
+        /* Error: Invalid axis specified. */
+        return false;
+    }
+    return true;
+}
+
+bool getCurrentPositionCallback(cdxbot::gantryGetCurrentPosition::Request &req,
+                                cdxbot::gantryGetCurrentPosition::Response &resp) {
+    resp.x = gc->getPos(AXIS_X);
+    resp.y = gc->getPos(AXIS_Y);
+    resp.z = gc->getPos(AXIS_Z);
+
+}
+
+bool setFeedratesCallback(cdxbot::gantrySetFeedrates::Request &req,
+                          cdxbot::gantrySetFeedrates::Response &resp) {
+    if((req.x_current_percentage < 0) ||
+            (req.y_current_percentage < 0) ||
+            (req.z_current_percentage < 0)) {
+        /* ERROR: Current percentage out of bounds. */
+        resp.ok = false;
+        return false;
+    }
+    if(req.set_min) {
+        gc->setMinFeedrate(AXIS_X, req.x_min);
+        gc->setMinFeedrate(AXIS_Y, req.y_min);
+        gc->setMinFeedrate(AXIS_Z, req.z_min);
+    }
+    if(req.set_max) {
+        gc->setMaxFeedrate(AXIS_X, req.x_max);
+        gc->setMaxFeedrate(AXIS_Y, req.y_max);
+        gc->setMaxFeedrate(AXIS_Z, req.z_max);
+    }
+    if(req.set_cur) {
+        gc->setMaxFeedrate(AXIS_X, req.x_current_percentage*req.x_max);
+        gc->setMaxFeedrate(AXIS_Y, req.y_current_percentage*req.y_max);
+        gc->setMaxFeedrate(AXIS_Z, req.z_current_percentage*req.z_max);
+    }
+    resp.ok = true;
+    return true;
+}
+
+bool setAccelerationsCallback(cdxbot::gantrySetAccelerations::Request &req,
+                              cdxbot::gantrySetAccelerations::Response &resp) {
+    if((req.x_current_percentage < 0) ||
+            (req.y_current_percentage < 0) ||
+            (req.z_current_percentage < 0)) {
+        /* ERROR: Current percentage out of bounds. */
+        resp.ok = false;
+        return false;
+    }
+    if(req.set_min) {
+        gc->setMinAccel(AXIS_X, req.x_min);
+        gc->setMinAccel(AXIS_Y, req.y_min);
+        gc->setMinAccel(AXIS_Z, req.z_min);
+    }
+    if(req.set_max) {
+        gc->setMaxAccel(AXIS_X, req.x_max);
+        gc->setMaxAccel(AXIS_Y, req.y_max);
+        gc->setMaxAccel(AXIS_Z, req.z_max);
+    }
+    if(req.set_cur) {
+        gc->setMaxAccel(AXIS_X, req.x_current_percentage*req.x_max);
+        gc->setMaxAccel(AXIS_Y, req.y_current_percentage*req.y_max);
+        gc->setMaxAccel(AXIS_Z, req.z_current_percentage*req.z_max);
+    }
+    resp.ok = true;
+    return true;
+}
+
+
 
 int main(int argc, char **argv) {
     //const char *gcfile = "./gantryConfig.conf";
@@ -356,14 +520,26 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     loadParams(nh);
     if(gc->init() < 0) {
-        std::cout << "GC Init return code: " << gc->init() << std::endl;
+        ROS_ERROR_STREAM("GC Init return code: " << gc->init());
         return -1;
     }
+    /* CREATE PUBLISHERS / SUBSCRIBERS */
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Publisher gc_status_pub = nh.advertise<std_msgs::Bool>("gantry_status", 1000);
 
-    ros::Subscriber sub = nh.subscribe("/gc_pub", 1000, &gcPubCallback);
-    ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
+    ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
+
+    /* INSTANTIATE SERVICE SERVERS */
+    ros::ServiceServer gantryMoveServer = nh.advertiseService("gantry_move", &moveCallback);
+    ros::ServiceServer gantryEStopToggle = nh.advertiseService("gantry_estop_toggle", &eStopToggleCallback);
+    ros::ServiceServer gantryHome = nh.advertiseService("gantry_home", &homeCallback);
+    ros::ServiceServer gantryMotorsToggle = nh.advertiseService("gantry_motors_toggle", &motorsToggleCallback);
+    ros::ServiceServer gantrySetUnits = nh.advertiseService("gantry_set_units", &setUnitsCallback);
+    ros::ServiceServer gantrySetAxisStepsPerUnitServer = nh.advertiseService("gantry_set_axis_steps_per_unit", &setAxisStepsPerUnitCallback);
+    ros::ServiceServer gantryGetCurrentPositionServer = nh.advertiseService("gantry_get_current_position", &getCurrentPositionCallback);
+    ros::ServiceServer gantrySetFeedratesServer = nh.advertiseService("gantry_set_feedrates", &setFeedratesCallback);
+    ros::ServiceServer gantrySetAccelerationsServer = nh.advertiseService("gantry_set_accelerations", &setAccelerationsCallback);
     ros::Rate rate(100);
     std::cout << "Initialized gc with addr: " << &gc << std::endl;
     //gc.driver_init(gc);

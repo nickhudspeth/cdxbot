@@ -56,8 +56,8 @@ LICENSE:
 
 class GantryModule : public CDXModule {
   public:
-    GantryModule (void){};
-    virtual ~GantryModule(void){};
+    GantryModule (void) {};
+    virtual ~GantryModule(void) {};
 
     /*************************************************************************
     * Function :   dwell()
@@ -109,7 +109,7 @@ class GantryModule : public CDXModule {
     * Input    :   void
     * Returns  :   virtual int
     *************************************************************************/
-    virtual int motorsEnable(void) {};
+    virtual int motorsEnable(unsigned int axis) {};
 
     /*************************************************************************
     * Function :   moveAbsolute()
@@ -132,12 +132,12 @@ class GantryModule : public CDXModule {
     virtual int moveRelative(float x, float y, float z) {};
 
     /*************************************************************************
-    * Function :   setAxisStepsPerMM()
+    * Function :   setAxisStepsPerUnit()
     * Purpose  :   Sets the axis drive ratio in steps/mm
     * Input    :   unsigned int axis, unsigned int steps
     * Returns  :   virtual int
     *************************************************************************/
-    virtual int setAxisStepsPerMM(unsigned int axis, unsigned int steps) {};
+    virtual int setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {};
 
     /*************************************************************************
     * Function :   setUnits()
@@ -153,15 +153,15 @@ class GantryModule : public CDXModule {
     * Input    :   const char *axis
     * Returns  :   double
     *************************************************************************/
-    double getPos(const char axis) {
+    double getPos(unsigned int axis) {
         switch(axis) {
-        case 'x':
+        case AXIS_X:
             return _pos[0];
             break;
-        case 'y':
+        case AXIS_Y:
             return _pos[1];
             break;
-        case 'z':
+        case AXIS_Z:
             return _pos[2];
             break;
         default:
@@ -262,10 +262,6 @@ class GantryModule : public CDXModule {
         return _units;
     }
 
-    void setUnits(bool u) {
-        _units = u;
-    }
-
     double getTraverseVelocity(void) {
         return _traverse_velocity;
     }
@@ -274,6 +270,101 @@ class GantryModule : public CDXModule {
         return _traverse_velocity;
     }
 
+    void setMinFeedrate(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _feedrate_x_min = rate;
+        } else if(axis == AXIS_Y) {
+            _feedrate_y_min = rate;
+        }
+        if(axis == AXIS_Z) {
+            _feedrate_z_min = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _feedrate_x_min = rate;
+            _feedrate_y_min = rate;
+            _feedrate_z_min = rate;
+        }
+    }
+
+    void setMaxFeedrate(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _feedrate_x_max = rate;
+        } else if(axis == AXIS_Y) {
+            _feedrate_y_max = rate;
+        }
+        if(axis == AXIS_Z) {
+            _feedrate_z_max = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _feedrate_x_max = rate;
+            _feedrate_y_max = rate;
+            _feedrate_z_max = rate;
+        }
+    }
+
+    void setCurrentFeedrate(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _feedrate_x_cur = rate;
+        } else if(axis == AXIS_Y) {
+            _feedrate_y_cur = rate;
+        }
+        if(axis == AXIS_Z) {
+            _feedrate_z_cur = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _feedrate_x_cur = rate;
+            _feedrate_y_cur = rate;
+            _feedrate_z_cur = rate;
+        }
+    }
+
+    void setMinAccel(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _accel_x_min = rate;
+        } else if(axis == AXIS_Y) {
+            _accel_y_min = rate;
+        }
+        if(axis == AXIS_Z) {
+            _accel_z_min = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _accel_x_min = rate;
+            _accel_y_min = rate;
+            _accel_z_min = rate;
+        }
+    }
+
+    void setMaxAccel(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _accel_x_max = rate;
+        } else if(axis == AXIS_Y) {
+            _accel_y_max = rate;
+        }
+        if(axis == AXIS_Z) {
+            _accel_z_max = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _accel_x_max = rate;
+            _accel_y_max = rate;
+            _accel_z_max = rate;
+        }
+    }
+
+    void setCurrentAccel(int axis, double rate) {
+        if(axis == AXIS_X) {
+            _accel_x_cur = rate;
+        } else if(axis == AXIS_Y) {
+            _accel_y_cur = rate;
+        }
+        if(axis == AXIS_Z) {
+            _accel_z_cur = rate;
+        }
+        if(axis == AXIS_ALL) {
+            _accel_x_cur = rate;
+            _accel_y_cur = rate;
+            _accel_z_cur = rate;
+        }
+    }
     void setTraverseVelocity(double p) {
         _traverse_velocity = p;
     }
@@ -362,17 +453,21 @@ class GantryModule : public CDXModule {
         _pos_max[2] = p;
     }
 
-    void setMoveMode(int m){
-        if(m > 0){ m = 1; }
-        if(m < 0){ m = 0; }
+    void setMoveMode(int m) {
+        if(m > 0) {
+            m = 1;
+        }
+        if(m < 0) {
+            m = 0;
+        }
         _move_mode = m;
     }
 
-    int getMoveMode(void){
+    int getMoveMode(void) {
         return _move_mode;
     }
 
-    int &getMoveModeRef(void){
+    int &getMoveModeRef(void) {
         return _move_mode;
     }
 
@@ -382,7 +477,25 @@ class GantryModule : public CDXModule {
     bool _units = UNITS_MM;
     double _traverse_velocity;
     double _rapid_feed_velocity;
-
+    double _feedrate_x_cur;
+    double _feedrate_x_max;
+    double _feedrate_x_min;
+    double _feedrate_y_cur;
+    double _feedrate_y_max;
+    double _feedrate_y_min;
+    double _feedrate_z_cur;
+    double _feedrate_z_max;
+    double _feedrate_z_min;
+    double _accel_x_cur;
+    double _accel_x_max;
+    double _accel_x_min;
+    double _accel_y_cur;
+    double _accel_y_max;
+    double _accel_y_min;
+    double _accel_z_cur;
+    double _accel_z_max;
+    double _accel_z_min;
+    double _steps_per_unit[3];
     double _pos[3];
     double _pos_min[3];
     double _pos_max[3];

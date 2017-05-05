@@ -4,7 +4,7 @@ from std_msgs.msg import String
 
 
 import kivy
-# kivy.require('1.0.6')
+kivy.require('1.0.6')
 from kivy.config import Config
 #  Config.set('graphics', 'resizable', 0)  # Disable window resizing
 #  Config.set('graphics', 'borderless', 1)  # Disable window bordering
@@ -18,8 +18,6 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 
-from time import sleep
-
 def buttonPressCallback(instance):
     print('The button <%s> has been pressed' % instance.text)
     pub.publish('%s' % instance.text)
@@ -27,12 +25,10 @@ def buttonPressCallback(instance):
 def shutdownCallback(instance):
     print('The button <%s> has been pressed' % instance.text)
     sd_pub.publish('%s' % instance.text)
-    #  sleep(2)
     App.get_running_app().stop()
     rospy.shutdown()
 
 class MyScreen(GridLayout):
-    pass
     def __init__(self, **kwargs):
         super(MyScreen, self).__init__(**kwargs)
         self.cols = 2
@@ -49,6 +45,9 @@ class MyScreen(GridLayout):
         self.reset_button = Button(text='RESET')
         self.reset_button.bind(on_press=buttonPressCallback)
         self.add_widget(self.reset_button)
+        self.pause_button = Button(text='PAUSE')
+        self.pause_button.bind(on_press=buttonPressCallback)
+        self.add_widget(self.pause_button)
 
 
 class CDXBotGui(App):
@@ -58,8 +57,8 @@ class CDXBotGui(App):
 
 
 if __name__ == '__main__':
-    pub = rospy.Publisher('gui_cmd', String, queue_size=10)
-    sd_pub = rospy.Publisher('sd_pub', String, queue_size=10)
+    pub = rospy.Publisher('/gui_cmd', String, queue_size=10)
+    sd_pub = rospy.Publisher('/sd_pub', String, queue_size=10)
     rospy.init_node('gui_node', anonymous=False)
     while not rospy.is_shutdown():
         CDXBotGui().run()

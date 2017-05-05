@@ -75,11 +75,8 @@ typedef struct {
 } thread_params_t;
 
 
-pthread_t thread_id;
-thread_params_t thread_params;
-
 bool ready_flag = 1;
-std::mutex ready_flag_mutex;
+// std::mutex ready_flag_mutex;
 /* The 'extern "C"' keyword must be used here to force the compiler to use
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
@@ -101,7 +98,7 @@ extern "C" {
         int moveAbsolute(float x, float y, float z);
         int moveRelative(float x, float y, float z);
         int setUnits(unsigned int u = UNITS_MM);
-        int setAxisStepsPerMM(unsigned int axis, unsigned int steps);
+        int setAxisStepsPerUnit(unsigned int axis, unsigned int steps);
         int getSocket(void) {
             return _sockfd;
         }
@@ -130,6 +127,8 @@ extern "C" {
         double _netTimeoutMS = 0.0;
         double _pos[3] = {0, 0, 0};
         bool _ready_flag = 1;
+        pthread_t _thread_id;
+        thread_params_t _thread_params;
         // struct sockaddr_in _remote;
     };
 

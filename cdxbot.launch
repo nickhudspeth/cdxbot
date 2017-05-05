@@ -9,14 +9,6 @@ output="screen"
 />
 <rosparam file ="$(find cdxbot)/conf/pipetterController.yaml" command="load"/>
 
-<node
-pkg="cdxbot"
-type="gantryControllerNode"
-name="gc_node"
-respawn="false"
-output="screen"
-/>
-<rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/>
 
 <node
 pkg="cdxbot"
@@ -26,6 +18,15 @@ respawn="false"
 output="screen"
 />
 <rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
+
+<node
+pkg="cdxbot"
+type="gantryControllerNode"
+name="gc_node"
+respawn="false"
+output="screen"
+/>
+<rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/>
 
 <node
 pkg="cdxbot"

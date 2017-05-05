@@ -1,0 +1,5 @@
+bool x_status
+bool y_status
+bool z_status
+---
+bool ok

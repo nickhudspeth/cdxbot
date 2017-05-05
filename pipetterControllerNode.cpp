@@ -1,11 +1,16 @@
-#include <ros/ros.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <stdlib.h>
-#include "std_msgs/String.h"
-// #include "PipetterController.h"
 #include "PipetterModule.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/pc_cmd.h"
+#include "cdxbot/pipetterAspirate.h"
+#include "cdxbot/pipetterDispense.h"
+#include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterMoveZ.h"
+#include "cdxbot/pipetterPickUpTip.h"
+#include "std_msgs/String.h"
+#include <geometry_msgs/Vector3Stamped.h>
+#include <ros/ros.h>
+#include <stdlib.h>
+// #include "PipetterController.h"
 
 PipetterModule *pc;
 std::string type;
@@ -79,15 +84,23 @@ void loadParams(ros::NodeHandle &nh) {
                                 Initializing pipetter with default value " <<\
                         pc->getZAxisEnabledRef());
     }
+    if(!nh.getParam("/pc_conf/feed_plane_height", pc->getFeedPlaneHeightRef())) {
+        nh.getParam("/pc_defaults/feed_plane_height", pc->getFeedPlaneHeightRef());
+        ROS_WARN_STREAM("No paramater \"_feed_plane_height\" found in configuration file.\
+               Initializing pipetter with default value " << pc->getFeedPlaneHeightRef());
+    }
 }
 
 void gcPubCallback(const cdxbot::gc_cmd &msg) {
     ROS_DEBUG_STREAM("PipetterControllerNode:: Received gc_cmd - " << msg.cmd);
     if(msg.cmd == "movez") {
-        pc->moveZ((1800 - 219.075 - msg.z), 1);
+        // pc->moveZ((1800 - 219.075 - msg.z), 1);
+        pc->moveZ(msg.z, 1);
     }
-    else if(msg.cmd == "home"){
-        pc->moveZ((1800 - 219.75 - 45), 1);
+    /* Move Pipetter head to feed plane height at startup */
+    else if(msg.cmd == "home") {
+        // pc->moveZ((1800 - 219.75 - pc->getFeedPlaneHeight()), 1);
+        pc->moveZ(pc->getFeedPlaneHeight(), 1);
     }
 }
 
@@ -109,6 +122,34 @@ void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
     ros::shutdown();
 }
 
+bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
+        cdxbot::pipetterMoveZ::Response &resp){
+
+}
+
+bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
+        cdxbot::pipetterPickUpTip::Response &resp){
+
+}
+
+bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
+        cdxbot::pipetterEjectTip::Response &resp){
+
+}
+
+bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
+        cdxbot::pipetterAspirate::Response &resp){
+
+}
+
+bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
+        cdxbot::pipetterDispense::Response &resp){
+
+}
+
+
+
+
 int main(int argc, char **argv) {
     // const char *pcfile = "..pipetterConfig.conf";
     geometry_msgs::Vector3Stamped msg;
@@ -123,6 +164,18 @@ int main(int argc, char **argv) {
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     std::cout << "Initialized pc with addr: " << &pc << std::endl;
+    /* Instantiate service servers */
+    ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
+            &moveZCallback);
+    ros::ServiceServer pickUpTipServer = nh.advertiseService("pipetter_pick_up_tip",
+            &pickUpTipCallback);
+    ros::ServiceServer ejectTipServer = nh.advertiseService("pipetter_eject_tip",
+            &ejectTipCallback);
+    ros::ServiceServer aspirateServer = nh.advertiseService("pipetter_aspirate",
+            &aspirateCallback);
+    ros::ServiceServer dispenseServer = nh.advertiseService("pipetter_dispense",
+            &dispenseCallback);
+
 
     ros::Rate rate(100);
     while(ros::ok()) {

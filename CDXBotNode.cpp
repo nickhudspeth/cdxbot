@@ -31,25 +31,37 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <ros/ros.h>
-#include <cstdlib>
-#include <string>
-#include <cstring>
-#include <cstdio>
-#include <iostream>
-#include <stdbool.h>
-#include <ros/ros.h>
-#include "std_msgs/String.h"
-#include "std_msgs/Bool.h"
+
+#include "CDXBot.h"
+#include "cdxbot/gantryMotorsToggle.h"
+#include "cdxbot/gantryHome.h"
+#include "cdxbot/gantryMove.h"
+#include "cdxbot/gantrySetAccelerations.h"
+#include "cdxbot/gantrySetAxisStepsPerUnit.h"
+#include "cdxbot/gantrySetFeedrates.h"
+#include "cdxbot/gantrySetUnits.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/gc_cmd_s.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/pc_cmd_s.h"
+#include "cdxbot/pipetterAspirate.h"
+#include "cdxbot/pipetterDispense.h"
+#include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterMoveZ.h"
+#include "cdxbot/pipetterPickUpTip.h"
 #include "cdxbot/vc_cmd.h"
 #include "cdxbot/vc_cmd_s.h"
 #include "common.h"
-#include "CDXBot.h"
-
+#include "std_msgs/Bool.h"
+#include "std_msgs/String.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <ros/ros.h>
+#include <ros/ros.h>
+#include <stdbool.h>
+#include <string>
 
 /*********************    CONSTANTS AND MACROS    **********************/
 
@@ -65,6 +77,10 @@ ros::Publisher gc_pub; //= nh.advertise<cdx
 ros::Publisher pc_pub;
 ros::Publisher vc_pub;
 ros::Publisher shutdown_pub;
+
+bool gantry_ready = false;
+bool pipetter_ready = false;
+
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
@@ -216,11 +232,10 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         /* INITIALIZE CONTAINER CELL MATRIX */
         for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
             std::vector<struct container_cell> newRow;
-            // cd.getContainer(i).getCellsVecRef().push_back(newRow);
             for(unsigned int k=0; k < cd.getContainer(i).getCols(); k++) {
                 struct container_cell c;
+                memset(&c, 0, sizeof(struct container_cell));
                 c.test_type = " ";
-                c.used = 0;
                 if(cd.getContainer(i).getType() == "well") {
                     memset(buf, ' ',64);
                     sprintf(buf,"/cdxbot/containers/c%d/container_vol", i);
@@ -239,8 +254,35 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         Initializing cdxbot with default value %s",\
                                  i, c.depth);
                     }
+                } else if(cd.getContainer(i).getType() == "tip") {
+                    memset(buf, ' ', 64);
+                    sprintf(buf,"/cdxbot/containers/c%d/tt_index", i);
+                    if(!nh.getParam(buf, c.tt_index)) {
+                        // nh.getParam("/cdxbot_defaults/tt_index", c.tt_index);
+                        c.tt_index = 0;
+                        ROS_WARN("No parameter containers:%d:tt_index found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                                 i, c.tt_index);
+                    }
+
+                    memset(buf, ' ', 64);
+                    sprintf(buf,"/cdxbot/containers/c%d/botpp", i);
+                    if(!nh.getParam(buf, c.botpp)) {
+                        nh.getParam("/cdxbot_defaults/tt_index", c.botpp);
+                        ROS_WARN("No parameter containers:%d:botpp found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                                 i, c.botpp);
+                    }
+
+                    memset(buf, ' ', 64);
+                    sprintf(buf,"/cdxbot/containers/c%d/eotpp", i);
+                    if(!nh.getParam(buf, c.eotpp)) {
+                        nh.getParam("/cdxbot_defaults/tt_index", c.eotpp);
+                        ROS_WARN("No parameter containers:%d:eotpp found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                                 i, c.eotpp);
+                    }
                 }
-                // cd.getContainer(i).getCellsVecRef()[j].push_back(c);
                 newRow.push_back(c);
             }
             cd.getContainer(i).getCellsVecRef().push_back(newRow);
@@ -278,6 +320,7 @@ void parseAction(CDXBot &cd, const struct action a) {
     cdxbot::vc_cmd vmsg;
 
     if(a.cmd == "move") {
+        gantry_ready = false;
         /* Convert CRC (Container, Row, Column) coords to XYZ Coordinates. */
         // if(a.args[1] > cd.getNumContainers()) {
         // THROW ERROR: CONTAINER INDEX OUT OF RANGE.
@@ -317,6 +360,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         gc_pub.publish(gmsg);
 
     } else if(a.cmd == "aspirate") {
+        pipetter_ready = false;
         /* Check to see if current well volume < commanded fill volume */
         unsigned int row = static_cast<unsigned int>(a.args[1]);
         unsigned int col = static_cast<unsigned int>(a.args[2]);
@@ -346,19 +390,74 @@ void parseAction(CDXBot &cd, const struct action a) {
         pmsg.type = a.args[4];
         pc_pub.publish(pmsg);
     } else if(a.cmd == "dispense") {
+        pipetter_ready = false;
         /* Check to see if current well volume + commanded dispensing
          * volume is greater than maximum well volume */
         /* Move pipette tip to bottom of well */
         /* Dispense commanded volume */
 
     } else if(a.cmd == "mix") {
+        pipetter_ready = false;
         /* Volume of solution in well should not exceed 75% of the capacity
          * of the pipetter. Check for this. */
         /* Move pipette tip to halfway up from the bottom of the well */
         /* Draw up and dispense equal volumes of fluid N times */
         /* Dispense drawn amount of fluid + 1 unit to flush pipette tip */
 
+    } else if(a.cmd == "pickup") {
+        gantry_ready = false;
+        pipetter_ready = false;
+        /* Get location of next available tip */
+        std::cout << "Received PICKUP command." << std::endl;
+        /* TODO: nam - Refactor. Right now, the following routins scans through
+         * all tip locations until it finds an unused tip. This is pretty
+         * inefficient. Instead, store the location of the last used tip and
+         * increment every time a tip is used. - Tue 02 May 2017 02:38:54 PM MDT */
+
+        double x = 0, y = 0, z = 0;
+        unsigned int i = 0, j = 0, k = 0;
+        bool stop = false;
+        for(i = 0; (i < cd.getNumContainers()) && !stop; i++) {
+            Container c = cd.getContainer(i);
+            std::cout << "got valid container at position " << i << std::endl;
+            if(c.getType() == "tip") {
+                for(j = 0; (j < c.getRows()) && !stop; j++) {
+                    for(k = 0; (k < c.getCols()) && !stop; j++) {
+                        if(c.getCell(j,k).used == 0) {
+                            /* Mark tip cell as used. */
+                            c.getCellsVecRef()[j][k].used = 1;
+                            x = cd.getContainer(i).getGlobalCoords('x', j, k);
+                            std::cout <<"x = " << x << std::endl;
+                            y = cd.getContainer(i).getGlobalCoords('y', j, k);
+                            std::cout <<"y = " << y << std::endl;
+                            z = cd.getContainer(i).getGlobalCoords('z', j, k);
+                            std::cout <<"z = " << z << std::endl;
+                            // exit the main loop
+                            stop = true;
+                            ROS_INFO_STREAM("Pipette tip found in container " << i << " row " << j << " column " << k);
+                        }
+                    }
+                }
+            }
+        }
+        if(!stop) {
+            ROS_ERROR_STREAM("CDXBotNode: No pipette tips remaining! Please reload.");
+        }
+        /* Move to location */
+        gmsg.cmd = "movexy";
+        gmsg.x = x;
+        gmsg.y = y;
+        gc_pub.publish(gmsg);
+        while(!gantry_ready){}
+        /* Pick up Tip */
+        pmsg.cmd = ("pickup");
+        pmsg.type = cd.getContainer(i).getCellsVecRef()[j][k].tt_index;
+        pc_pub.publish(pmsg);
+        while(!pipetter_ready){}
+
     } else if(a.cmd == "eject") {
+        gantry_ready = false;
+        pipetter_ready = false;
         /* Move tip to feed plane */
 
         /* Rapid feed to center of eject bin */
@@ -371,6 +470,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         gmsg.time = a.args[0];
         gc_pub.publish(gmsg);
     } else if(a.cmd == "home") {
+        gantry_ready = false;
         gmsg.cmd = "home";
         gc_pub.publish(gmsg);
     } else if (a.cmd == "estop") {
@@ -379,7 +479,10 @@ void parseAction(CDXBot &cd, const struct action a) {
     } else if(a.cmd == "estoprst") {
         gmsg.cmd = "estoprst";
         gc_pub.publish(gmsg);
+    } else if(a.cmd == "pause") {
+        cd.setRunStatus(0);
     }
+    while((!pipetter_ready) && (!gantry_ready)){}
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
@@ -415,6 +518,12 @@ int main(int argc, char **argv) {
     ros::ServiceClient vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
     //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
 
+    /* Create service clients */
+    ros::ServiceClient pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");
+    ros::ServiceClient pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
+    ros::ServiceClient pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
+    ros::ServiceClient pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
+    ros::ServiceClient pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
     /* Check for and load/parse HLMD file */
 
     /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */

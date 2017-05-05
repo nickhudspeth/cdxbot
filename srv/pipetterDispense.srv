@@ -1,0 +1,11 @@
+# Dispense from top and follow liquid level (0) / from bottom and hold (1)
+bool orientation
+
+# Dispense speed (uL/sec)
+float64 speed
+
+# Dispense volume (uL)
+float64 vol
+
+---
+bool ok

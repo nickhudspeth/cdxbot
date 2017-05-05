@@ -54,25 +54,29 @@ int CDXBot::parseHLMDFile(const char *fname) {
     }
     while(std::getline(infile, line)) {
         struct action a;
-        if(line.empty()) {
-            break;
+        /* Strip rest of line following a '#' character to allow comments.*/
+        int p = line.find('#');
+        if(p != std::string::npos) {
+            line.erase(p);
         }
-        /* Strip whitespace from string */
-        std::string::iterator end_pos = std::remove(line.begin(), line.end(), ' ');
-        line.erase(end_pos, line.end());
-        // Assemble an action structure from the parsed tokens in the line.
-        // a.fp = getActionPointer(v[0]);
-        typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
-        boost::char_separator<char> sep(d);
-        tokenizer v(line,sep);
+        if(!line.empty()) {
+            /* Strip whitespace from string */
+            std::string::iterator end_pos = std::remove(line.begin(), line.end(), ' ');
+            line.erase(end_pos, line.end());
+            // Assemble an action structure from the parsed tokens in the line.
+            // a.fp = getActionPointer(v[0]);
+            typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+            boost::char_separator<char> sep(d);
+            tokenizer v(line,sep);
 
-        for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter)
-            if(iter == v.begin()) {
-                a.cmd = *iter;
-            } else {
-                a.args.push_back(std::stof(*iter));
-            }
-        actionMap.push_back(a);
+            for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter)
+                if(iter == v.begin()) {
+                    a.cmd = *iter;
+                } else {
+                    a.args.push_back(std::stof(*iter));
+                }
+            actionMap.push_back(a);
+        }
     }
     return 0;
 }

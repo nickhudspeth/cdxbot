@@ -1,0 +1,10 @@
+# Tip type table index
+int32 tt_index
+
+# Beginning of tip picking position
+float64 botpp
+
+# End of tip picking position
+float64 eotpp
+---
+bool ok

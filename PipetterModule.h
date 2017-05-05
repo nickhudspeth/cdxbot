@@ -49,6 +49,14 @@ LICENSE:
 #include <unistd.h>
 #include "CDXModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+// struct deck_geometry_t {
+    // unsigned int index;
+    // unsigned int min_traverse_height;
+    // unsigned int min_z_pos;
+    // unsigned int botpp; // Beginning of Tip Picking Position
+    // unsigned int eotpp; // End of Tip Picking Position
+    // unsigned int potdp; // Position of Tip Deposit Process
+// };
 
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
@@ -60,24 +68,36 @@ class PipetterModule : public CDXModule {
     virtual void moveZ(double pos, double vel) {};
 
     virtual void pickUpTip(int index) {};
-
+    virtual void pickUpTip(struct container_cell c) {};
     virtual void ejectTip(void) {};
 
     virtual void aspirate(double vol) {};
 
     virtual void dispense(double vol) {};
 
-    double getZPos(void){
+    // void setTipParams(struct tip_params t){
+        // _tp.min_traverse_height = t.min_traverse_height;
+        // _
+
+    // }
+
+    double getZPos(void) {
         return _zpos;
     }
-    double &getZPosRef(void){
+    double &getZPosRef(void) {
         return _zpos;
     }
-    bool getZAxisEnabled(void){
+    bool getZAxisEnabled(void) {
         return _z_axis_enabled;
     }
-    bool &getZAxisEnabledRef(void){
+    bool &getZAxisEnabledRef(void) {
         return _z_axis_enabled;
+    }
+    double getFeedPlaneHeight(void) {
+        return _feed_plane_height;
+    }
+    double &getFeedPlaneHeightRef(void) {
+        return _feed_plane_height;
     }
 
     std::string type;
@@ -89,10 +109,11 @@ class PipetterModule : public CDXModule {
     double _zpos_min;
     double _zpos_max;
     bool _z_axis_enabled = 1;
+    double _feed_plane_height = 50;
+    // struct tip_params _tp;
     /* data */
 };
 
 
 typedef PipetterModule *create_t();
 typedef void destroy_t(PipetterModule *);
-

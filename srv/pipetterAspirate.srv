@@ -1,0 +1,13 @@
+# Aspirate from top and follow liquid level (0) / from bottom and hold (1)
+bool orientation
+
+# Aspiration speed (uL/sec)
+float64 speed
+
+# Tip pre-wetting (true/false)
+bool prewet
+
+# Aspiration volume (uL)
+float64 vol
+---
+bool ok

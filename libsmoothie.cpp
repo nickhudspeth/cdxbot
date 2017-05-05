@@ -101,7 +101,7 @@ void SmoothieModule::waitForOK(void) {
             if(s.find("ok") != std::string::npos)  {
                 printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s.c_str());
                 s.clear();
-                std::lock_guard<std::mutex> lock(ready_flag_mutex);
+                // std::lock_guard<std::mutex> lock(ready_flag_mutex);
                 return;
             }
         }
@@ -172,16 +172,17 @@ int SmoothieModule::init(void) {
         }
     }
     /* Create a listener thread */
-    thread_params.sockfd = _sockfd;
-    thread_params.buffer = _buffer;
-    thread_params.timeout = _netTimeoutMS;
-    thread_params.remote = _remote;
+    _thread_params.sockfd = _sockfd;
+    _thread_params.buffer = _buffer;
+    _thread_params.timeout = _netTimeoutMS;
+    _thread_params.remote = _remote;
     /* Configure attributes for creation of detached state thread. */
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&thread_id, &attr, &thread_func, &thread_params);
-    pthread_attr_destroy(&attr);
+    // pthread_attr_t attr;
+    // pthread_attr_init(&attr);
+    // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    // pthread_create(&_thread_id, &attr, &thread_func, &thread_params);
+    pthread_create(&_thread_id, NULL, &thread_func, &_thread_params);
+    // pthread_attr_destroy(&attr);
 
     home(AXIS_ALL);
 
@@ -189,14 +190,17 @@ int SmoothieModule::init(void) {
 }
 
 int SmoothieModule::deinit(void) {
-    if(_connect == CONN_ETHER) {
-        close(_sockfd);
-    } else {
-        close(_usbfd);
-    }
-    printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
-    pthread_exit(&thread_id);
+    // if(_connect == CONN_ETHER) {
+    // close(_sockfd);
+    // } else {
+    // close(_usbfd);
+    // }
+    pthread_cancel(_thread_id);
+    pthread_join(_thread_id, NULL);
     printf("LIBSMOOTHIE: Killed worker thread.\n");
+    close(_sockfd);
+    printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
+    return 0;
     // PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
 }
 
@@ -282,10 +286,10 @@ int SmoothieModule::sendCommand(std::string s, bool wfr) {
 
     }
     // if(n < 0) {
-        // perror("Error writing to socket.\n");
-        // return -1;
+    // perror("Error writing to socket.\n");
+    // return -1;
     // } else {
-        // std::cout << n << " bytes written to device. " << std::endl;
+    // std::cout << n << " bytes written to device. " << std::endl;
     // }
     // if(wfr) {
     // std::lock_guard<std::mutex> lock(ready_flag_mutex);
@@ -419,22 +423,35 @@ int SmoothieModule::setUnits(unsigned int u) {
     return 0;
 }
 
-int SmoothieModule::setAxisStepsPerMM(unsigned int axis, unsigned int steps) {
+int SmoothieModule::setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {
     std::string ret = "M92";
     switch (axis) {
     case AXIS_X:
         ret += " X";
+        ret += std::to_string(steps);
+        _steps_per_unit[0] = steps;
         break;
     case AXIS_Y:
         ret += " Y";
+        ret += std::to_string(steps);
+        _steps_per_unit[1] = steps;
         break;
     case AXIS_Z:
         ret += " Z";
+        ret += std::to_string(steps);
+        _steps_per_unit[2] = steps;
+        break;
+    case AXIS_ALL:
+        _steps_per_unit[0] = steps;
+        _steps_per_unit[1] = steps;
+        _steps_per_unit[2] = steps;
+        ret += " X" + std::to_string(steps);
+        ret += " Y" + std::to_string(steps);
+        ret += " Z" + std::to_string(steps);
         break;
     default:
         return -1;
     }
-    ret += std::to_string(steps);
     return 0;
 }
 

@@ -1,0 +1,15 @@
+bool set_min
+bool set_max
+bool set_cur
+float64 x_min
+float64 y_min
+float64 z_min
+float64 x_max
+float64 y_max
+float64 z_max
+float64 x_current_percentage
+float64 y_current_percentage
+float64 z_current_percentage
+---
+bool ok
+

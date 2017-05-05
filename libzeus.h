@@ -161,7 +161,7 @@ extern "C" {
             PRINT_ERROR = ef;
         }
         void moveZ(double pos, double vel);
-        void pickUpTip(void);
+        void pickUpTip(struct container_cell c);
         void discardTip(void);
         void aspirate(double vol, bool mode);
         void dispense(double vol, bool mode);
@@ -194,14 +194,14 @@ extern "C" {
         /* This method is accessed from *thread_func(), so data access
          * must be protected from collisions by a mutex.*/
         void setReceivedMsg(std::string s) {
-            pthread_mutex_lock(&_lock_msg);
+            // pthread_mutex_lock(&_lock_msg);
             _received_msg = s;
-            pthread_mutex_unlock(&_lock_msg);
+            // pthread_mutex_unlock(&_lock_msg);
         }
         std::string getReceivedMsg(void) {
-            pthread_mutex_lock(&_lock_msg);
+            // pthread_mutex_lock(&_lock_msg);
             std::string ret = _received_msg;
-            pthread_mutex_unlock(&_lock_msg);
+            // pthread_mutex_unlock(&_lock_msg);
             return ret;
         }
         void setRemoteFlag(bool state) {
@@ -335,7 +335,7 @@ extern "C" {
         struct can_frame _last_transmitted;
         std::queue<struct can_frame> _fifo;
         struct can_frame _last_sent_frame;
-        pthread_mutex_t _lock_msg;
+        // pthread_mutex_t _lock_msg;
         pthread_t _thread_id;
         thread_params_t _thread_params;
     };

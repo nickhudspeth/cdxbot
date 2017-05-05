@@ -10,9 +10,12 @@ cdxbot:
         # Container Properties
         c0:              # Container ID Number
             type: "tip"        # Container type [tip/well]
+            tt_index: 4        # Tip type table index
+            botpp: 111        # Beginning height of tip picking-up process
+            eotpp: 107        # Ending height of tip picking-up process
             length: 127.30         # Container Exterior Length
             width:  85         # Container Exterior Width
-            height: 45          # Container Exterior Height
+            height: 120          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 9     # Spacing Between Adjacent Cells in Row
@@ -28,9 +31,12 @@ cdxbot:
             tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
         c1:              # Container ID Number
             type: "tip"        # Container type [tip/well]
+            tt_index: 4        # Tip type table index
+            botpp: 111        # Beginning height of tip picking-up process
+            eotpp: 107        # Ending height of tip picking-up process
             length: 150         # Container Exterior Length
             width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
+            height: 120          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -48,7 +54,7 @@ cdxbot:
             type: "well"        # Container type [tip/well]
             length: 150         # Container Exterior Length
             width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
+            height: 120          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
