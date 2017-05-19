@@ -1,14 +1,14 @@
 /************************************************************************
-Title:    Container.cpp
+Title:    libairz.cpp 
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     Container.cpp
+File:     libairz.cpp 
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
-Usage:    Refer to the header file Container.h.
+Usage:    Refer to the header file libairz.h.
 
 LICENSE:
-    Copyright (C) 2016 Nicholas Morrow
+    Copyright (C) 2017 Nicholas Morrow
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,7 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include "Container.h"
+#include "libairz.h"
 
 
 /*********************    CONSTANTS AND MACROS    **********************/
@@ -41,43 +41,12 @@ LICENSE:
 
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
-
-
-double Container::getGlobalCoords(const char axis, unsigned int row, unsigned int col) {
-    // printf("Getting global coords for container axis %c with %d rows and %d cols.\n", axis, _rows, _cols);
-    double ret = 0;
-    if(row > _rows) {
-        printf("ERROR: Specified row index \"%d\" is out of range for container.\n", row);
-        // Throw error: specified row index out of range for container.
-        return 0;
-    }
-    if(col > _cols) {
-        // Throw error: specified column index out of range for container.
-        printf("ERROR: Specified column index \"%d\" is out of range for container.\n", col);
-        return 0;
-    }
-
-    switch(axis) {
-    case 'x':
-        // ret = _offset_x + _tray_offsets[0] + (0.5 + col) * _col_spacing;
-        ret = _offset_x + _tray_offsets[0] + (col * _col_spacing) - 4.5;
-        break;
-
-    case 'y':
-        // ret = _offset_y + _tray_offsets[1] + (0.5 + row) * _row_spacing;
-        ret = _offset_y + _tray_offsets[1] +  (row * _row_spacing) - 4.5;
-        break;
-
-    case 'z':
-        ret = _height + _tray_offsets[2];
-        break;
-
-    default:
-        // Throw error: unspecified axis selected
-        printf("ERROR: Specified axis \"%c\" is invalid.\n", axis);
-        break;
-    }
-    return ret;
+int airZModule::init(){
 
 }
+
+int airZModule::deinit(){
+
+}
+
 

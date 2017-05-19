@@ -157,6 +157,9 @@ add_library(eppendorf
 add_library(smoothie
     libsmoothie.cpp)
 
+add_library(ramps
+    libramps.cpp)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -200,7 +203,19 @@ target_link_libraries(smoothie
     )
 
 SET(GCC_LINKER_FLAGS "-l -E")
+target_link_libraries(smoothie
+    ${catkin_LIBRARIES}
+    pthread
+    )
 ADD_DEFINITIONS(${GCC_LINKER_FLAGS})
+target_link_libraries(smoothie
+    ${catkin_LIBRARIES}
+    pthread
+    )
+target_link_libraries(ramps
+    ${catkin_LIBRARIES}
+    pthread
+    )
 #############
 ## Install ##
 #############

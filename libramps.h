@@ -1,7 +1,7 @@
 /*************************************************************************
-Title:    libsmoothie.h - CDXBot Gantry Controller Driver for Smoothieboard
+Title:    libramps.h - CDXBot Gantry Controller Driver for RAMPS 1.4 board
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     libsmoothie.h
+File:     libramps.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -64,14 +64,12 @@ LICENSE:
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define NETBUFSIZE 128
 #define UNITS_MM 0
-#define CONN_USB 0
-#define CONN_ETHER 1
 
 typedef struct {
-    int sockfd;
+    int usbfd;
     char *buffer;
     double timeout = 0.0;
-    struct sockaddr_in remote;
+    // struct sockaddr_in remote;
 } thread_params_t;
 
 
@@ -81,10 +79,10 @@ bool ready_flag = 1;
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/
 extern "C" {
-    class SmoothieModule : public GantryModule {
+    class RampsModule : public GantryModule {
       public:
-        SmoothieModule (void);
-        virtual ~SmoothieModule ();
+        RampsModule (void);
+        virtual ~RampsModule ();
         int init(void);
         int deinit(void);
         int lconf(void);
@@ -100,13 +98,10 @@ extern "C" {
         int setUnits(unsigned int u = UNITS_MM);
         int setAxisStepsPerUnit(unsigned int axis, unsigned int steps);
         int getSocket(void) {
-            return _sockfd;
+            return _usbfd;
         }
         char *getBuffer(void) {
             return _buffer;
-        }
-        void setConnectionMethod(bool con) {
-            _connect = con;
         }
         bool getReadyFlag(void) {
             return _ready_flag;
@@ -115,18 +110,14 @@ extern "C" {
             _ready_flag = f;
         }
       private:
-        int sendCommand(std::string s, bool wfr = 1);
+        int sendCommand(std::string s, bool wfr = 0);
         int readResponse(void);
         void waitForOK(void);
-        void waitForString(std::string s, unsigned int timeout);
+        void waitForString(std::string s, unsigned int timeout = 10);
         bool _units = UNITS_MM;
         /* Networking configuration */
-        bool _connect = CONN_ETHER;
-        std::string _host_ip = "192.168.169.99";
-        std::string _usb_addr = "/dev/ttyACM0";
-        unsigned int _host_port = 23;
-        speed_t _usb_baud = B115200;
-        int _sockfd = 0;
+        std::string _usb_addr = "/dev/ttyUSB0";
+        int _usb_baud = B115200;
         int _usbfd = 0;
         char _buffer[NETBUFSIZE];
         double _netTimeoutMS = 0.0;

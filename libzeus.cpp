@@ -167,8 +167,8 @@ int ZeusModule::init(void) {
     memset(&f, 0, sizeof(struct can_frame));
     setLastFrame(f);
     // if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
-        // printf("ERROR: LibZeus: Could not create mutex.\n");
-        // Unable to create mutex. Throw error.
+    // printf("ERROR: LibZeus: Could not create mutex.\n");
+    // Unable to create mutex. Throw error.
     // }
     initCANBus();
     pthread_create(&_thread_id, NULL, &thread_func, this);
@@ -208,13 +208,14 @@ int ZeusModule::lconf(void) {
 }
 
 void ZeusModule::moveZ(double pos, double vel) {
-    printf("Moving pipetter head to: %f mm.", pos);
+    printf("Moving pipetter head to: %f mm.\n", pos);
     std::string cmd = cmdHeader("GZ");
     pos = (1800 - 10*pos) + 370;
-    if((_zpos > ZPOS_MAX) || (_zpos < ZPOS_MIN)) {
+    if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
         printf("LIBZEUS: Requested z-position %f out of range.\
                 Valid range for z-position is [%f,%f]",\
-               _zpos, ZPOS_MIN, ZPOS_MAX);
+               pos, ZPOS_MIN, ZPOS_MAX);
+        return;
     }
     if(vel < 1.0) {
         vel = 0.0;

@@ -56,7 +56,13 @@ LICENSE:
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class CDXBot {
   public:
-    CDXBot () {};
+    CDXBot () {
+        /* Watch out for this. Make sure to update the z-position of the end
+         * effector after homing. */
+        _eepos[0] = 0;
+        _eepos[1] = 0;
+        _eepos[2] = 0;
+    };
     virtual ~CDXBot () {};
     int parseHLMDFile(const char *fname);
     void setRunStatus(unsigned int status);
@@ -82,11 +88,19 @@ class CDXBot {
             printf("Requested container index %d is out of range [%d, %zu ]!", index, 0, _containers.size());
         }
         return _containers[index];
-    };
+    }
+
     double getFeedPlaneHeight(void) {
         return _feed_plane;
     }
-    void setFeedPlaneHeight(double z);
+
+    double &getFeedPlaneHeightRef(void) {
+        return _feed_plane;
+    }
+
+    void setFeedPlaneHeight(double z){
+        _feed_plane = z;
+    };
 
     std::vector<class Container> &getContainersRef(void) {
         return _containers;
@@ -107,6 +121,28 @@ class CDXBot {
     bool getGantryStatus(void) {
         return _gantry_status;
     }
+    void setPipetterHasZ(bool s) {
+        _pipetter_has_z = s;
+    }
+    bool getPipetterHasZ(void) {
+        return _pipetter_has_z;
+    }
+    bool &getPipetterHasZRef(void) {
+        return _pipetter_has_z;
+    }
+    double getEEPos(unsigned int i) {
+        if(i > 2) {
+            std::cout << "ERROR " << __PRETTY_FUNCTION__ << "Requested axis is invalid. " << std::endl;
+            return 0;
+        }
+        return _eepos[i];
+    }
+    void setEEPos(unsigned int i, double pos) {
+        if(i > 2) {
+            std::cout << "ERROR " << __PRETTY_FUNCTION__ << "Requested axis is invalid. " << std::endl;
+        }
+        _eepos[i] = pos;
+    }
 
   private:
     double _feed_plane;  /* Feed plane height (mm) */
@@ -121,6 +157,8 @@ class CDXBot {
     double extents_z = 0.0;
 
     bool _gantry_status = 0;
+    bool _pipetter_has_z;
+    double _eepos[3];
     //    std::map<std::string, struct action> actionMap;
     // std::vector<struct action> actionMap;
     void (*getActionPointer(std::string s))(std::vector<float>);

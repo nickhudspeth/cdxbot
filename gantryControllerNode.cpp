@@ -365,13 +365,15 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
     } else {
         gc->moveRelative(req.x, req.y, req.z);
     }
-    while(  (gc->getPos('x') != req.x) |
-            (gc->getPos('y') != req.y) |
-            (gc->getPos('z') != req.z)) {
+    // while(  (gc->getPos('x') != req.x) |
+            // (gc->getPos('y') != req.y) |
+            // (gc->getPos('z') != req.z)) {
         /* WAIT FOR GANTRY TO ARIVE */
-    }
+    // }
 
-    return (resp.ok = true);
+    ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
+    resp.ok = true;
+    return true;
 }
 
 bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
@@ -386,6 +388,10 @@ bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
 
 bool homeCallback(cdxbot::gantryHome::Request &req,
                   cdxbot::gantryHome::Response &resp) {
+    ROS_INFO_STREAM("ENTERED HOME CALLBACK");
+    if(req.all){
+        gc->home(AXIS_ALL);
+    }
     if(req.x) {
         gc->home(AXIS_X);
     }
@@ -395,8 +401,10 @@ bool homeCallback(cdxbot::gantryHome::Request &req,
     if(req.z) {
         gc->home(AXIS_Z);
     }
-    return (resp.ok = true);
-
+    ROS_INFO_STREAM("LEAVING HOME CALLBACK");
+    resp.ok = true;
+    return true;
+    // return (resp.ok = true);
 }
 
 bool motorsToggleCallback(cdxbot::gantryMotorsToggle::Request &req,
@@ -527,7 +535,7 @@ int main(int argc, char **argv) {
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Publisher gc_status_pub = nh.advertise<std_msgs::Bool>("gantry_status", 1000);
 
-    ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
+    // ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
 
     /* INSTANTIATE SERVICE SERVERS */

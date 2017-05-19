@@ -123,27 +123,28 @@ void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
 }
 
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
-        cdxbot::pipetterMoveZ::Response &resp){
+                   cdxbot::pipetterMoveZ::Response &resp) {
+    pc->moveZ(req.pos, 1);
 
 }
 
 bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
-        cdxbot::pipetterPickUpTip::Response &resp){
+                       cdxbot::pipetterPickUpTip::Response &resp) {
 
 }
 
 bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
-        cdxbot::pipetterEjectTip::Response &resp){
+                      cdxbot::pipetterEjectTip::Response &resp) {
 
 }
 
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
-        cdxbot::pipetterAspirate::Response &resp){
+                      cdxbot::pipetterAspirate::Response &resp) {
 
 }
 
 bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
-        cdxbot::pipetterDispense::Response &resp){
+                      cdxbot::pipetterDispense::Response &resp) {
 
 }
 
@@ -166,15 +167,15 @@ int main(int argc, char **argv) {
     std::cout << "Initialized pc with addr: " << &pc << std::endl;
     /* Instantiate service servers */
     ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
-            &moveZCallback);
+                                     &moveZCallback);
     ros::ServiceServer pickUpTipServer = nh.advertiseService("pipetter_pick_up_tip",
-            &pickUpTipCallback);
+                                         &pickUpTipCallback);
     ros::ServiceServer ejectTipServer = nh.advertiseService("pipetter_eject_tip",
-            &ejectTipCallback);
+                                        &ejectTipCallback);
     ros::ServiceServer aspirateServer = nh.advertiseService("pipetter_aspirate",
-            &aspirateCallback);
+                                        &aspirateCallback);
     ros::ServiceServer dispenseServer = nh.advertiseService("pipetter_dispense",
-            &dispenseCallback);
+                                        &dispenseCallback);
 
 
     ros::Rate rate(100);

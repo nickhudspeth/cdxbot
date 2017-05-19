@@ -1,13 +1,13 @@
 /*************************************************************************
-Title:    PipetterModule.h - Interface Class for CDXBot Pipetter Drivers
+Title:    libairz.h - CDXBot Driver for TriContinent Air-Z Premier Pipetter
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     PipetterModule.h
+File:     libairz.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
 
 DESCRIPTION:
-
+    What does this module do?
 
 USAGE:
 
@@ -37,33 +37,22 @@ LICENSE:
     THE SOFTWARE.
 
 *************************************************************************/
-#pragma once
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
-#include "CDXModule.h"
+
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-// struct deck_geometry_t {
-    // unsigned int index;
-    // unsigned int min_traverse_height;
-    // unsigned int min_z_pos;
-    // unsigned int botpp; // Beginning of Tip Picking Position
-    // unsigned int eotpp; // End of Tip Picking Position
-    // unsigned int potdp; // Position of Tip Deposit Process
-// };
-
-
-/***********************    FUNCTION PROTOTYPES    ***********************/
-class PipetterModule : public CDXModule {
+class airZModule : public PipetterModule {
   public:
-    PipetterModule (void) {};
-    virtual ~PipetterModule (void) {};
+    airZModule (void);
+    virtual ~airZModule ();
+    int init(void);
+    int deinit(void);
+    int lconf(void);
+    void seterrfunc(void(*ef)(std::string s)) {
+        PRINT_ERROR = ef;
+    }
     virtual void moveZ(double pos, double vel) {};
     virtual void pickUpTip(int index) {};
     virtual void pickUpTip(struct container_cell c) {};
@@ -72,8 +61,8 @@ class PipetterModule : public CDXModule {
     virtual void dispense(double vol) {};
 
     // void setTipParams(struct tip_params t){
-        // _tp.min_traverse_height = t.min_traverse_height;
-        // _
+    // _tp.min_traverse_height = t.min_traverse_height;
+    // _
 
     // }
 
@@ -95,21 +84,24 @@ class PipetterModule : public CDXModule {
     double &getFeedPlaneHeightRef(void) {
         return _feed_plane_height;
     }
+    int setID(unsigned int id) {
+        if((id < 1) || (id > 16)) {
+            /* ERROR: ID out of valid range [1, 16] */
+            return -1;
+        }
+        _id = id;
+    }
+    unsigned int getID(void) {
+        return _id;
+    }
+    unsigned int &getIDRef(void) {
+        return _id;
+    }
 
-    std::string type;
-    std::string driver_name;
-    std::string driver_path;
 
-  protected:
-    double _zpos;
-    double _zpos_min;
-    double _zpos_max;
-    bool _z_axis_enabled = 1;
-    double _feed_plane_height = 50;
-    // struct tip_params _tp;
+  private:
+    unsigned int _id;
     /* data */
 };
 
-
-typedef PipetterModule *create_t();
-typedef void destroy_t(PipetterModule *);
+/***********************    FUNCTION PROTOTYPES    ***********************/

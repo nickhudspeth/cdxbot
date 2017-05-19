@@ -33,8 +33,10 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 
 #include "CDXBot.h"
-#include "cdxbot/gantryMotorsToggle.h"
+#include "cdxbot/gantryEStopToggle.h"
+#include "cdxbot/gantryGetCurrentPosition.h"
 #include "cdxbot/gantryHome.h"
+#include "cdxbot/gantryMotorsToggle.h"
 #include "cdxbot/gantryMove.h"
 #include "cdxbot/gantrySetAccelerations.h"
 #include "cdxbot/gantrySetAxisStepsPerUnit.h"
@@ -53,6 +55,7 @@ LICENSE:
 #include "cdxbot/vc_cmd_s.h"
 #include "common.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Float64.h"
 #include "std_msgs/String.h"
 #include <cstdio>
 #include <cstdlib>
@@ -78,8 +81,25 @@ ros::Publisher pc_pub;
 ros::Publisher vc_pub;
 ros::Publisher shutdown_pub;
 
-bool gantry_ready = false;
-bool pipetter_ready = false;
+
+/* Create service clients */
+ros::ServiceClient gcClient;
+ros::ServiceClient pcClient;
+ros::ServiceClient vcClient;
+ros::ServiceClient gantryEStopToggleClient;
+ros::ServiceClient gantryGetCurrentPositionClient;
+ros::ServiceClient gantryHomeClient;
+ros::ServiceClient gantryMotorsToggleClient;
+ros::ServiceClient gantryMoveClient;
+ros::ServiceClient gantrySetAccelerationsClient;
+ros::ServiceClient gantrySetAxisStepsPerUnitClient;
+ros::ServiceClient gantrySetFeedratesClient;
+ros::ServiceClient gantrySetUnitsClient;
+ros::ServiceClient pipetterAspirateClient;
+ros::ServiceClient pipetterDispenseClient;
+ros::ServiceClient pipetterEjectTipClient;
+ros::ServiceClient pipetterMoveZClient;
+ros::ServiceClient pipetterPickUpTipClient;
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
@@ -102,6 +122,22 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
     // Initializing cdxbot with default value %s",\
     // cd.getNumContainers());
     // }
+    memset(buf, ' ',64);
+    sprintf(buf,"/cdxbot/pipetter_has_z");
+    if(!nh.getParam(buf, cd.getPipetterHasZRef())) {
+        nh.getParam("/cdxbot_defaults/pipetter_has_z", cd.getPipetterHasZRef());
+        ROS_WARN("No parameter pipetter_has_z found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                 cd.getPipetterHasZRef());
+    }
+    memset(buf, ' ',64);
+    sprintf(buf,"/cdxbot/feed_plane");
+    if(!nh.getParam(buf, cd.getFeedPlaneHeightRef())) {
+        nh.getParam("/cdxbot_defaults/feed_plane", cd.getFeedPlaneHeightRef());
+        ROS_WARN("No parameter feed_plane found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                 cd.getFeedPlaneHeightRef());
+    }
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
@@ -320,7 +356,13 @@ void parseAction(CDXBot &cd, const struct action a) {
     cdxbot::vc_cmd vmsg;
 
     if(a.cmd == "move") {
-        gantry_ready = false;
+
+        /* 1.) Check location of end effector height.
+         * 2.) If end effector is below feed plane, move end effector to feed
+         * plane.
+         * 3.) Move gantry in XY plane to destination.
+         * 4.) Move end effector to Z destination.
+         */
         /* Convert CRC (Container, Row, Column) coords to XYZ Coordinates. */
         // if(a.args[1] > cd.getNumContainers()) {
         // THROW ERROR: CONTAINER INDEX OUT OF RANGE.
@@ -329,38 +371,97 @@ void parseAction(CDXBot &cd, const struct action a) {
         // }
         printf("CDXBotNode: Parsing move command.\n");
         unsigned int cidx = (int)a.args[0];
-        printf("Calculating coordinates of container... %d\n", cidx);
+        printf("Calculating coordinates of container %d.\n", cidx);
+        printf("\t Using x-offset %f\n", cd.getContainer(cidx).getOffsetX());
+        printf("\t Using y-offset %f\n", cd.getContainer(cidx).getOffsetY());
+        printf("\t Using z-offset %f\n", cd.getContainer(cidx).getOffsetZ());
+        printf("\t Using x tray offset %f\n", cd.getContainer(cidx).getTrayOffset(0));
+        printf("\t Using y tray offset %f\n", cd.getContainer(cidx).getTrayOffset(1));
+        printf("\t Using z tray offset %f\n", cd.getContainer(cidx).getTrayOffset(2));
         double x = cd.getContainer(cidx).getGlobalCoords('x', a.args[1], a.args[2]);
         double y = cd.getContainer(cidx).getGlobalCoords('y', a.args[1], a.args[2]);
         double z = cd.getContainer(cidx).getGlobalCoords('z', a.args[1], a.args[2]);
         std::cout << "moving to coordinates (x, y, z) = (" << x << ", " << y << ", " << z << ")" << std::endl;
         /* Move tip to feed plane */
-        gmsg.cmd = "movez";
-        gmsg.z = z;
-        gc_pub.publish(gmsg);
-
+        // gmsg.cmd = "movez";
+        // gmsg.z = z;
+        // gc_pub.publish(gmsg);
+        /* Check location of end effector height and move end effector to feed
+         * plane if z-position of end effector is below feed plane. */
+        if(cd.getEEPos(2) < cd.getFeedPlaneHeight()) {
+            if(cd.getPipetterHasZ()) {
+                cdxbot::pipetterMoveZ::Request pmzreq;
+                cdxbot::pipetterMoveZ::Response pmzresp;
+                pmzreq.pos = cd.getFeedPlaneHeight();
+                pmzreq.vel = 0;
+                if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+                    ROS_ERROR_STREAM("CDXBotNode: Unable to move pipetter to (z = )" << z << ").");
+                }
+            } else {
+                cdxbot::gantryMove::Request gmzreq;
+                cdxbot::gantryMove::Response gmzresp;
+                /* TODO: nam - Get current move mode dynamically. Mon 08 May 2017 10:25:48 AM MDT */
+                gmzreq.move_mode = 0;
+                gmzreq.x = -1;
+                gmzreq.y = -1;
+                gmzreq.z = cd.getFeedPlaneHeight();
+                if(!gantryMoveClient.call(gmzreq, gmzresp)) {
+                    ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << z << ").");
+                }
+            }
+        }
+        cdxbot::gantryMove::Request gmxyreq;
+        cdxbot::gantryMove::Response gmxyresp;
+        /* Move gantry to destination in XY plane. */
+        gmxyreq.move_mode = 0;
+        gmxyreq.x = x;
+        gmxyreq.y = y;
+        gmxyreq.z = -1;
+        if(!gantryMoveClient.call(gmxyreq, gmxyresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x=" << x << ", y=" << y << ", z = " << z);
+        }
+        if(cd.getPipetterHasZ()) {
+            cdxbot::pipetterMoveZ::Request pmzreq2;
+            cdxbot::pipetterMoveZ::Response pmzresp2;
+            pmzreq2.pos = cd.getFeedPlaneHeight();
+            pmzreq2.vel = 0;
+            if(!pipetterMoveZClient.call(pmzreq2, pmzresp2)) {
+                ROS_ERROR_STREAM("CDXBotNode: Unable to move pipetter to (z = )" << z << ").");
+            }
+        } else {
+            cdxbot::gantryMove::Request gmzreq2;
+            cdxbot::gantryMove::Response gmzresp2;
+            /* TODO: nam - Get current move mode dynamically. Mon 08 May 2017 10:25:48 AM MDT */
+            gmzreq2.move_mode = 0;
+            gmzreq2.x = -1;
+            gmzreq2.y = -1;
+            gmzreq2.z = cd.getFeedPlaneHeight();
+            if(!gantryMoveClient.call(gmzreq2, gmzresp2)) {
+                ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << z << ").");
+            }
+        }
+        ROS_INFO_STREAM("CDXBOTNODE: Leaving move callback.");
         /* Rapid feed to calculated coordinates in feed plane */
-        gmsg.cmd = "setvel";
-        gmsg.vel = -1;   //  [> Feed at maximum velocity <]
-        gc_pub.publish(gmsg);
+        // gmsg.cmd = "setvel";
+        // gmsg.vel = -1;   //  [> Feed at maximum velocity <]
+        // gc_pub.publish(gmsg);
 
-        gmsg.cmd = "movexy";
-        gmsg.x = x;
-        gmsg.y = y;
-        gc_pub.publish(gmsg);
+        // gmsg.cmd = "movexy";
+        // gmsg.x = x;
+        // gmsg.y = y;
+        // gc_pub.publish(gmsg);
 
         /* Set velocity to plunge velocity */
-        gmsg.cmd = "setvel";
-        gmsg.vel = -1;    // [> Feed at maximum velocity <]
-        gc_pub.publish(gmsg);
+        // gmsg.cmd = "setvel";
+        // gmsg.vel = -1;    // [> Feed at maximum velocity <]
+        // gc_pub.publish(gmsg);
 
         /* Move to top of container cell */
-        gmsg.cmd = "movez";
-        gmsg.z = z;
-        gc_pub.publish(gmsg);
+        // gmsg.cmd = "movez";
+        // gmsg.z = z;
+        // gc_pub.publish(gmsg);
 
     } else if(a.cmd == "aspirate") {
-        pipetter_ready = false;
         /* Check to see if current well volume < commanded fill volume */
         unsigned int row = static_cast<unsigned int>(a.args[1]);
         unsigned int col = static_cast<unsigned int>(a.args[2]);
@@ -390,14 +491,12 @@ void parseAction(CDXBot &cd, const struct action a) {
         pmsg.type = a.args[4];
         pc_pub.publish(pmsg);
     } else if(a.cmd == "dispense") {
-        pipetter_ready = false;
         /* Check to see if current well volume + commanded dispensing
          * volume is greater than maximum well volume */
         /* Move pipette tip to bottom of well */
         /* Dispense commanded volume */
 
     } else if(a.cmd == "mix") {
-        pipetter_ready = false;
         /* Volume of solution in well should not exceed 75% of the capacity
          * of the pipetter. Check for this. */
         /* Move pipette tip to halfway up from the bottom of the well */
@@ -405,8 +504,6 @@ void parseAction(CDXBot &cd, const struct action a) {
         /* Dispense drawn amount of fluid + 1 unit to flush pipette tip */
 
     } else if(a.cmd == "pickup") {
-        gantry_ready = false;
-        pipetter_ready = false;
         /* Get location of next available tip */
         std::cout << "Received PICKUP command." << std::endl;
         /* TODO: nam - Refactor. Right now, the following routins scans through
@@ -448,16 +545,12 @@ void parseAction(CDXBot &cd, const struct action a) {
         gmsg.x = x;
         gmsg.y = y;
         gc_pub.publish(gmsg);
-        while(!gantry_ready){}
         /* Pick up Tip */
         pmsg.cmd = ("pickup");
         pmsg.type = cd.getContainer(i).getCellsVecRef()[j][k].tt_index;
         pc_pub.publish(pmsg);
-        while(!pipetter_ready){}
 
     } else if(a.cmd == "eject") {
-        gantry_ready = false;
-        pipetter_ready = false;
         /* Move tip to feed plane */
 
         /* Rapid feed to center of eject bin */
@@ -466,23 +559,44 @@ void parseAction(CDXBot &cd, const struct action a) {
 
         /* Move to home position? */
     } else if(a.cmd == "wait") {
-        gmsg.cmd = "wait";
-        gmsg.time = a.args[0];
-        gc_pub.publish(gmsg);
+        float dur = a.args[0] / 1000.0;
+        std::cout << "sleeping for " << dur << " seconds." << std::endl;
+        ros::Duration(dur).sleep();
+        // usleep((a.args[0] * 1000));
+        // gmsg.cmd = "wait";
+        // gmsg.time = a.args[0];
+        // gc_pub.publish(gmsg);
     } else if(a.cmd == "home") {
-        gantry_ready = false;
-        gmsg.cmd = "home";
-        gc_pub.publish(gmsg);
+        cdxbot::gantryHome::Request ghomereq;
+        cdxbot::gantryHome::Response ghomeresp;
+        // ghomereq.x = ghomereq.y = ghomereq.z = 1;
+        ghomereq.all = 1;
+        if(!gantryHomeClient.call(ghomereq, ghomeresp)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not home gantry.");
+        }
+        // gmsg.cmd = "home";
+        // gc_pub.publish(gmsg);
     } else if (a.cmd == "estop") {
-        gmsg.cmd = "estop";
-        gc_pub.publish(gmsg);
+        cdxbot::gantryEStopToggle::Request gestreq;
+        cdxbot::gantryEStopToggle::Response gestresp;
+        gestreq.state = 0;
+        if(!gantryEStopToggleClient.call(gestreq, gestresp)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not activate emergency stop.");
+        }
+        // gmsg.cmd = "estop";
+        // gc_pub.publish(gmsg);
     } else if(a.cmd == "estoprst") {
-        gmsg.cmd = "estoprst";
-        gc_pub.publish(gmsg);
+        cdxbot::gantryEStopToggle::Request gestrstreq;
+        cdxbot::gantryEStopToggle::Response gestrstresp;
+        gestrstreq.state = 0;
+        if(!gantryEStopToggleClient.call(gestrstreq, gestrstresp)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not deactivate emeregency stop.");
+        }
+        // gmsg.cmd = "estoprst";
+        // gc_pub.publish(gmsg);
     } else if(a.cmd == "pause") {
         cd.setRunStatus(0);
     }
-    while((!pipetter_ready) && (!gantry_ready)){}
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
@@ -499,6 +613,10 @@ void gantryStatusCallback(const std_msgs::Bool &msg) {
     cd.setGantryStatus(msg.data);
 }
 
+void pipetterUpdateZPosCallback(const std_msgs::Float64 &msg) {
+    cd.setEEPos(2, msg.data);
+}
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
@@ -508,22 +626,32 @@ int main(int argc, char **argv) {
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
     ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
+    ros::Subscriber pipetter_zpos = nh.subscribe("/pipetter_zpos", 1000, &pipetterUpdateZPosCallback);
     /* Create publishers for the various controller */
     gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
     pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
     vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
 
-    ros::ServiceClient gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
-    ros::ServiceClient pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
-    ros::ServiceClient vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
     //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
-
     /* Create service clients */
-    ros::ServiceClient pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");
-    ros::ServiceClient pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
-    ros::ServiceClient pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
-    ros::ServiceClient pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
-    ros::ServiceClient pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
+    gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
+    pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
+    vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
+    gantryEStopToggleClient = nh.serviceClient<cdxbot::gantryEStopToggle>("gantry_estop_toggle");
+    gantryGetCurrentPositionClient = nh.serviceClient<cdxbot::gantryGetCurrentPosition>("gantry_get_current_position");
+    gantryHomeClient = nh.serviceClient<cdxbot::gantryHome>("gantry_home");
+    gantryMotorsToggleClient = nh.serviceClient<cdxbot::gantryMotorsToggle>("gantry_motors_toggle");
+    gantryMoveClient = nh.serviceClient<cdxbot::gantryMove>("gantry_move");
+    gantrySetAccelerationsClient = nh.serviceClient<cdxbot::gantrySetAccelerations>("gantry_set_accelerations");
+    gantrySetAxisStepsPerUnitClient = nh.serviceClient<cdxbot::gantrySetAxisStepsPerUnit>("gantry_set_axis_steps_per_unit");
+    gantrySetFeedratesClient = nh.serviceClient<cdxbot::gantrySetFeedrates>("gantry_set_feedrates");
+    gantrySetUnitsClient = nh.serviceClient<cdxbot::gantrySetUnits>("gantry_set_units");
+    pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
+    pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
+    pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
+    pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");
+    pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
+
     /* Check for and load/parse HLMD file */
 
     /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */

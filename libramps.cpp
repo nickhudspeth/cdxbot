@@ -1,11 +1,11 @@
 /************************************************************************
-Title:    libsmoothie.cpp
+Title:    libramps.cpp
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     libsmoothie.cpp
+File:     libramps.cpp
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
-Usage:    Refer to the header file libsmoothie.h.
+Usage:    Refer to the header file libramps.h.
 
 LICENSE:
     Copyright (C) 2017 Nicholas Morrow
@@ -31,12 +31,12 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include "libsmoothie.h"
+#include "libramps.h"
 
 
 /*********************    CONSTANTS AND MACROS    **********************/
-
-
+#define KBLU  "\x1B[34m""]"
+#define KNRM  "\x1B[0m""]"
 /***********************    GLOBAL VARIABLES    ************************/
 
 
@@ -51,7 +51,7 @@ LICENSE:
 
 
 extern "C" GantryModule *create(void) {
-    return new SmoothieModule;
+    return new RampsModule;
 }
 
 extern "C" void destroy(GantryModule *gc) {
@@ -70,7 +70,7 @@ extern "C" void destroy(GantryModule *gc) {
 // if((n = read(tp->sockfd, buffer, NETBUFSIZE - 1) > 0)) {
 // s += std::string(buffer);
 // if(s.find("ok") != std::string::npos)  {
-// printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s.c_str());
+// printf("LIBRAMPS::WORKER THREAD: %s\n", s.c_str());
 // s.clear();
 // std::lock_guard<std::mutex> lock(ready_flag_mutex);
 // ready_flag = 1;
@@ -80,15 +80,25 @@ extern "C" void destroy(GantryModule *gc) {
 // }
 
 extern "C" void *thread_func(void *arg) {
+    int n = 0;
+    std::string s;
     char buffer[NETBUFSIZE];
     std::memset(buffer, 0, NETBUFSIZE);
     thread_params_t *tp = (thread_params_t *)arg;
     while(1) {
-        read(tp->sockfd, buffer, (NETBUFSIZE - 1));
+        n = 0;
+        std::memset(buffer, 0, NETBUFSIZE);
+        if((n = read(tp->usbfd, buffer, NETBUFSIZE - 1) > 0)) {
+            s += std::string(buffer);
+            if(s.find("\n") != std::string::npos)  {
+                printf("%s%s%s\n", KBLU, s.c_str(), KNRM);
+                s.clear();
+            }
+        }
     }
 }
 
-void SmoothieModule::waitForOK(void) {
+void RampsModule::waitForOK(void) {
     int n = 0;
     std::string s;
     char buffer[NETBUFSIZE];
@@ -96,163 +106,141 @@ void SmoothieModule::waitForOK(void) {
     while(1) {
         n = 0;
         std::memset(buffer, 0, NETBUFSIZE);
-        if((n = read(_sockfd, buffer, NETBUFSIZE - 1) > 0)) {
+        if((n = read(_usbfd, buffer, NETBUFSIZE - 1) > 0)) {
             s += std::string(buffer);
             if(s.find("ok") != std::string::npos)  {
-                printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s.c_str());
+                printf("LIBRAMPS::WORKER THREAD: %s\n", s.c_str());
                 s.clear();
-                // std::lock_guard<std::mutex> lock(ready_flag_mutex);
                 return;
             }
         }
     }
 }
 
-void SmoothieModule::waitForString(std::string s, unsigned int timeout) {
+void RampsModule::waitForString(std::string s, unsigned int timeout) {
     int n = 0;
     std::string s2;
     char buffer[NETBUFSIZE];
     std::memset(buffer, 0, NETBUFSIZE);
     time_t start = time(NULL);
     while((time(NULL) - start) < timeout) {
+        write(_usbfd, "M114\n", 5);
         n = 0;
         std::memset(buffer, 0, NETBUFSIZE);
-        if((n = read(_sockfd, buffer, NETBUFSIZE - 1) > 0)) {
+        if((n = read(_usbfd, buffer, NETBUFSIZE - 1) > 0)) {
             s2 += std::string(buffer);
             if(s2.find(s) != std::string::npos)  {
-                printf("LIBSMOOTHIE::WORKER THREAD: %s\n", s2.c_str());
+                printf("LIBRAMPS::WORKER THREAD: %s\n", s2.c_str());
                 s2.clear();
-                // std::lock_guard<std::mutex> lock(ready_flag_mutex);
                 return;
             }
         }
+        usleep(100000);
     }
 }
 
 
 
-SmoothieModule::SmoothieModule() {}
-SmoothieModule::~SmoothieModule() {}
+RampsModule::RampsModule() {}
+RampsModule::~RampsModule() {}
 
 
-int SmoothieModule::init(void) {
-    struct sockaddr_in _remote;
-    if(_connect == CONN_ETHER) {
-        /* Clear out needed memory */
-        std::memset(_buffer, 0, NETBUFSIZE);
-        std::memset(&_remote, 0, sizeof(struct sockaddr_in));
-        /* Fill in required details in the socket structure */
-        _remote.sin_family = AF_INET;
-        _remote.sin_port = htons(_port);
-        _remote.sin_addr.s_addr = inet_addr(_ip_address.c_str());
-        /* Create a socket */
-        std::cout <<"LIBSMOOTHIE: Connecting to " << _ip_address << ":" << _port << std::endl;
-        _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if(_sockfd < 0) {
-            std::cout << "err 1" << std::endl;
-            perror("socket");
-            return -1;
-        }
-        std::cout << "sockfd = " << _sockfd <<std::endl;
-        /* Set socket options */
-        int i = 1;
-        setsockopt(_sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&i, sizeof(i));
-        /* Connect to remote host */
-        if(connect(_sockfd, (struct sockaddr *) &_remote, sizeof(_remote)) < 0) {
-            std::cout << "err 2" << std::endl;
-            perror("connect");
-            return -1;
-        }
-        std::cout <<"LIBSMOOTHIE: Connected to " << _ip_address << ":" << _port << std::endl;
-    } else if (_connect == CONN_USB) {
-        /* Open USB Device */
-        _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
-        std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
-        struct termios tty;
-        struct termios tty_old;
-        if(tcgetattr(_usbfd, &tty) != 0) {
-            std::cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
-        }
-        tty_old = tty;
-        /* Set baud rate */
-        cfsetospeed(&tty, (speed_t)_usb_baud);
-        cfsetispeed(&tty, (speed_t)_usb_baud);
-
-        tty.c_cflag &= ~PARENB;
-        tty.c_cflag &= ~CSTOPB;
-        tty.c_cflag &= ~CSIZE;
-        tty.c_cflag |= CS8;
-        tty.c_cflag &= ~CRTSCTS;
-        tty.c_cc[VMIN] = 1;
-        tty.c_cc[VTIME] = 5;
-        tty.c_cflag |= CREAD | CLOCAL;
-        /* Make raw */
-        cfmakeraw(&tty);
-        /* Flush port then apply attributes */
-        tcflush(_usbfd, TCIFLUSH);
-        if(tcsetattr(_usbfd, TCSANOW, &tty) !=0) {
-            std::cout << "Error: " << errno << " from tcsetattr." << std::endl;
-        }
+int RampsModule::init(void) {
+    /* Open USB Device */
+    _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+    if(_usbfd < 0) {
+        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << "opening " << _usb_addr << " : " << strerror(errno) << std::endl;
+        return -1;
     }
+    std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+    if(tcgetattr(_usbfd, &tty) != 0) {
+        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    /* Set baud rate */
+    cfsetospeed(&tty, _usb_baud);
+    cfsetispeed(&tty, _usb_baud);
+
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
+    tty.c_iflag &= ~IGNBRK;
+    tty.c_lflag = 0;
+    tty.c_oflag = 0;
+    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VTIME] = 5;
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+    tty.c_cflag |= (CLOCAL | CREAD);
+    tty.c_cflag &= ~(PARENB | PARODD);
+    tty.c_cflag |= 0; // No parity
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CRTSCTS;
+    if(tcsetattr(_usbfd, TCSANOW, &tty) != 0) {
+        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcsetattr: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    /* Set serial port to non-blocking */
+    // memset(&tty, 0, sizeof tty);
+    // if(tcgetattr(_usbfd, &tty) != 0){
+    // std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+    // return -1;
+    // }
+    // tty.c_cc[VMIN] = 0;
+    // tty.c_cc[VTIME] = 5;
+
     /* Create a listener thread */
-    _thread_params.sockfd = _sockfd;
+    _thread_params.usbfd = _usbfd;
     _thread_params.buffer = _buffer;
     _thread_params.timeout = _netTimeoutMS;
-    _thread_params.remote = _remote;
     /* Configure attributes for creation of detached state thread. */
-    // pthread_attr_t attr;
-    // pthread_attr_init(&attr);
-    // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    // pthread_create(&_thread_id, &attr, &thread_func, &thread_params);
-    pthread_create(&_thread_id, NULL, &thread_func, &_thread_params);
-    // pthread_attr_destroy(&attr);
+// pthread_attr_t attr;
+// pthread_attr_init(&attr);
+// pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+// pthread_create(&_thread_id, &attr, &thread_func, &thread_params);
+    // pthread_create(&_thread_id, NULL, &thread_func, &_thread_params);
+// pthread_attr_destroy(&attr);
 
-    home(AXIS_ALL);
+    // home(AXIS_ALL);
 
     return 0;
 }
 
-int SmoothieModule::deinit(void) {
-    // if(_connect == CONN_ETHER) {
-    // close(_sockfd);
-    // } else {
-    // close(_usbfd);
-    // }
+int RampsModule::deinit(void) {
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
-    printf("LIBSMOOTHIE: Killed worker thread.\n");
-    close(_sockfd);
-    printf("LIBSMOOTHIE: Closed socket connection to hardware.\n");
+    printf("LIBRAMPS: Killed worker thread.\n");
+    close(_usbfd);
+    printf("LIBRAMPS: Closed socket connection to hardware.\n");
     return 0;
-    // PRINT_ERROR("LIBSMOOTHIE: Successfully shut down driver.\n");
+    // PRINT_ERROR("LIBRAMPS: Successfully shut down driver.\n");
 }
 
-int SmoothieModule::lconf(void) {
+int RampsModule::lconf(void) {
 
 }
 
-void SmoothieModule::seterrfunc(void(*ef)(std::string s)) {
+void RampsModule::seterrfunc(void(*ef)(std::string s)) {
     PRINT_ERROR = ef;
 }
 
-void SmoothieModule::dwell(int t) {
+void RampsModule::dwell(int t) {
     std::string ret = "G4 P";
     ret += std::to_string(t);
     sendCommand(ret);
 }
 
-void SmoothieModule::emergencyStop(void) {
+void RampsModule::emergencyStop(void) {
     std::string ret = "M112";
     sendCommand(ret);
 }
 
-void SmoothieModule::emergencyStopReset(void) {
+void RampsModule::emergencyStopReset(void) {
     std::string ret = "M999";
     sendCommand(ret);
 }
 
-int SmoothieModule::home(unsigned int axis) {
-    std::string ret = "$H";
+int RampsModule::home(unsigned int axis) {
+    std::string ret = "G28";
     switch (axis) {
     case AXIS_ALL:
         break;
@@ -277,51 +265,21 @@ int SmoothieModule::home(unsigned int axis) {
 }
 
 
-int SmoothieModule::sendCommand(std::string s, bool wfr) {
-    s += "\r\n";
-    // std::cout << "LIBSMOOTHIE: Sending command: " << s.c_str() << std::endl;
+int RampsModule::sendCommand(std::string s, bool wfr) {
+    s += "\n";
     int n = 0;
+    // n = write(_usbfd, s.c_str(), sizeof(s.c_str()) - 1);
+    n = write(_usbfd, s.c_str(), s.length());
+    std::cout << "LIBRAMPS: Sent " << n << " characters in command: " << s.c_str() << std::endl;
     // if(wfr) {
-    // while(!ready_flag) {
-    // usleep(1000);
+    waitForString("Count");
     // }
-    // }
-    if(_connect == CONN_USB) {
-        n = write(_sockfd, s.c_str(), sizeof(s.c_str()) - 1);
-        usleep((n+25) * 100);
-    } else if (_connect == CONN_ETHER) {
-        // char buf[256];
-        // memset(buf, 0, 256);
-        // int len = s.size();
-        // sprintf(buf, "%s", s.c_str());
-        // n = write(_sockfd, buf, len);
-        // fflush((FILE*)(&_sockfd));
-        // waitForOK();
-        std::string py = "python /home/cdx/catkin_ws/src/cdxbot/sendcommand.py ";
-        py += " -i ";
-        py += _ip_address;
-        py += " -p 23 ";
-        py += "\"";
-        py += s;
-        py += "\"";
-        std::cout << " BASH: " << py << std::endl;
-        system(py.c_str());
-
-    }
-    // if(n < 0) {
-    // perror("Error writing to socket.\n");
-    // return -1;
-    // } else {
-    // std::cout << n << " bytes written to device. " << std::endl;
-    // }
-    // if(wfr) {
-    // std::lock_guard<std::mutex> lock(ready_flag_mutex);
-    // ready_flag = 0;
-    // }
+    usleep((n+25) * 100);
+    // usleep(10000);
     return n;
 }
 
-int SmoothieModule::readResponse(void) {
+int RampsModule::readResponse(void) {
     int n = 0;
     boost::timer t;
     /* Receive date information and print it */
@@ -329,7 +287,7 @@ int SmoothieModule::readResponse(void) {
     /* TODO: nam - Do we need to memset() the buffer again here?
      * Thu 01 Dec 2016 01:59:16 PM MST */
     while((t.elapsed() * 1000) < _netTimeoutMS) {
-        if((n = read(_sockfd, &_buffer, NETBUFSIZE - 1)) > 0) {
+        if((n = read(_usbfd, &_buffer, NETBUFSIZE - 1)) > 0) {
             _buffer[n] = '\0'; // Null terminate the string
             printf("%s", _buffer);
             break;
@@ -343,7 +301,7 @@ int SmoothieModule::readResponse(void) {
     return n;
 }
 
-int SmoothieModule::motorsDisable(unsigned int axis) {
+int RampsModule::motorsDisable(unsigned int axis) {
     std::string ret = "M18";
     switch (axis) {
     case AXIS_X:
@@ -363,13 +321,13 @@ int SmoothieModule::motorsDisable(unsigned int axis) {
     return 0;
 }
 
-int SmoothieModule::motorsEnable(void) {
+int RampsModule::motorsEnable(void) {
     std::string ret = "M17";
     sendCommand(ret);
     return 0;
 }
 
-int SmoothieModule::moveAbsolute(float x, float y, float z) {
+int RampsModule::moveAbsolute(float x, float y, float z) {
 
     /* TODO: nam - Modify function such that x,y,z destinations less than zero are
      * supported. Tue 28 Mar 2017 11:08:51 AM MDT */
@@ -378,7 +336,7 @@ int SmoothieModule::moveAbsolute(float x, float y, float z) {
     double tvel = _traverse_velocity / 60.0f;
     if (_move_mode != MOVE_MODE_ABSOLUTE) {
         ret = "G90"; // Set absolute mode (modal)
-        sendCommand(ret);
+        sendCommand(ret, 1);
         _move_mode = MOVE_MODE_ABSOLUTE;
     }
     ret = std::string("G0");
@@ -400,15 +358,15 @@ int SmoothieModule::moveAbsolute(float x, float y, float z) {
         move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
         _pos[2] = z;
     }
-    ret += std::string(" F") + std::to_string(_traverse_velocity);
-    sendCommand(ret);
+    // ret += std::string(" F") + std::to_string(_traverse_velocity);
+    sendCommand(ret, 1);
     // int stime = *std::max_element(move_times, move_times+3);
     // printf("SLEEPING %d MICROSECONDS...\n", stime);
     // usleep(stime);
     return 0;
 }
 
-int SmoothieModule::moveRelative(float x, float y, float z) {
+int RampsModule::moveRelative(float x, float y, float z) {
     std::string ret;
     if (_move_mode != MOVE_MODE_RELATIVE) {
         ret = "G91"; // Set absolute mode (modal)
@@ -426,11 +384,11 @@ int SmoothieModule::moveRelative(float x, float y, float z) {
         ret += std::string(" Z") + std::to_string(z);
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
-    sendCommand(ret);
+    sendCommand(ret, 1);
     return 0;
 }
 
-int SmoothieModule::setUnits(unsigned int u) {
+int RampsModule::setUnits(unsigned int u) {
     std::string ret;
     switch(u) {
     case UNITS_MM:
@@ -446,7 +404,7 @@ int SmoothieModule::setUnits(unsigned int u) {
     return 0;
 }
 
-int SmoothieModule::setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {
+int RampsModule::setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {
     std::string ret = "M92";
     switch (axis) {
     case AXIS_X:

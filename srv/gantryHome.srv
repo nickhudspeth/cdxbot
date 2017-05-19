@@ -1,5 +1,6 @@
 bool x
 bool y
 bool z
+bool all
 ---
 bool ok
