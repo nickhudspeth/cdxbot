@@ -43,6 +43,15 @@ LICENSE:
 #include <stdio.h>
 
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+#define N0 0 // Normal increment mode
+#define N1 1 // Micro-increment mode
+#define N2 2 // Microliter mode
+#define NORMAL_INCREMENT_MAX 3143 // Maximum displacement in normal increment mode
+#define MICRO_INCREMENT_MAX 50288 // Maximum displacement in micro-increment mode
+#define MICROLITER_INCREMENT_MAX 1100.050 // Maximum displacement in microliter increment mode
+
+#define IDLE 0
+#define BUSY 1
 class airZModule : public PipetterModule {
   public:
     airZModule (void);
@@ -53,12 +62,12 @@ class airZModule : public PipetterModule {
     void seterrfunc(void(*ef)(std::string s)) {
         PRINT_ERROR = ef;
     }
-    virtual void moveZ(double pos, double vel) {};
-    virtual void pickUpTip(int index) {};
-    virtual void pickUpTip(struct container_cell c) {};
-    virtual void ejectTip(void) {};
-    virtual void aspirate(double vol) {};
-    virtual void dispense(double vol) {};
+    void moveZ(double pos, double vel) {};
+    void pickUpTip(int index) {};
+    void pickUpTip(struct container_cell c) {};
+    void ejectTip(void) {};
+    void aspirate(double vol) {};
+    void dispense(double vol) {};
 
     // void setTipParams(struct tip_params t){
     // _tp.min_traverse_height = t.min_traverse_height;
@@ -101,7 +110,13 @@ class airZModule : public PipetterModule {
 
   private:
     unsigned int _id;
-    /* data */
+    float _volume;
+    unsigned int _capacitance_change_threshold;
+    int sendCommand(std::string s, bool run = 1);
+    bool liquidLevelDetect(int timeout);
+    void terminate(void);
+    bool getStatus(void);
+        /* data */
 };
 
 /***********************    FUNCTION PROTOTYPES    ***********************/

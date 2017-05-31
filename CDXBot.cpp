@@ -43,16 +43,17 @@ LICENSE:
 
 int CDXBot::parseHLMDFile(const char *fname) {
 
-    /* TODO: nam - Add provision to ignore commented lines - Mon 10 Apr 2017 02:18:09 PM MDT */
 
     std::ifstream infile(fname);
     std::string line;
     std::vector<std::string> v;
     std::string s;
+    int t_count = 0;
     if(!infile.good()) {
         return -1;
     }
     while(std::getline(infile, line)) {
+        t_count = 0;
         struct action a;
         /* Strip rest of line following a '#' character to allow comments.*/
         int p = line.find('#');
@@ -69,13 +70,21 @@ int CDXBot::parseHLMDFile(const char *fname) {
             boost::char_separator<char> sep(d);
             tokenizer v(line,sep);
 
-            for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter)
+            for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter) {
+                t_count++;
                 if(iter == v.begin()) {
                     a.cmd = *iter;
                 } else {
                     a.args.push_back(std::stof(*iter));
                 }
-            actionMap.push_back(a);
+                actionMap.push_back(a);
+                printf("Parsed new action successfully:\n");
+                printf("\tCMD: %s\n", a.args[0]);
+                for(int i = 1; i < t_count; i++ ) {
+                    printf("\tARG %d: %s\n", a.args[i]);
+                }
+
+            }
         }
     }
     return 0;

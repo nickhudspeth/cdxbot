@@ -16,28 +16,28 @@ cdxbot:
             cols: 8             # Number of Columns in Container
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD  due to nonuniform container floor profiles.
             eotpp: 107        # Ending height of tip picking-up process
-            height: 120          # Container Exterior Height
-            length: 127.30         # Container Exterior Length
-            offset_x: 45.32        # X-offset Between Container Origin and Deck Origin
-            offset_y: 16.80        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 45        # Z-offset Between Container Origin and Deck Origin
+            height: 69.22          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            offset_x: 45.19        # X-offset Between Container Origin and Deck Origin
+            offset_y: 16.69        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
             row_spacing: 9     # Spacing Between Adjacent Cells in Row
             rows: 12            # Number of Rows in Container
-            tray_offset_x: 12.5        # X-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_y: 16.0        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 10.125        # Y-offset Between Tip (0,0) Origin and Container Origin
             tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
             tt_index: 4        # Tip type table index
             type: "tip"        # Container type [tip/well]
             well_depth:  41.3     # Depth of Well from Deck to Lowest Floor Point
-            width:  85         # Container Exterior Width
+            width:  85.93        # Container Exterior Width
         c1:              # Container ID Number
             type: "tip"        # Container type [tip/well]
             tt_index: 4        # Tip type table index
             botpp: 111        # Beginning height of tip picking-up process
             eotpp: 107        # Ending height of tip picking-up process
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 120          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            width:  85.93         # Container Exterior Width
+            height: 69.22          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -45,17 +45,17 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 200        # X-offset Between Container Origin and Deck Origin
-            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
+            offset_x: 162.66        # X-offset Between Container Origin and Deck Origin
+            offset_y: 16.69        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 10.125        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
         c2:              # Container ID Number
             type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 120          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            width:  85.93         # Container Exterior Width
+            height: 69.22          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -63,17 +63,17 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 300        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
+            offset_x: 280.31        # X-offset Between Container Origin and Deck Origin
+            offset_y: 16.69        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_y: 10.125        # Y-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
         c3:              # Container ID Number
             type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            width:  85.93         # Container Exterior Width
+            height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -81,17 +81,17 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 100        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            offset_x: 45.19        # X-offset Between Container Origin and Deck Origin
+            offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
             tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
         c4:              # Container ID Number
             type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            width:  85.93         # Container Exterior Width
+            height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -99,17 +99,17 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 200        # X-offset Between Container Origin and Deck Origin
-            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            offset_x: 162.66        # X-offset Between Container Origin and Deck Origin
+            offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
             tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
+            tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin
         c5:              # Container ID Number
             type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
+            length: 127.91         # Container Exterior Length
+            width:  85.93         # Container Exterior Width
+            height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
             row_spacing: 10     # Spacing Between Adjacent Cells in Row
@@ -117,47 +117,9 @@ cdxbot:
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 300        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
+            offset_x: 280.14        # X-offset Between Container Origin and Deck Origin
+            offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
             tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
-        c6:              # Container ID Number
-            type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
-                # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 200        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
-        c7:              # Container ID Number
-            type: "well"        # Container type [tip/well]
-            length: 150         # Container Exterior Length
-            width:  100         # Container Exterior Width
-            height: 50          # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
-                # due to nonuniform container floor profiles.
-            offset_x: 50        # X-offset Between Container Origin and Deck Origin
-            offset_y: 50        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 50        # Z-offset Between Container Origin and Deck Origin
-            tray_offset_x: 50        # X-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_y: 50        # Y-offset Between Tip (0,0) Origin and Container Origin
-            tray_offset_z: 50        # Z-offset Between Tip (0,0) Origin and Container Origin
-
-
+            tray_offset_z: 0        # Z-offset Between Tip (0,0) Origin and Container Origin

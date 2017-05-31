@@ -371,7 +371,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         // }
         printf("CDXBotNode: Parsing move command.\n");
         unsigned int cidx = (int)a.args[0];
-        printf("Calculating coordinates of container %d.\n", cidx);
+        printf("Calculating coordinates of container %d, row %d, column %d.\n", cidx, a.args[1], a.args[2]);
         printf("\t Using x-offset %f\n", cd.getContainer(cidx).getOffsetX());
         printf("\t Using y-offset %f\n", cd.getContainer(cidx).getOffsetY());
         printf("\t Using z-offset %f\n", cd.getContainer(cidx).getOffsetZ());
