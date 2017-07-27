@@ -371,17 +371,17 @@ void parseAction(CDXBot &cd, const struct action a) {
         // }
         printf("CDXBotNode: Parsing move command.\n");
         unsigned int cidx = (int)a.args[0];
-        printf("Calculating coordinates of container %d, row %d, column %d.\n", cidx, a.args[1], a.args[2]);
+        printf("Calculating coordinates of container %d, row %d, column %d.\n", cidx, (int)a.args[1], (int)a.args[2]);
         printf("\t Using x-offset %f\n", cd.getContainer(cidx).getOffsetX());
         printf("\t Using y-offset %f\n", cd.getContainer(cidx).getOffsetY());
         printf("\t Using z-offset %f\n", cd.getContainer(cidx).getOffsetZ());
         printf("\t Using x tray offset %f\n", cd.getContainer(cidx).getTrayOffset(0));
         printf("\t Using y tray offset %f\n", cd.getContainer(cidx).getTrayOffset(1));
         printf("\t Using z tray offset %f\n", cd.getContainer(cidx).getTrayOffset(2));
-        double x = cd.getContainer(cidx).getGlobalCoords('x', a.args[1], a.args[2]);
-        double y = cd.getContainer(cidx).getGlobalCoords('y', a.args[1], a.args[2]);
-        double z = cd.getContainer(cidx).getGlobalCoords('z', a.args[1], a.args[2]);
-        std::cout << "moving to coordinates (x, y, z) = (" << x << ", " << y << ", " << z << ")" << std::endl;
+        double x = cd.getContainer(cidx).getGlobalCoords('x', (unsigned int)a.args[1], (unsigned int)a.args[2]);
+        double y = cd.getContainer(cidx).getGlobalCoords('y', (unsigned int)a.args[1], (unsigned int)a.args[2]);
+        double z = cd.getContainer(cidx).getGlobalCoords('z', (unsigned int)a.args[1], (unsigned int)a.args[2]);
+        ROS_INFO_STREAM("moving to coordinates (x, y, z) = (" << x << ", " << y << ", " << z << ")");
         /* Move tip to feed plane */
         // gmsg.cmd = "movez";
         // gmsg.z = z;
@@ -505,7 +505,7 @@ void parseAction(CDXBot &cd, const struct action a) {
 
     } else if(a.cmd == "pickup") {
         /* Get location of next available tip */
-        std::cout << "Received PICKUP command." << std::endl;
+        ROS_DEBUG_STREAM("Received PICKUP command.");
         /* TODO: nam - Refactor. Right now, the following routins scans through
          * all tip locations until it finds an unused tip. This is pretty
          * inefficient. Instead, store the location of the last used tip and
@@ -516,7 +516,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         bool stop = false;
         for(i = 0; (i < cd.getNumContainers()) && !stop; i++) {
             Container c = cd.getContainer(i);
-            std::cout << "got valid container at position " << i << std::endl;
+            ROS_INFO_STREAM("got valid container at position " << i);
             if(c.getType() == "tip") {
                 for(j = 0; (j < c.getRows()) && !stop; j++) {
                     for(k = 0; (k < c.getCols()) && !stop; j++) {
@@ -524,11 +524,11 @@ void parseAction(CDXBot &cd, const struct action a) {
                             /* Mark tip cell as used. */
                             c.getCellsVecRef()[j][k].used = 1;
                             x = cd.getContainer(i).getGlobalCoords('x', j, k);
-                            std::cout <<"x = " << x << std::endl;
+                            ROS_DEBUG_STREAM("x = " << x);
                             y = cd.getContainer(i).getGlobalCoords('y', j, k);
-                            std::cout <<"y = " << y << std::endl;
+                            ROS_DEBUG_STREAM("y = " << y);
                             z = cd.getContainer(i).getGlobalCoords('z', j, k);
-                            std::cout <<"z = " << z << std::endl;
+                            ROS_DEBUG_STREAM("z = " << z);
                             // exit the main loop
                             stop = true;
                             ROS_INFO_STREAM("Pipette tip found in container " << i << " row " << j << " column " << k);
@@ -560,7 +560,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         /* Move to home position? */
     } else if(a.cmd == "wait") {
         float dur = a.args[0] / 1000.0;
-        std::cout << "sleeping for " << dur << " seconds." << std::endl;
+        ROS_INFO_STREAM("sleeping for " << dur << " seconds.");
         ros::Duration(dur).sleep();
         // usleep((a.args[0] * 1000));
         // gmsg.cmd = "wait";

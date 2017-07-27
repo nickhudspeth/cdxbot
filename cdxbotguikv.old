@@ -1,6 +1,6 @@
 MyScreen:
     GridLayout:
-        cols: 2
+        cols: 3
         rows: 2
         Button:
             text: "RUN"
@@ -13,5 +13,8 @@ MyScreen:
             on_press: shutdownCallback()
         Button:
             text: "RESTART"
+            on_press: buttonPressCallback()
+        Button:
+            text: "PAUSE"
             on_press: buttonPressCallback()
 

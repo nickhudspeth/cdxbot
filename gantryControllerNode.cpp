@@ -241,7 +241,7 @@ void waitForGantry(const cdxbot::gc_cmd &msg) {
 
 void gcPubCallback(const cdxbot::gc_cmd &msg) {
     gc->setMoveMode(0);
-    //std::cout << "Got message: " << msg.cmd << msg.x << msg.y << msg.z << msg.vel << std::endl;
+    //ROS_DEBUG_STREAM("Got message: " << msg.cmd << msg.x << msg.y << msg.z << msg.vel);
 
     /* TODO: nam - Publish gantry status 1, and delay for calculated travel time
      * so that pipette motion is delayed until gantry is in place. Publish
@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
     ros::ServiceServer gantrySetFeedratesServer = nh.advertiseService("gantry_set_feedrates", &setFeedratesCallback);
     ros::ServiceServer gantrySetAccelerationsServer = nh.advertiseService("gantry_set_accelerations", &setAccelerationsCallback);
     ros::Rate rate(100);
-    std::cout << "Initialized gc with addr: " << &gc << std::endl;
+    ROS_DEBUG_STREAM("Initialized gc with addr: " << &gc);
     //gc.driver_init(gc);
     while(ros::ok()) {
         ros::spinOnce();

@@ -7,7 +7,7 @@ cdxbot:
     extent_z: 395.00 
     num_containers: 6
     pipetter_has_z: true
-    feed_plane: 120.00
+    feed_plane: 100.00
     containers:
         # Container Properties
         c0:              # Container ID Number
@@ -18,8 +18,8 @@ cdxbot:
             eotpp: 107        # Ending height of tip picking-up process
             height: 69.22          # Container Exterior Height
             length: 127.91         # Container Exterior Length
-            offset_x: 45.19        # X-offset Between Container Origin and Deck Origin
-            offset_y: 16.69        # Y-offset Between Container Origin and Deck Origin
+            offset_x: 56.38        # X-offset Between Container Origin and Deck Origin
+            offset_y: 31.15        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
             row_spacing: 9     # Spacing Between Adjacent Cells in Row
             rows: 12            # Number of Rows in Container
@@ -40,13 +40,13 @@ cdxbot:
             height: 69.22          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            row_spacing: 9     # Spacing Between Adjacent Cells in Row
+            col_spacing: 9     # Spacing Between Adjacent Cells in Column
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
-            offset_x: 162.66        # X-offset Between Container Origin and Deck Origin
-            offset_y: 16.69        # Y-offset Between Container Origin and Deck Origin
+            offset_x: 173.86        # X-offset Between Container Origin and Deck Origin
+            offset_y: 31.15        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
             tray_offset_x: 6.925        # X-offset Between Tip (0,0) Origin and Container Origin
             tray_offset_y: 10.125        # Y-offset Between Tip (0,0) Origin and Container Origin
@@ -58,8 +58,8 @@ cdxbot:
             height: 69.22          # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            row_spacing: 9     # Spacing Between Adjacent Cells in Row
+            col_spacing: 9     # Spacing Between Adjacent Cells in Column
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
@@ -76,8 +76,8 @@ cdxbot:
             height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            row_spacing: 9     # Spacing Between Adjacent Cells in Row
+            col_spacing: 9     # Spacing Between Adjacent Cells in Column
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
@@ -94,8 +94,8 @@ cdxbot:
             height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            row_spacing: 9     # Spacing Between Adjacent Cells in Row
+            col_spacing: 9     # Spacing Between Adjacent Cells in Column
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.
@@ -112,8 +112,8 @@ cdxbot:
             height: 69.22         # Container Exterior Height
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
-            row_spacing: 10     # Spacing Between Adjacent Cells in Row
-            col_spacing: 10     # Spacing Between Adjacent Cells in Column
+            row_spacing: 9     # Spacing Between Adjacent Cells in Row
+            col_spacing: 9     # Spacing Between Adjacent Cells in Column
             well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             container_vol: 250  # Container Volume (uL) - cannot be calculated from LxWxD
                 # due to nonuniform container floor profiles.

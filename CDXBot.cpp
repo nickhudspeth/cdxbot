@@ -71,19 +71,18 @@ int CDXBot::parseHLMDFile(const char *fname) {
             tokenizer v(line,sep);
 
             for(tokenizer::iterator iter = v.begin(); iter!=v.end(); ++iter) {
-                t_count++;
                 if(iter == v.begin()) {
                     a.cmd = *iter;
                 } else {
                     a.args.push_back(std::stof(*iter));
+                    t_count++;
                 }
-                actionMap.push_back(a);
-                printf("Parsed new action successfully:\n");
-                printf("\tCMD: %s\n", a.args[0]);
-                for(int i = 1; i < t_count; i++ ) {
-                    printf("\tARG %d: %s\n", a.args[i]);
-                }
-
+            }
+            actionMap.push_back(a);
+            printf("Parsed new action successfully:\n");
+            printf("\tCMD: %s\n", a.cmd.c_str() );
+            for(int i = 0; i < t_count; i++ ) {
+                printf("\tARG %d: %f\n", i, a.args[i]);
             }
         }
     }

@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     ros::Subscriber sub_pc = nh.subscribe("/pc_pub", 100, &pcPubCallback);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
-    std::cout << "Initialized pc with addr: " << &pc << std::endl;
+    ROS_INFO_STREAM("Initialized pc with addr: " << &pc);
     /* Instantiate service servers */
     ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
                                      &moveZCallback);

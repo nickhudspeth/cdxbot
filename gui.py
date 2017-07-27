@@ -31,7 +31,7 @@ def shutdownCallback(instance):
 class MyScreen(GridLayout):
     def __init__(self, **kwargs):
         super(MyScreen, self).__init__(**kwargs)
-        self.cols = 2
+        self.cols = 3
         self.rows = 2
         self.run_button = Button(text='RUN')
         self.run_button.bind(on_press=buttonPressCallback)
@@ -51,7 +51,6 @@ class MyScreen(GridLayout):
 
 
 class CDXBotGui(App):
-
     def build(self):
         return MyScreen()
 
