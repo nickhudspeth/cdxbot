@@ -1,0 +1,4 @@
+# Power level percentage (0-100)%
+uint8 pwr
+---
+bool ok

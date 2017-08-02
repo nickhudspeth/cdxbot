@@ -350,7 +350,6 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
     }
 }
 
-//ros::Subscriber shutdown = nh.subscribe("shutdown", 100, shutdownCallback);
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
@@ -532,11 +531,11 @@ int main(int argc, char **argv) {
         return -1;
     }
     /* CREATE PUBLISHERS / SUBSCRIBERS */
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
     ros::Publisher gc_status_pub = nh.advertise<std_msgs::Bool>("gantry_status", 1000);
 
     // ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
-    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
 
     /* INSTANTIATE SERVICE SERVERS */
     ros::ServiceServer gantryMoveServer = nh.advertiseService("gantry_move", &moveCallback);

@@ -1,0 +1,4 @@
+sc_conf:
+    type: "teleshake"
+    driver_name: "libteleshake.so"
+    driver_path: "/home/cdx/catkin_ws/devel/lib/"

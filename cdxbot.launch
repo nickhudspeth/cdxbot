@@ -30,6 +30,15 @@ output="screen"
 
 <node
 pkg="cdxbot"
+type="shakerControllerNode"
+name="sc_node"
+respawn="false"
+output="screen"
+/>
+<rosparam file ="$(find cdxbot)/conf/shakerController.yaml" command="load"/>
+
+<node
+pkg="cdxbot"
 type="gui.py"
 name="gui_node"
 respawn="false"

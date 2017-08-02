@@ -1,7 +1,7 @@
 /*************************************************************************
-Title:    PipetterModule.h - Interface Class for CDXBot Pipetter Drivers
+Title:    ShakerModule.h - Interface Class for CDXBot Shaker Drivers
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     PipetterModule.h
+File:     ShakerModule.h
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
@@ -49,67 +49,26 @@ LICENSE:
 #include <unistd.h>
 #include "CDXModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-// struct deck_geometry_t {
-    // unsigned int index;
-    // unsigned int min_traverse_height;
-    // unsigned int min_z_pos;
-    // unsigned int botpp; // Beginning of Tip Picking Position
-    // unsigned int eotpp; // End of Tip Picking Position
-    // unsigned int potdp; // Position of Tip Deposit Process
-// };
 
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
-class PipetterModule : public CDXModule {
+class ShakerModule : public CDXModule {
   public:
-    PipetterModule (void) {};
-    virtual ~PipetterModule (void) {};
-    virtual bool moveZ(double pos, double vel) {};
-    virtual void pickUpTip(int index) {};
-    virtual void pickUpTip(struct container_cell c) {};
-    virtual void ejectTip(void) {};
-    virtual void aspirate(double vol) {};
-    virtual void dispense(double vol) {};
-
-    // void setTipParams(struct tip_params t){
-        // _tp.min_traverse_height = t.min_traverse_height;
-        // _
-
-    // }
-
-    double getZPos(void) {
-        return _zpos;
-    }
-    double &getZPosRef(void) {
-        return _zpos;
-    }
-    bool getZAxisEnabled(void) {
-        return _z_axis_enabled;
-    }
-    bool &getZAxisEnabledRef(void) {
-        return _z_axis_enabled;
-    }
-    double getFeedPlaneHeight(void) {
-        return _feed_plane_height;
-    }
-    double &getFeedPlaneHeightRef(void) {
-        return _feed_plane_height;
-    }
+    ShakerModule (void) {};
+    virtual ~ShakerModule (void) {};
+    virtual bool start(void) {};
+    virtual bool stop(void) {};
+    virtual bool setFrequency(unsigned int f) {};
+    virtual bool setPower(float percent) {};
 
     std::string type;
     std::string driver_name;
     std::string driver_path;
 
   protected:
-    double _zpos;
-    double _zpos_min;
-    double _zpos_max;
-    bool _z_axis_enabled = 1;
-    double _feed_plane_height = 50;
-    // struct tip_params _tp;
-    /* data */
+    double freq;
 };
 
 
-typedef PipetterModule *create_t();
-typedef void destroy_t(PipetterModule *);
+typedef ShakerModule *create_t();
+typedef void destroy_t(ShakerModule *);

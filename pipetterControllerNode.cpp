@@ -10,7 +10,6 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/ros.h>
 #include <stdlib.h>
-// #include "PipetterController.h"
 
 PipetterModule *pc;
 std::string type;
@@ -117,14 +116,14 @@ void pcPubCallback(const cdxbot::pc_cmd &msg) {
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
-    ROS_INFO_STREAM("PipetterControllerNode: Received shutdown directive.");
+    ROS_WARN_STREAM("PipetterControllerNode: Received shutdown directive.");
     pc->deinit();
     ros::shutdown();
 }
 
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
                    cdxbot::pipetterMoveZ::Response &resp) {
-    pc->moveZ(req.pos, 1);
+    return ((pc->moveZ(req.pos, 1)) == 1) ? 1 : 0;
 
 }
 
@@ -162,9 +161,9 @@ int main(int argc, char **argv) {
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);
     ros::Subscriber sub_pc = nh.subscribe("/pc_pub", 100, &pcPubCallback);
-    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
-    ROS_INFO_STREAM("Initialized pc with addr: " << &pc);
+    ROS_DEBUG_STREAM("Initialized pc with addr: " << &pc);
     /* Instantiate service servers */
     ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
                                      &moveZCallback);

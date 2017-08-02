@@ -79,11 +79,11 @@ int CDXBot::parseHLMDFile(const char *fname) {
                 }
             }
             actionMap.push_back(a);
-            printf("Parsed new action successfully:\n");
-            printf("\tCMD: %s\n", a.cmd.c_str() );
-            for(int i = 0; i < t_count; i++ ) {
-                printf("\tARG %d: %f\n", i, a.args[i]);
-            }
+            // printf("Parsed new action successfully:\n");
+            // printf("\tCMD: %s\n", a.cmd.c_str() );
+            // for(int i = 0; i < t_count; i++ ) {
+                // printf("\tARG %d: %f\n", i, a.args[i]);
+            // }
         }
     }
     return 0;

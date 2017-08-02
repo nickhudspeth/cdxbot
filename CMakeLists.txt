@@ -54,6 +54,8 @@ add_message_files(
     gc_out.msg
     pc_cmd.msg
     pc_out.msg
+    sc_cmd.msg
+    sc_out.msg
     vc_cmd.msg
     vc_out.msg
     )
@@ -61,9 +63,9 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
     FILES
-    gantryHome.srv
     gantryEStopToggle.srv
     gantryGetCurrentPosition.srv
+    gantryHome.srv
     gantryMotorsToggle.srv
     gantryMove.srv
     gantrySetAccelerations.srv
@@ -75,6 +77,11 @@ add_service_files(
     pipetterEjectTip.srv
     pipetterMoveZ.srv
     pipetterPickUpTip.srv
+    shakerReset.srv
+    shakerSetFreq.srv
+    shakerSetPower.srv
+    shakerStart.srv
+    shakerStop.srv
     gc_cmd_s.srv
     pc_cmd_s.srv
     vc_cmd_s.srv
@@ -160,12 +167,15 @@ add_library(smoothie
 add_library(ramps
     libramps.cpp)
 
+add_library(teleshake
+    libteleshake.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(cdxbot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
+add_executable(shakerControllerNode shakerControllerNode.cpp)
 add_executable(gantryControllerNode gantryControllerNode.cpp)
 add_executable(pipetterControllerNode pipetterControllerNode.cpp)
 add_executable(visionControllerNode visionControllerNode.cpp)
@@ -174,6 +184,7 @@ add_executable(CDXBotNode Container.cpp CDXBot.cpp CDXBotNode.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
+add_dependencies(shakerControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(gantryControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(pipetterControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(visionControllerNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -196,6 +207,10 @@ target_link_libraries(pipetterControllerNode
     )
 target_link_libraries(visionControllerNode
     ${catkin_LIBRARIES}
+    )
+target_link_libraries(shakerControllerNode
+    ${catkin_LIBRARIES}
+    dl
     )
 target_link_libraries(smoothie
     ${catkin_LIBRARIES}

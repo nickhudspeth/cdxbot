@@ -25,8 +25,9 @@ def buttonPressCallback(instance):
 def shutdownCallback(instance):
     print('The button <%s> has been pressed' % instance.text)
     sd_pub.publish('%s' % instance.text)
+    rospy.logwarn("CDXBotGUI: Received shutdown directive.")
+    rospy.signal_shutdown("CDXBotGUI shutdown.")
     App.get_running_app().stop()
-    rospy.shutdown()
 
 class MyScreen(GridLayout):
     def __init__(self, **kwargs):

@@ -207,15 +207,15 @@ int ZeusModule::lconf(void) {
     return 0;
 }
 
-void ZeusModule::moveZ(double pos, double vel) {
+bool ZeusModule::moveZ(double pos, double vel) {
     printf("Moving pipetter head to: %f mm.\n", pos);
     std::string cmd = cmdHeader("GZ");
     pos = (1800 - 10*pos) + 370;
     if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
         printf("LIBZEUS: Requested z-position %f out of range.\
                 Valid range for z-position is [%f,%f]",\
-               pos, ZPOS_MIN, ZPOS_MAX);
-        return;
+               pos, (ZPOS_MIN/10.0), (ZPOS_MAX/10.0));
+        return 0;
     }
     if(vel < 1.0) {
         vel = 0.0;
@@ -223,10 +223,25 @@ void ZeusModule::moveZ(double pos, double vel) {
     if(vel > 1.0) {
         vel = 1.0;
     }
+
     // printf("LIBZEUS: Moving z-axis from position %f to position %f.", _zpos, pos);
     cmd += "gy" + zfill(std::to_string(static_cast<unsigned int>(pos + 0.5)),4) + "gw" + std::to_string(int(vel));
-    _zpos = pos;
     sendCommand(cmd);
+    double cur_z_pos = getZPos();
+    double err = 99.0;
+    time_t start = time(NULL);
+    while((err < MAX_Z_ERROR) && ((time(NULL) - start) < 1)) {
+        cur_z_pos = getZPos();
+        err = abs(cur_z_pos - pos);
+    }
+    if(err < MAX_Z_ERROR) {
+        _zpos = pos;
+        return 1;
+    }
+    else{
+        printf("Pipetter z-pos = %f\n", getZPos());
+        return 0;
+    }
 }
 
 void ZeusModule::pickUpTip(struct container_cell c) {

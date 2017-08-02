@@ -87,6 +87,8 @@ LICENSE:
 #define TOP 0
 #define BOTTOM 1
 
+#define MAX_Z_ERROR 0.1
+
 typedef struct {
     int sockfd;
     char *buffer;
@@ -160,7 +162,7 @@ extern "C" {
         void seterrfunc(void(*ef)(std::string s)) {
             PRINT_ERROR = ef;
         }
-        void moveZ(double pos, double vel);
+        bool moveZ(double pos, double vel);
         void pickUpTip(struct container_cell c);
         void discardTip(void);
         void aspirate(double vol, bool mode);

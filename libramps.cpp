@@ -149,7 +149,8 @@ int RampsModule::init(void) {
     /* Open USB Device */
     _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if(_usbfd < 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << "opening " << _usb_addr << " : " << strerror(errno) << std::endl;
+        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: Code " << errno << \
+            " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
         return -1;
     }
     std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;

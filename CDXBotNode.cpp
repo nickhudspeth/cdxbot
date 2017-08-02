@@ -46,11 +46,17 @@ LICENSE:
 #include "cdxbot/gc_cmd_s.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/pc_cmd_s.h"
+#include "cdxbot/sc_cmd.h"
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
+#include "cdxbot/shakerReset.h"
+#include "cdxbot/shakerSetFreq.h"
+#include "cdxbot/shakerSetPower.h"
+#include "cdxbot/shakerStart.h"
+#include "cdxbot/shakerStop.h"
 #include "cdxbot/vc_cmd.h"
 #include "cdxbot/vc_cmd_s.h"
 #include "common.h"
@@ -78,6 +84,7 @@ ros::Subscriber guiSub;
 /* Create publishers for the various controller */
 ros::Publisher gc_pub; //= nh.advertise<cdx
 ros::Publisher pc_pub;
+ros::Publisher sc_pub;
 ros::Publisher vc_pub;
 ros::Publisher shutdown_pub;
 
@@ -100,7 +107,11 @@ ros::ServiceClient pipetterDispenseClient;
 ros::ServiceClient pipetterEjectTipClient;
 ros::ServiceClient pipetterMoveZClient;
 ros::ServiceClient pipetterPickUpTipClient;
-
+ros::ServiceClient shakerResetClient;
+ros::ServiceClient shakerSetFreqClient;
+ros::ServiceClient shakerSetPowerClient;
+ros::ServiceClient shakerStartClient;
+ros::ServiceClient shakerStopClient;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
@@ -596,11 +607,46 @@ void parseAction(CDXBot &cd, const struct action a) {
         // gc_pub.publish(gmsg);
     } else if(a.cmd == "pause") {
         cd.setRunStatus(0);
+    } else if(a.cmd == "shakerreset") {
+        cdxbot::shakerReset::Request shaker_reset_request;
+        cdxbot::shakerReset::Response shaker_reset_response;
+        shaker_reset_request.reset = 1;
+        if(!shakerResetClient.call(shaker_reset_request, shaker_reset_response)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not reset shaker.");
+        }
+    } else if(a.cmd == "shakersetfreq") {
+        cdxbot::shakerSetFreq::Request shaker_setfreq_request;
+        cdxbot::shakerSetFreq::Response shaker_setfreq_response;
+        shaker_setfreq_request.freq = static_cast<uint32_t>(a.args[0]);
+        if(!shakerSetFreqClient.call(shaker_setfreq_request, shaker_setfreq_response)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not set shaker frequency.");
+        }
+    } else if(a.cmd == "shakersetpower") {
+        cdxbot::shakerSetPower::Request shaker_setpower_request;
+        cdxbot::shakerSetPower::Response shaker_setpower_response;
+        shaker_setpower_request.pwr = static_cast<uint8_t>(a.args[0]);
+        if(!shakerSetPowerClient.call(shaker_setpower_request, shaker_setpower_response)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not set shaker power.");
+        }
+    } else if(a.cmd == "shakerstart") {
+        cdxbot::shakerStart::Request shaker_start_request;
+        cdxbot::shakerStart::Response shaker_start_response;
+        shaker_start_request.start = 1;
+        if(!shakerStartClient.call(shaker_start_request, shaker_start_response)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not activate shaker.");
+        }
+    } else if(a.cmd == "shakerstop") {
+        cdxbot::shakerStop::Request shaker_stop_request;
+        cdxbot::shakerStop::Response shaker_stop_response;
+        shaker_stop_request.stop = 1;
+        if(!shakerStopClient.call(shaker_stop_request, shaker_stop_response)) {
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not deactivate shaker.");
+        }
     }
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO_STREAM("CDXBotNode: Received shutdown directive.");
+    ROS_WARN_STREAM("CDXBotNode: Received shutdown directive.");
     ros::shutdown();
 }
 
@@ -622,16 +668,17 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     ros::Rate rate(100);
     loadConfig(nh, cd);
+
+    ros::Subscriber sd = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     /* Subscribe to GUI topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
-    ros::Subscriber sd = nh.subscribe("/sd_pub", 1000, &shutdownCallback);
     ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
     ros::Subscriber pipetter_zpos = nh.subscribe("/pipetter_zpos", 1000, &pipetterUpdateZPosCallback);
     /* Create publishers for the various controller */
     gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
     pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
     vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
-
+    sc_pub = nh.advertise<cdxbot::sc_cmd>("sc_pub", 100);
     //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
     /* Create service clients */
     gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
@@ -651,7 +698,11 @@ int main(int argc, char **argv) {
     pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
     pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");
     pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
-
+    shakerResetClient = nh.serviceClient<cdxbot::shakerReset>("shaker_reset");
+    shakerSetFreqClient = nh.serviceClient<cdxbot::shakerSetFreq>("shaker_set_freq");
+    shakerSetPowerClient = nh.serviceClient<cdxbot::shakerSetPower>("shaker_set_power");
+    shakerStartClient = nh.serviceClient<cdxbot::shakerStart>("shaker_start");
+    shakerStopClient = nh.serviceClient<cdxbot::shakerStop>("shaker_stop");
     /* Check for and load/parse HLMD file */
 
     /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */
@@ -674,7 +725,6 @@ int main(int argc, char **argv) {
     while(ros::ok()) {
         if(cd.getRunStatus() == 1) {
             struct action a;
-
             if(cd.getNextAction(a) < 0) {
                 ROS_INFO_STREAM("DONE!");
                 cd.setRunStatus(0);
