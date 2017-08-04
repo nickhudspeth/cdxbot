@@ -157,7 +157,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         Initializing cdxbot with default value %s",\
                      i, cd.getContainer(i).getType());
         }
-        printf("Container %d initialized with type %s.\n", i, cd.getContainer(i).getType().c_str());
+        // printf("Container %d initialized with type %s.\n", i, cd.getContainer(i).getType().c_str());
 
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/length", i);

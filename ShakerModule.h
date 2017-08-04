@@ -56,6 +56,7 @@ class ShakerModule : public CDXModule {
   public:
     ShakerModule (void) {};
     virtual ~ShakerModule (void) {};
+    virtual bool reset(void){};
     virtual bool start(void) {};
     virtual bool stop(void) {};
     virtual bool setFrequency(unsigned int f) {};

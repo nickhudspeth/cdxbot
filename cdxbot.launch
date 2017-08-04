@@ -19,14 +19,14 @@ output="screen"
 />
 <rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
 
-<node
+<!-- node
 pkg="cdxbot"
 type="gantryControllerNode"
 name="gc_node"
 respawn="false"
 output="screen"
-/>
-<rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/>
+/ -->
+<!-- rosparam file ="$(find cdxbot)/conf/gantryController.yaml" command="load"/ -->
 
 <node
 pkg="cdxbot"

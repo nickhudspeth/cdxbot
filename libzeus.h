@@ -64,7 +64,7 @@ LICENSE:
 #include <sys/stat.h>
 #include "PipetterModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-#define PRINT_OUTPUT 1
+#define PRINT_OUTPUT 0
 
 
 #define KICK_MASK 0b10000000000

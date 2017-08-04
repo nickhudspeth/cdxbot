@@ -14,7 +14,9 @@ USAGE:
 
 
 NOTES:
-
+    This driver expects the teleshake module to be available at /dev/teleshakeN,
+    where N is the device address. Therefore, an appropriate udev rule must be
+    set for the USB<->RS232 converter used between the host PC and the module.
 LICENSE:
     Copyright (C) 2017 Nicholas Morrow
 
@@ -48,6 +50,8 @@ LICENSE:
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <iomanip>
+#include <iostream>
 #include <iostream>
 #include <mutex>
 #include <netinet/in.h>
@@ -186,7 +190,7 @@ extern "C" {
         uint8_t getPower(void);
         unsigned int queryAll();
         bool resetAll();
-        bool resetDevice();
+        bool reset();
         bool setFrequency(unsigned int f);
         bool setPower(float percent);
         bool start();
@@ -206,13 +210,14 @@ extern "C" {
         uint8_t getDeviceAddr() {
             return _device_addr;
         };
+        long d2b(long n);
         // struct sockaddr_in _remote;
         bool _ready_flag = 1;
-        double _netTimeoutMS = 0.0;
+        double _netTimeoutMS = 200.0;
         int _usb_baud = B9600;
         int _usbfd = 0;
         pthread_t _thread_id;
-        std::string _usb_addr = "/dev/ttyUSB1";
+        std::string _usb_addr = "/dev/ttyUSB0";
         thread_params_t _thread_params;
         uint8_t _buffer[6];
         uint8_t _device_addr = 0;

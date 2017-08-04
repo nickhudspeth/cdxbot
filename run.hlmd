@@ -1,4 +1,4 @@
-home
+# home
 #move, 0, 0, 0
 #wait, 2000
 #move, 0, 0, 7
@@ -36,7 +36,12 @@ home
 #pickup
 
 shakerstart
-
+shakersetpower, 100
+shakersetfreq, 100
+wait, 5000
+shakersetfreq, 2000
+wait, 5000
+shakerstop
 
 home
 end

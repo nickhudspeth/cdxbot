@@ -149,7 +149,7 @@ int RampsModule::init(void) {
     /* Open USB Device */
     _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if(_usbfd < 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: Code " << errno << \
+        std::cout << __FILE__ << " " <<__PRETTY_FUNCTION__ << " ERROR: Code " << errno << \
             " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
         return -1;
     }
@@ -157,7 +157,7 @@ int RampsModule::init(void) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+        std::cout << __FILE__ << " " << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
         return -1;
     }
     /* Set baud rate */
@@ -177,7 +177,7 @@ int RampsModule::init(void) {
     tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CRTSCTS;
     if(tcsetattr(_usbfd, TCSANOW, &tty) != 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcsetattr: " << strerror(errno) << std::endl;
+        std::cout << __FILE__ << " " << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcsetattr: " << strerror(errno) << std::endl;
         return -1;
     }
     /* Set serial port to non-blocking */

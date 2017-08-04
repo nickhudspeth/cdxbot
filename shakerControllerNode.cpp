@@ -137,8 +137,12 @@ bool setPowerCallback(cdxbot::shakerSetPower::Request &req,
 }
 
 bool resetCallback(cdxbot::shakerReset::Request &req,
-                   cdxbot::shakerSetPower::Response &resp) {
-
+                   cdxbot::shakerReset::Response &resp) {
+    if(sm->reset() == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -148,9 +152,7 @@ int main(int argc, char **argv) {
     loadParams(nh);
     sm->init();
     /* Instantiate publishers and subscribers*/
-    ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
-                         "cdxbot/pipetter_zpos", 100);
-    ros::Subscriber sub_sc = nh.subscribe("/pc_pub", 100, &scPubCallback);
+    // ros::Subscriber sub_sc = nh.subscribe("/pc_pub", 100, &scPubCallback);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ROS_DEBUG_STREAM("Initialized pc with addr: " << &sm);
     /* Instantiate service servers */

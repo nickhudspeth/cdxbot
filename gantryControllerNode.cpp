@@ -370,7 +370,7 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
         /* WAIT FOR GANTRY TO ARIVE */
     // }
 
-    ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
+    // ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
     resp.ok = true;
     return true;
 }
@@ -387,7 +387,7 @@ bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
 
 bool homeCallback(cdxbot::gantryHome::Request &req,
                   cdxbot::gantryHome::Response &resp) {
-    ROS_INFO_STREAM("ENTERED HOME CALLBACK");
+    // ROS_INFO_STREAM("ENTERED HOME CALLBACK");
     if(req.all){
         gc->home(AXIS_ALL);
     }
@@ -400,7 +400,7 @@ bool homeCallback(cdxbot::gantryHome::Request &req,
     if(req.z) {
         gc->home(AXIS_Z);
     }
-    ROS_INFO_STREAM("LEAVING HOME CALLBACK");
+    // ROS_INFO_STREAM("LEAVING HOME CALLBACK");
     resp.ok = true;
     return true;
     // return (resp.ok = true);
