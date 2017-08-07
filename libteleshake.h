@@ -64,6 +64,7 @@ LICENSE:
 #include <vector>
 #include "ShakerModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
+#define PRINT_OUTPUT 0
 /* All CB_****_MASK definitions must be ORed with the device address */
 #define CB_ADDRESS_MASK         0b01100000
 #define CB_BROADCAST_ADDRESS    0b01101111
@@ -139,22 +140,6 @@ LICENSE:
 #define CTRL_SET_LEN(X) ((X) |= (1UL))
 #define CTRL_SET_MODE(X) ((X) |= (1UL << 1))
 
-/* The packing order of this bitfield will depend on the endianness of the
- *  machine executing this code. Either check endianness when transmitting
- *  values of type control_byte_t, or find a more robust solution for
- *  structuring this data. Bitfield order is currently set for a little endian
- *  (Intel) machine. */
-
-// typedef struct {
-// uint8_t addr0 : 1 = 0;
-// uint8_t addr1 : 1 = 0;
-// uint8_t addr2 : 1 = 0;
-// uint8_t addr3 : 1 = 0;
-// uint8_t error : 1 = 0;
-// uint8_t dirty : 1 = 0;
-// uint8_t mode  : 1 = 0;
-// uint8_t len   : 1 = 0;
-// } control_byte_t;
 
 typedef struct {
     // control_byte_t control;
@@ -217,7 +202,7 @@ extern "C" {
         int _usb_baud = B9600;
         int _usbfd = 0;
         pthread_t _thread_id;
-        std::string _usb_addr = "/dev/ttyUSB0";
+        std::string _usb_addr = "/dev/serial/by-id/usb-FTDI_UT232R_FTYO7XCW-if00-port0";
         thread_params_t _thread_params;
         uint8_t _buffer[6];
         uint8_t _device_addr = 0;

@@ -99,8 +99,10 @@ void scPubCallback(const std_msgs::String::ConstPtr &msg) {
 bool startCallback(cdxbot::shakerStart::Request &req,
                    cdxbot::shakerStart::Response &resp) {
     if(sm->start() == 1) {
+        resp.ok = true;
         return 1;
     } else {
+        resp.ok = false;
         return 0;
     }
 }
@@ -108,8 +110,10 @@ bool startCallback(cdxbot::shakerStart::Request &req,
 bool stopCallback(cdxbot::shakerStop::Request &req,
                   cdxbot::shakerStop::Response &resp) {
     if(sm->stop() == 1) {
+        resp.ok = true;
         return 1;
     } else {
+        resp.ok = false;
         return 0;
     }
 }
@@ -139,8 +143,10 @@ bool setPowerCallback(cdxbot::shakerSetPower::Request &req,
 bool resetCallback(cdxbot::shakerReset::Request &req,
                    cdxbot::shakerReset::Response &resp) {
     if(sm->reset() == 1) {
+        resp.ok = true;
         return 1;
     } else {
+        resp.ok = false;
         return 0;
     }
 }

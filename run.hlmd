@@ -34,12 +34,10 @@
 #wait, 2000
 #this is a comment.
 #pickup
-
+shakersetfreq, 1990
 shakerstart
-shakersetpower, 100
-shakersetfreq, 100
 wait, 5000
-shakersetfreq, 2000
+shakersetfreq, 100
 wait, 5000
 shakerstop
 
