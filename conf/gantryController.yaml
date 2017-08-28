@@ -1,7 +1,7 @@
 gc_conf:
     type: "ramps"
     driver_name: "libramps.so"
-    driver_path: "/home/cdx/catkin_ws/build/devel/lib/"
+    driver_path: "/home/cdx/catkin_ws/devel/lib/"
         # NETWORKING CONFIGURATION
     ip_address: "192.168.169.99"
     port: 23
@@ -10,13 +10,13 @@ gc_conf:
 
         # DRIVE CONFIGURATION SETTINGS
     units: 1
-    traverse_velocity: 1000
+    traverse_velocity: 5000
     rapid_feed_velocity: 5000
 
     xpos_min: 0.0
-    xpos_max: 395.0
+    xpos_max: 406.4
     ypos_min: 0.0
-    ypos_max: 395.0
+    ypos_max: 406.4
     zpos_min: 0.0
     zpos_max: 300.0
     move_mode: "absolute"

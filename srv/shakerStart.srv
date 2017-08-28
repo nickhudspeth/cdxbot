@@ -1,3 +1,7 @@
 bool start
+
+# Specifies the amount of time (in seconds)for which the shaker should run.
+# Set time to 0 to run shaker continuously.
+float32 time
 ---
 bool ok

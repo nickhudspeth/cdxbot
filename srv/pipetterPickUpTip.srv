@@ -1,10 +1,10 @@
 # Tip type table index
-int32 tt_index
+int16 tip_type_table_index
 
-# Beginning of tip picking position
-float64 botpp
+# Deck geometry table index
+int16 deck_geometry_table_index
 
-# End of tip picking position
-float64 eotpp
+# Tip pickup speed (0/false = slow, 1/true = fast)
+bool tip_pickup_speed
 ---
 bool ok

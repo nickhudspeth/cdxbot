@@ -62,11 +62,11 @@ struct container_cell {
 };
 
 // struct tip_params {
-    // double min_traverse_height;
-    // double min_z_pos;
-    // double botpp;
-    // double eotpp;
-    // double potdp;
+// double min_traverse_height;
+// double min_z_pos;
+// double botpp;
+// double eotpp;
+// double potdp;
 // }
 
 class Container {
@@ -519,6 +519,27 @@ class Container {
         return _tray_offsets[axis];
     }
 
+    /*************************************************************************
+    * Function :   getTipTypeTableIndex()
+    * Purpose  :   Returns the tip type table index for this container
+    * Input    :   void
+    * Returns  :   unsigned int
+    *************************************************************************/
+    unsigned int getTipTypeTableIndex(void) {
+        return _tip_type_table_index;
+    }
+
+    /*************************************************************************
+    * Function :   getDeckGeometryTableIndex()
+    * Purpose  :   Returns the deck geometry table index for this container
+    * Input    :   void
+    * Returns  :   unsigned int
+    *************************************************************************/
+    unsigned int getDeckGeometryTableIndex(void) {
+        return _deck_geometry_table_index;
+    }
+
+
   private:
     std::string _type = "tip";      // Type of container.(tip rack, well plate, etc.)
     double _length = 0;
@@ -534,4 +555,6 @@ class Container {
     double _offset_z = 0;
     double _tray_offsets[3] = {0, 0, 0};
     std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
+    unsigned int _tip_type_table_index = 0;
+    unsigned int _deck_geometry_table_index = 0;
 };

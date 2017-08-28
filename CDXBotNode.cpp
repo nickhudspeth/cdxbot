@@ -361,6 +361,7 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
     }
 }
 
+
 void parseAction(CDXBot &cd, const struct action a) {
     cdxbot::gc_cmd gmsg;
     cdxbot::pc_cmd pmsg;
@@ -521,46 +522,65 @@ void parseAction(CDXBot &cd, const struct action a) {
          * all tip locations until it finds an unused tip. This is pretty
          * inefficient. Instead, store the location of the last used tip and
          * increment every time a tip is used. - Tue 02 May 2017 02:38:54 PM MDT */
-
         double x = 0, y = 0, z = 0;
-        unsigned int i = 0, j = 0, k = 0;
+        // unsigned int i = 0, j = 0, k = 0;
         bool stop = false;
-        for(i = 0; (i < cd.getNumContainers()) && !stop; i++) {
-            Container c = cd.getContainer(i);
-            ROS_INFO_STREAM("got valid container at position " << i);
-            if(c.getType() == "tip") {
-                for(j = 0; (j < c.getRows()) && !stop; j++) {
-                    for(k = 0; (k < c.getCols()) && !stop; j++) {
-                        if(c.getCell(j,k).used == 0) {
-                            /* Mark tip cell as used. */
-                            c.getCellsVecRef()[j][k].used = 1;
-                            x = cd.getContainer(i).getGlobalCoords('x', j, k);
-                            ROS_DEBUG_STREAM("x = " << x);
-                            y = cd.getContainer(i).getGlobalCoords('y', j, k);
-                            ROS_DEBUG_STREAM("y = " << y);
-                            z = cd.getContainer(i).getGlobalCoords('z', j, k);
-                            ROS_DEBUG_STREAM("z = " << z);
-                            // exit the main loop
-                            stop = true;
-                            ROS_INFO_STREAM("Pipette tip found in container " << i << " row " << j << " column " << k);
-                        }
-                    }
-                }
+        Container c = cd.getContainer(a.args[0]);
+        if(c.getType() == "tip") {
+            if((c.getCell(a.args[1],a.args[2]).used == true)) {
+                ROS_ERROR_STREAM("No consumable item available at specified location [." << a.args[0] << ", " << a.args[1] << ", " << a.args[2]);
+                return;
+            } else {
+                ROS_ERROR_STREAM("Invalid container [" << a.args[0] << "] selected for pickup operation.");
+                return;
             }
-        }
-        if(!stop) {
-            ROS_ERROR_STREAM("CDXBotNode: No pipette tips remaining! Please reload.");
-        }
-        /* Move to location */
-        gmsg.cmd = "movexy";
-        gmsg.x = x;
-        gmsg.y = y;
-        gc_pub.publish(gmsg);
-        /* Pick up Tip */
-        pmsg.cmd = ("pickup");
-        pmsg.type = cd.getContainer(i).getCellsVecRef()[j][k].tt_index;
-        pc_pub.publish(pmsg);
+            // for(i = 0; (i < cd.getNumContainers()) && !stop; i++) {
+            // Container c = cd.getContainer(i);
+            // ROS_INFO_STREAM("got valid container at position " << i);
+            // if(c.getType() == "tip") {
+            // for(j = 0; (j < c.getRows()) && !stop; j++) {
+            // for(k = 0; (k < c.getCols()) && !stop; j++) {
+            // if(c.getCell(j,k).used == 0) {
+            // Mark tip cell as used.
+            // c.getCellsVecRef()[j][k].used = 1;
+            // x = cd.getContainer(i).getGlobalCoords('x', j, k);
+            // ROS_DEBUG_STREAM("x = " << x);
+            // y = cd.getContainer(i).getGlobalCoords('y', j, k);
+            // ROS_DEBUG_STREAM("y = " << y);
+            // z = cd.getContainer(i).getGlobalCoords('z', j, k);
+            // ROS_DEBUG_STREAM("z = " << z);
+            // exit the main loop
+            // stop = true;
+            // ROS_INFO_STREAM("Pipette tip found in container " << i << " row " << j << " column " << k);
+            // }
+            // }
+            // }
+            // }
+            // }
+            // if(!stop) {
+            // ROS_ERROR_STREAM("CDXBotNode: No pipette tips remaining! Please reload.");
+            // }
+            /* Move to location */
+            cdxbot::gantryMove::Request gmzreq;
+            cdxbot::gantryMove::Response gmzresp;
+            gmzreq.move_mode = 0;
+            gmzreq.x = cd.getContainer(a.args[0]).getGlobalCoords('x', a.args[1], a.args[2]);
+            gmzreq.y = cd.getContainer(a.args[0]).getGlobalCoords('y', a.args[1], a.args[2]);
+            gmzreq.z = cd.getContainer(a.args[0]).getGlobalCoords('z', a.args[1], a.args[2]);
+            if(!gantryMoveClient.call(gmzreq, gmzresp)){
+                // Unable to move gantry. HALT!
+            }
+            /* Pick up Tip */
+            cdxbot::pipetterPickUpTip::Request pputreq;
+            cdxbot::pipetterPickUpTip::Response pputresp;
+            pputreq.tip_type_table_index = c.getTipTypeTableIndex();
+            pputreq.deck_geometry_table_index = c.getDeckGeometryTableIndex();
 
+            // pmsg.cmd = ("pickup");
+            // pmsg.type = cd.getContainer(i).getCellsVecRef()[j][k].tt_index;
+            // pc_pub.publish(pmsg);
+
+        }
     } else if(a.cmd == "eject") {
         /* Move tip to feed plane */
 
@@ -632,6 +652,7 @@ void parseAction(CDXBot &cd, const struct action a) {
         cdxbot::shakerStart::Request shaker_start_request;
         cdxbot::shakerStart::Response shaker_start_response;
         shaker_start_request.start = 1;
+        shaker_start_request.time = ((a.args.size() > 0) ? static_cast<float>(a.args[0]) : 0);
         if(!shakerStartClient.call(shaker_start_request, shaker_start_response)) {
             ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not activate shaker.");
         }

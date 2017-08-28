@@ -162,25 +162,29 @@ extern "C" {
         void seterrfunc(void(*ef)(std::string s)) {
             PRINT_ERROR = ef;
         }
-        bool moveZ(double pos, double vel);
-        void pickUpTip(struct container_cell c);
-        void discardTip(void);
-        void aspirate(double vol, bool mode);
-        void dispense(double vol, bool mode);
-        double getZPos(void);
-        void emergencyStop(void);
-        void emergencyStopReset(void);
-
         bool getTipStatus(void);
-        void getFirmwareVersion(void);
+        bool moveZ(double pos, double vel);
+        double getZPos(void);
         unsigned int getInitializationStatus(void);
-
-        void setDeckGeometryParams(struct deck_geometry_t d);
-        void getDeckGeometryParams(unsigned int index);
-        void setContainerGeometryParams(struct container_geometry_t c);
-        void getContainerGeometryParams(unsigned int index);
-        void setLiquidClassParams(struct liquid_class_t l);
-        void getLiquidClassParams(unsigned int index);
+        bool aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
+                      unsigned int lc_idx, double liquid_surface);
+        bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
+                      unsigned int lc_idx, double liquid_surface);
+        bool discardTip(unsigned int dg_idx);
+        bool emergencyStop(void);
+        bool emergencyStopReset(void);
+        bool getContainerGeometryParams(unsigned int index);
+        bool getDeckGeometryParams(unsigned int index);
+        bool getFirmwareVersion(void);
+        bool getLiquidClassParams(unsigned int index);
+        bool makeDeckGeometry(unsigned int index, double feed_plane,\
+                              double container_offset_z, \
+                              double tip_engagement_len, \
+                              double tip_deposit_height);
+        bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed);
+        bool setContainerGeometryParams(struct container_geometry_t c);
+        bool setDeckGeometryParams(struct deck_geometry_t d);
+        bool setLiquidClassParams(struct liquid_class_t l);
         int getSockFD(void) {
             return _sockfd;
         }
@@ -305,16 +309,13 @@ extern "C" {
             {"85", "No communication to the digital potentiometer."},
         };
 
-        int _tt_index = 7;
-        int _dg_index = 0;
         int _cgt_index = 1;
-        int _dgt_index = 0;
         int _lct_index = 1;
         bool _gpm = 0;
-        int _qpm = 0;
+        bool _qpm = 0;
         bool _lld = 0;
-        unsigned int _lld_search_pos = 0;
-        unsigned int _liquid_surface = 500;
+        unsigned int _lld_search_height = 0;
+        unsigned int _check_height = 0;
         int _search_bottom_mode = 0;
         // Mixing parameters
         unsigned int _mix_vol = 0;

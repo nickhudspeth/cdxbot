@@ -167,7 +167,7 @@ int SmoothieModule::init(void) {
     } else if (_connect == CONN_USB) {
         /* Open USB Device */
         _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
-        std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
+        std::cout << "LIBSMOOTHIE: Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
         struct termios tty;
         struct termios tty_old;
         if(tcgetattr(_usbfd, &tty) != 0) {
@@ -206,6 +206,7 @@ int SmoothieModule::init(void) {
     // pthread_create(&_thread_id, &attr, &thread_func, &thread_params);
     pthread_create(&_thread_id, NULL, &thread_func, &_thread_params);
     // pthread_attr_destroy(&attr);
+    usleep(100000);
 
     home(AXIS_ALL);
 

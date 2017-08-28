@@ -60,18 +60,18 @@ EppendorfModule::~EppendorfModule(void) {
     // std::cout << "Closed interface." << std::endl;
 }
 
-void EppendorfModule::ejectTip(void) {
+bool EppendorfModule::ejectTip(void) {
     write(_fd, "e\r\n", 3);
 }
 
-void EppendorfModule::aspirate(double vol) {
+bool EppendorfModule::aspirate(double vol) {
     memset(_retbuf, '0', sizeof(_retbuf));
     int n = sprintf(_retbuf,"f%.2f\r\n", vol);
     waitForStatus();
     write(_fd, _retbuf, n);
 }
 
-void EppendorfModule::dispense(double vol) {
+bool EppendorfModule::dispense(double vol) {
     memset(_retbuf, '0', sizeof(_retbuf));
     int n = sprintf(_retbuf,"d%.2f\r\n", vol);
     waitForStatus();

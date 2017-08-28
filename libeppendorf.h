@@ -58,9 +58,9 @@ class EppendorfModule : PipetterModule {
   public:
     EppendorfModule();
     ~EppendorfModule();
-    void ejectTip(void);
-    void aspirate(double vol);
-    void dispense(double vol);
+    bool ejectTip(void);
+    bool aspirate(double vol);
+    bool dispense(double vol);
   private:
     int _fd = -1;
     int _speed = 115200;

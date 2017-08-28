@@ -135,7 +135,7 @@ void RampsModule::waitForString(std::string s, unsigned int timeout) {
                 return;
             }
         }
-        usleep(100000);
+        // usleep(100000);
     }
 }
 
@@ -153,7 +153,7 @@ int RampsModule::init(void) {
             " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
         return -1;
     }
-    std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
+    std::cout << "LIBRAMPS: Opened serial connection to USB device at " << _usb_addr << " with file descriptor " << _usbfd << std::endl;
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
@@ -202,7 +202,6 @@ int RampsModule::init(void) {
 // pthread_attr_destroy(&attr);
 
     // home(AXIS_ALL);
-
     return 0;
 }
 
@@ -359,7 +358,7 @@ int RampsModule::moveAbsolute(float x, float y, float z) {
         move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
         _pos[2] = z;
     }
-    // ret += std::string(" F") + std::to_string(_traverse_velocity);
+    ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret, 1);
     // int stime = *std::max_element(move_times, move_times+3);
     // printf("SLEEPING %d MICROSECONDS...\n", stime);

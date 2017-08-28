@@ -4,6 +4,7 @@
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterMakeDeckGeometry.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
 #include "std_msgs/String.h"
@@ -81,12 +82,22 @@ void loadParams(ros::NodeHandle &nh) {
         nh.getParam("/pc_defaults/z_axis_enabled", pc->getZAxisEnabledRef());
         ROS_WARN_STREAM("No parameter \"_z_axis_enabled\" found in configuration file.\
                                 Initializing pipetter with default value " <<\
-                        pc->getZAxisEnabledRef());
+                        pc->getZAxisEnabled());
     }
-    if(!nh.getParam("/pc_conf/feed_plane_height", pc->getFeedPlaneHeightRef())) {
-        nh.getParam("/pc_defaults/feed_plane_height", pc->getFeedPlaneHeightRef());
-        ROS_WARN_STREAM("No paramater \"_feed_plane_height\" found in configuration file.\
-               Initializing pipetter with default value " << pc->getFeedPlaneHeightRef());
+    if(pc->getZAxisEnabled()) {
+        /* The feed plane is only relevant if the pipetter has a mobile
+         * z-axis. */
+        if(!nh.getParam("/cdxbot/feed_plane", pc->getFeedPlaneRef())) {
+            nh.getParam("/pc_defaults/feed_plane", pc->getFeedPlaneRef());
+            ROS_WARN_STREAM("No paramater \"_feed_plane\" found in configuration file.\
+               Initializing pipetter with default value " << pc->getFeedPlane());
+        }
+
+    }
+    if(!nh.getParam("/cdxbot/tip_pickup_speed", pc->getTipPickupSpeedRef())) {
+        nh.getParam("/pc_defaults/pickup_speed",pc->getTipPickupSpeedRef());
+        ROS_WARN_STREAM("No paramater \"_tip_pickup_speed\" found in configuration file.\
+               Initializing pipetter with default value " << pc->getTipPickupSpeed());
     }
 }
 
@@ -99,20 +110,20 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
     /* Move Pipetter head to feed plane height at startup */
     else if(msg.cmd == "home") {
         // pc->moveZ((1800 - 219.75 - pc->getFeedPlaneHeight()), 1);
-        pc->moveZ(pc->getFeedPlaneHeight(), 1);
+        pc->moveZ(pc->getFeedPlane(), 1);
     }
 }
 
 void pcPubCallback(const cdxbot::pc_cmd &msg) {
-    if(msg.cmd == "aspirate") {
-        pc->aspirate(msg.vol);
-    } else if(msg.cmd == "dispense") {
-        pc->dispense(msg.vol);
-    } else if(msg.cmd == "eject") {
-        pc->ejectTip();
-    } else if(msg.cmd == "pickup") {
-        pc->pickUpTip(msg.type);
-    }
+    // if(msg.cmd == "aspirate") {
+        // pc->aspirate(msg.vol);
+    // } else if(msg.cmd == "dispense") {
+        // pc->dispense(msg.vol);
+    // } else if(msg.cmd == "eject") {
+        // pc->ejectTip();
+    // } else if(msg.cmd == "pickup") {
+        // pc->pickUpTip(msg.type);
+    // }
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
@@ -123,12 +134,15 @@ void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
 
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
                    cdxbot::pipetterMoveZ::Response &resp) {
-    return ((pc->moveZ(req.pos, 1)) == 1) ? 1 : 0;
+    return pc->moveZ(req.pos, 1);
 
 }
 
 bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
                        cdxbot::pipetterPickUpTip::Response &resp) {
+    return pc->pickUpTip(req.tip_type_table_index,
+                         req.deck_geometry_table_index,
+                         req.tip_pickup_speed);
 
 }
 
@@ -147,7 +161,11 @@ bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
 
 }
 
+bool makeDeckGeometryCallback(cdxbot::pipetterMakeDeckGeometry::Request &req,
+                              cdxbot::pipetterMakeDeckGeometry::Response &resp) {
+    pc->makeDeckGeometry(req.index, req.traverse_height, req.container_offset_z, req.engagement_length, req.tip_deposit_height);
 
+}
 
 
 int main(int argc, char **argv) {
@@ -175,7 +193,8 @@ int main(int argc, char **argv) {
                                         &aspirateCallback);
     ros::ServiceServer dispenseServer = nh.advertiseService("pipetter_dispense",
                                         &dispenseCallback);
-
+    ros::ServiceServer makeDeckGeometryServer = nh.advertiseService("pipetter_make_deck_geometry",
+            &makeDeckGeometryCallback);
 
     ros::Rate rate(100);
     while(ros::ok()) {

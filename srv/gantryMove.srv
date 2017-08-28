@@ -1,3 +1,4 @@
+# 0=absolute, 1=relative
 bool move_mode
 float64 x
 float64 y

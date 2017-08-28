@@ -113,10 +113,11 @@ extern "C" {
         int sendCommand(std::string s, bool wfr = 0);
         int readResponse(void);
         void waitForOK(void);
-        void waitForString(std::string s, unsigned int timeout = 10);
+        void waitForString(std::string s, unsigned int timeout = 2);
         bool _units = UNITS_MM;
         /* Networking configuration */
-        std::string _usb_addr = "/dev/ttyUSB0";
+        std::string _usb_addr = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AL03M8VU-if00-port0";
+        // std::string _usb_addr = "/dev/ttyUSB1";
         int _usb_baud = B115200;
         int _usbfd = 0;
         char _buffer[NETBUFSIZE];
@@ -125,6 +126,7 @@ extern "C" {
         bool _ready_flag = 1;
         pthread_t _thread_id;
         thread_params_t _thread_params;
+        float _traverse_velocity = 5000;
         // struct sockaddr_in _remote;
     };
 

@@ -88,7 +88,7 @@ int TeleshakeModule::init(void) {
         std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << "opening " << _usb_addr << " : " << strerror(errno) << std::endl;
         return -1;
     }
-    std::cout << "Opened serial connection to USB device with file descriptor " << _usbfd << std::endl;
+    std::cout << "LIBTELESHAKE: Opened serial connection to USB device at " << _usb_addr << " with file descriptor " << _usbfd << std::endl;
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
@@ -136,6 +136,7 @@ int TeleshakeModule::init(void) {
     // pthread_create(&_thread_id, NULL, &thread_func, &_thread_params);
 // pthread_attr_destroy(&attr);
     // resetAll();
+    // usleep(100000);
     queryAll();
     return 0;
 }
@@ -235,7 +236,7 @@ bool TeleshakeModule::setFrequency(unsigned int f) {
     t.data_2 = (uint8_t)(c_time >> 16);
     t.data_1 = (uint8_t)(c_time >> 8);
     t.data_0 = (uint8_t)(c_time);
-    std::cout << "LIBTELESHAKE: INFO - Setting frequency to: " << f /*<< ", cycle time: " << c_time << " " << d2b(c_time) << */std::endl;
+    std::cout << "LIBTELESHAKE: INFO - Setting frequency to: " << f << std::endl;
     sendCommand(t);
     t = readResponse();
     return true;

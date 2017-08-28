@@ -171,6 +171,7 @@ int ZeusModule::init(void) {
     // Unable to create mutex. Throw error.
     // }
     initCANBus();
+    // usleep(100000);
     pthread_create(&_thread_id, NULL, &thread_func, this);
     // printf("Thread function created.\n");
     initZDrive();
@@ -237,107 +238,98 @@ bool ZeusModule::moveZ(double pos, double vel) {
     if(err < MAX_Z_ERROR) {
         _zpos = pos;
         return 1;
-    }
-    else{
+    } else {
         printf("Pipetter z-pos = %f\n", getZPos());
         return 0;
     }
 }
 
-void ZeusModule::pickUpTip(struct container_cell c) {
-    if((_tt_index > 9) || (_dg_index > 99)) {
-        //throw error
-        return;
+
+bool ZeusModule::makeDeckGeometry(unsigned int index, double feed_plane,\
+                                  double container_offset_z, \
+                                  double tip_engagement_len, \
+                                  double tip_deposit_height) {
+    /* It's only necessary to perform range check on the difference of these two
+     * variables. Error checking on all other parameters is performed by the
+     * Zeus module.*/
+    if(container_offset_z < tip_engagement_len) {
+        return false;
+    }
+    std::string cmd = cmdHeader("GO");
+    cmd +=  "go" + zfill(std::to_string(index), 2) + \
+            "th" + zfill(std::to_string(static_cast<unsigned int>(feed_plane * 10)), 4) + \
+            "te" + zfill(std::to_string(static_cast<unsigned int>(10*(container_offset_z - tip_engagement_len))), 4) + \
+            "tm" + zfill(std::to_string(static_cast<unsigned int>(10*container_offset_z)), 4 )+ \
+            "tn" + zfill(std::to_string(static_cast<unsigned int>(10*(container_offset_z - tip_engagement_len))), 4) + \
+            "tr" + zfill(std::to_string(static_cast<unsigned int>(10*tip_deposit_height)), 4);
+
+}
+
+bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed) {
+    if((tt_idx > 9) || (dg_idx > 99)) {
+        // ROS_ERROR_STREAM("Tip type index (" << tt_idx << ") or deck geometry index (" << dg_idx << ") out of range.")
+        return false;
     }
 
-    /* Create a deck geometry struct from the tip properties in the container
-      cell structure and send these parameters to the pipetter */
-
-    /* TODO: nam - Maintain an internal index of deck geometry definitions and
-     * tip types so that new parameters don't have to be set with each call to
-     * this function. Currently, new parameters are set and stored at index 0
-     * each time this function is called. Since the Zeus' internal EEPROM has a
-     * finite number of write cycles, this may cause issues with time unless
-     * the Zeus implements some wear-leveling strategy internally (unknown.)
-     * - Tue 02 May 2017 11:00:23 AM MDT */
-
-    /* NOTE: The ZEUS only supports the use of predefined tip-types, as listed
-     * in section 5.12.4 of the ZEUS (II) Integrator Manual. Custom tip type
-     * definitions are not supported. */
-    struct deck_geometry_t d;
-    d.index = 0;
-    d.min_traverse_height = c.min_traverse_height;
-    d.botpp = c.botpp;
-    d.eotpp = c.eotpp;
-    d.potdp = d.potdp;
-    setDeckGeometryParams(d);
-
     std::string cmd = cmdHeader("GT");
-    cmd += "tt" + zfill(std::to_string(c.tt_index), 1) + \
-           "go" + zfill(std::to_string(0), 2) + \
-           "mt" + std::to_string(0);
+    cmd += "tt" + zfill(std::to_string(tt_idx), 1) + \
+           "go" + zfill(std::to_string(dg_idx), 2) + \
+           "mt" + std::to_string(static_cast<unsigned int>(speed));
     sendCommand(cmd);
 
     /* Here we should wait for the pipetter to indicate that a tip has been
      * picked up before returning. */
-    return;
+    return false;
 }
 
-void ZeusModule::discardTip(void) {
-    if((_dg_index > 99)) {
+bool ZeusModule::discardTip(unsigned int dg_idx) {
+    if((dg_idx > 99)) {
         //throw error
-        return;
+        return false;
     }
     std::string cmd = cmdHeader("GU");
-    cmd += "go" + zfill(std::to_string(_dg_index), 2);
+    cmd += "go" + zfill(std::to_string(dg_idx), 2);
     sendCommand(cmd);
+
+    /* TODO: nam - Check if has been successfully discarded
+     * before returning. - Thu 24 Aug 2017 04:34:57 PM MDT */
+    return false;
+
 }
 
-void ZeusModule::aspirate(double vol, bool mode) {
+bool ZeusModule::aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
+                          unsigned int lc_idx, double liquid_surface) {
 
-    /* TODO: nam - Modify function to accept a liquid container structure
-     * reference and fetch all paramaters from the struct. On completion, parse
-     * out the liquid height from the returned string and update the
-     * corresponding struct element before returning from function. - Tue 14 Mar 2017 09:40:08 AM MDT */
-
-    int _check_height = 100;
-    if((vol > 11000) || (_cgt_index > 99) || (_dgt_index > 99) \
-            || (_lct_index > 99) || (_qpm > 1) || (_lld > 1) \
-            || (_lld_search_pos > 1800) || (_liquid_surface > 1800) \
-            || (_check_height > 1800)) {
+    if((vol < 0) || (vol > 11000) || (liquid_surface < 0) || (liquid_surface > 1800)) {
         //throw error
-        return;
+        return false;
     }
 
     std::string cmd = cmdHeader("GA");
     cmd += "ai" + zfill(std::to_string(static_cast<unsigned int>(vol)), 5) +\
-           "ge" + zfill(std::to_string(_cgt_index), 2) +\
-           "go" + zfill(std::to_string(_dgt_index), 2) +\
-           "lq" + zfill(std::to_string(_lct_index), 2) +\
+           "ge" + zfill(std::to_string(gc_idx), 2) +\
+           "go" + zfill(std::to_string(dg_idx), 2) +\
+           "lq" + zfill(std::to_string(lc_idx), 2) +\
            "gq" + std::to_string(_qpm) +\
            "lb" + std::to_string(_lld) +\
-           "zp" + zfill(std::to_string(_lld_search_pos), 4) +\
+           "zp" + zfill(std::to_string(_lld_search_height), 4) +\
            "cg" + zfill(std::to_string(_check_height), 4) + \
-           "cf" + zfill(std::to_string(_liquid_surface), 4);
+           "cf" + zfill(std::to_string(liquid_surface), 4);
     sendCommand(cmd);
+    return false;
 }
 
-void ZeusModule::dispense(double vol, bool mode) {
-
-    /* TODO: nam - Modify function to accept a liquid container structure
-     * reference and fetch all paramaters from the struct. On completion, parse
-     * out the liquid height from the returned string and update the
-     * corresponding struct element before returning from function. - Tue 14 Mar 2017 09:40:08 AM MDT */
-
+bool ZeusModule::dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
+                          unsigned int lc_idx, double liquid_surface) {
     std::string cmd = cmdHeader("GD");
     cmd += "di" + zfill(std::to_string(static_cast<unsigned int>(vol)), 4) +\
-           "ge" + zfill(std::to_string(_cgt_index), 2) +\
-           "go" + zfill(std::to_string(_dgt_index), 2) +\
-           "lq" + zfill(std::to_string(_lct_index), 2) +\
+           "ge" + zfill(std::to_string(gc_idx), 2) +\
+           "go" + zfill(std::to_string(dg_idx), 2) +\
+           "lq" + zfill(std::to_string(lc_idx), 2) +\
            "gq" + std::to_string(_qpm) +\
            "lb" + std::to_string(_lld) +\
-           "zp" + zfill(std::to_string(_lld_search_pos), 4) +\
-           "cf" + zfill(std::to_string(_liquid_surface), 4) +\
+           "zp" + zfill(std::to_string(_lld_search_height), 4) +\
+           "cf" + zfill(std::to_string(liquid_surface), 4) +\
            "zm" + std::to_string(_search_bottom_mode);
     sendCommand(cmd);
 }
@@ -384,7 +376,6 @@ int ZeusModule::initCANBus(void) {
         exit(1);
     }
     printf("Opened CAN socket with file descriptor %d\n", _sockfd);
-
     addr.can_family = AF_CAN;
     strcpy(ifr.ifr_name, _interface.c_str());
     if(ioctl(_sockfd, SIOCGIFINDEX, &ifr) < 0) {
@@ -436,9 +427,10 @@ unsigned int ZeusModule::getInitializationStatus(void) {
     return INIT_FAILURE;
 }
 
-void ZeusModule::getFirmwareVersion(void) {
+bool ZeusModule::getFirmwareVersion(void) {
     // std::string cmd = cmdHeader("RF");
     sendCommand("RF");
+    return true;
 }
 
 canid_t ZeusModule::assembleIdentifier(unsigned int type) {
@@ -601,7 +593,7 @@ void ZeusModule::sendCommand(std::string cmd) {
              * peg the CPU with calls to time() */
             // usleep(10000);
             // }
-            usleep(1000000);
+            usleep(100000);
             _ready_for_new_command = 1;
             return;
         }
@@ -629,23 +621,25 @@ double ZeusModule::getZPos(void) {
     return stod(z_str);
 }
 
-void ZeusModule::emergencyStop(void) {
+bool ZeusModule::emergencyStop(void) {
     std::string cmd = "AB";
     sendCommand(cmd);
+    return true;
 }
 
-void ZeusModule::emergencyStopReset(void) {
+bool ZeusModule::emergencyStopReset(void) {
     std::string cmd = "AW";
     sendCommand(cmd);
+    return true;
 }
 
-void ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {
+bool ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {
     /* Validate struct members */
     if((d.index > 9999) || (d.min_traverse_height > 1800) || (d.min_z_pos > 1800)
             || (d.botpp > 1800) || (d.eotpp > 1800) || (d.potdp > 1800)) {
         printf("ERROR: Deck geometry definition contains out of range\
                parameter.\n");
-        return;
+        return false;
     }
     std::string cmd = cmdHeader("GO") +
                       "go" + zfill(std::to_string(d.index), 2) + \
@@ -655,19 +649,21 @@ void ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {
                       "tn" + zfill(std::to_string(d.eotpp), 4) + \
                       "tr" + zfill(std::to_string(d.potdp), 4);
     sendCommand(cmd);
+    return true;
 }
 
-void ZeusModule::getDeckGeometryParams(unsigned int index) {
+bool ZeusModule::getDeckGeometryParams(unsigned int index) {
     if(index > 99) {
         printf("ERROR: Requested deck geometry table index is out of range.\n");
-        return;
+        return false;
     }
     std::string cmd = cmdHeader("GR") + \
                       "go" + zfill(std::to_string(index), 2);
     sendCommand(cmd);
+    return true;
 }
 
-void ZeusModule::setContainerGeometryParams(struct container_geometry_t c) {
+bool ZeusModule::setContainerGeometryParams(struct container_geometry_t c) {
     /* Validate bounds on struct members*/
     if((c.index > 99) || (c.diameter > 999)
             || (c.x_length > 999) ||(c.y_length > 999)
@@ -676,6 +672,7 @@ void ZeusModule::setContainerGeometryParams(struct container_geometry_t c) {
             || (c.dhabs > 1800)) {
         printf("ERROR: Container geometry definition contains out of range\
                parameter.\n");
+        return false;
     }
     std::string cmd = cmdHeader("GC") + \
                       "ge" + zfill(std::to_string(c.index), 2) + \
@@ -689,20 +686,22 @@ void ZeusModule::setContainerGeometryParams(struct container_geometry_t c) {
                       "ch" + zfill(std::to_string(c.sohbs), 4) + \
                       "ic" + zfill(std::to_string(c.dhabs), 4);
     sendCommand(cmd);
+    return true;
 }
 
-void ZeusModule::getContainerGeometryParams(unsigned int index) {
+bool ZeusModule::getContainerGeometryParams(unsigned int index) {
     if(index > 99) {
         printf("ERROR: Requested deck geometry table index is out of range.\n");
-        return;
+        return false;
     }
     std::string cmd = cmdHeader("GB") + \
                       "ge" + zfill(std::to_string(index), 2);
     sendCommand(cmd);
+    return true;
 
 }
 
-void ZeusModule::setLiquidClassParams(struct liquid_class_t l) {
+bool ZeusModule::setLiquidClassParams(struct liquid_class_t l) {
     /* Validate bounds on struct members*/
     if((l.index > 99) || (l.lcfft > 1) || (l.aspiration_mode > 2) ||
             (l.aspiration_flow_rate > 25000) || (l.over_aspirated_vol > 9999) ||
@@ -743,14 +742,15 @@ void ZeusModule::setLiquidClassParams(struct liquid_class_t l) {
     sendCommand(cmd);
 }
 
-void ZeusModule::getLiquidClassParams(unsigned int index) {
+bool ZeusModule::getLiquidClassParams(unsigned int index) {
     if(index > 99) {
         printf("ERROR: Requested deck geometry table index is out of range.\n");
-        return;
+        return false;
     }
     std::string cmd = cmdHeader("GM") + \
                       "iq" + zfill(std::to_string(index), 2);
     sendCommand(cmd);
+    return false;
 }
 
 std::string ZeusModule::parseErrors(std::string error) {

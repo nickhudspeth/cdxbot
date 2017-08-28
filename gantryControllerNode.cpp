@@ -310,28 +310,28 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
     if(msg.cmd == "move") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(coords[0], coords[1], coords[2]);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(coords[0], coords[1], coords[2]);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         }
     } else if(msg.cmd == "wait") {
         gc->dwell(msg.time);
     } else if(msg.cmd == "movexy") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(coords[0], coords[1], 0);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(coords[0], coords[1], 0);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         }
     } else if (msg.cmd == "movez") {
         if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
             gc->moveAbsolute(0, 0, coords[2]);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
             gc->moveRelative(0, 0, coords[2]);
-            waitForGantry(msg);
+            // waitForGantry(msg);
         }
     } else if(msg.cmd == "setvel") {
         if(msg.vel < 0) {
@@ -346,14 +346,14 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
         gc->emergencyStopReset();
     } else if(msg.cmd == "home") {
         gc->home();
-        waitForGantry(msg);
+        // waitForGantry(msg);
     }
 }
 
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
-    ros::shutdown();
+    // ros::shutdown();
 }
 
 bool moveCallback(cdxbot::gantryMove::Request &req,

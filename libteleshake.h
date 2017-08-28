@@ -203,6 +203,7 @@ extern "C" {
         int _usbfd = 0;
         pthread_t _thread_id;
         std::string _usb_addr = "/dev/serial/by-id/usb-FTDI_UT232R_FTYO7XCW-if00-port0";
+        // std::string _usb_addr = "/dev/ttyUSB0";
         thread_params_t _thread_params;
         uint8_t _buffer[6];
         uint8_t _device_addr = 0;

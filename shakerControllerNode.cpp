@@ -17,6 +17,8 @@ std::string driver_path, driver_name;
 void *driver_handle;
 create_t *create_sm;
 destroy_t *destroy_sm;
+bool timeout_flag = false;
+float timeout_dur = 0.0;
 
 
 ShakerModule * loadDriver(std::string file) {
@@ -96,9 +98,14 @@ void scPubCallback(const std_msgs::String::ConstPtr &msg) {
 
 }
 
-bool startCallback(cdxbot::shakerStart::Request &req,
-                   cdxbot::shakerStart::Response &resp) {
-    if(sm->start() == 1) {
+void stopFromTimerCallback(const ros::TimerEvent &e) {
+    ROS_INFO_STREAM("Stopping shaker.");
+    sm->stop();
+}
+
+bool stopCallback(cdxbot::shakerStop::Request &req,
+                  cdxbot::shakerStop::Response &resp) {
+    if(sm->stop() == 1) {
         resp.ok = true;
         return 1;
     } else {
@@ -107,9 +114,14 @@ bool startCallback(cdxbot::shakerStart::Request &req,
     }
 }
 
-bool stopCallback(cdxbot::shakerStop::Request &req,
-                  cdxbot::shakerStop::Response &resp) {
-    if(sm->stop() == 1) {
+bool startCallback(cdxbot::shakerStart::Request &req,
+                   cdxbot::shakerStart::Response &resp) {
+    /*Start the shaker and run for the amount of time specified in req->time.*/
+    if(sm->start() == 1) {
+        if(req.time > 0.0){
+            timeout_dur = req.time;
+            timeout_flag = true;
+        }
         resp.ok = true;
         return 1;
     } else {
@@ -170,6 +182,12 @@ int main(int argc, char **argv) {
 
     ros::Rate rate(100);
     while(ros::ok()) {
+        if(timeout_flag){
+            ROS_INFO_STREAM("Running shaker with " << timeout_dur << " second timeout.");
+            ros::Timer timer = nh.createTimer(ros::Duration(timeout_dur), stopFromTimerCallback, true);
+            timeout_flag = false;
+            timeout_dur = 0.0;
+        }
         ros::spinOnce();
         rate.sleep();
     }

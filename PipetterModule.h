@@ -50,12 +50,12 @@ LICENSE:
 #include "CDXModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 // struct deck_geometry_t {
-    // unsigned int index;
-    // unsigned int min_traverse_height;
-    // unsigned int min_z_pos;
-    // unsigned int botpp; // Beginning of Tip Picking Position
-    // unsigned int eotpp; // End of Tip Picking Position
-    // unsigned int potdp; // Position of Tip Deposit Process
+// unsigned int index;
+// unsigned int min_feed_plane;
+// unsigned int min_z_pos;
+// unsigned int botpp; // Beginning of Tip Picking Position
+// unsigned int eotpp; // End of Tip Picking Position
+// unsigned int potdp; // Position of Tip Deposit Process
 // };
 
 
@@ -64,19 +64,15 @@ class PipetterModule : public CDXModule {
   public:
     PipetterModule (void) {};
     virtual ~PipetterModule (void) {};
+    virtual bool aspirate(double vol) {};
+    virtual bool dispense(double vol) {};
+    virtual bool ejectTip(void) {};
+    virtual bool makeDeckGeometry(unsigned int index, double feed_plane,\
+                                  double container_offset_z, \
+                                  double tip_engagement_len, \
+                                  double tip_deposit_height);
     virtual bool moveZ(double pos, double vel) {};
-    virtual void pickUpTip(int index) {};
-    virtual void pickUpTip(struct container_cell c) {};
-    virtual void ejectTip(void) {};
-    virtual void aspirate(double vol) {};
-    virtual void dispense(double vol) {};
-
-    // void setTipParams(struct tip_params t){
-        // _tp.min_traverse_height = t.min_traverse_height;
-        // _
-
-    // }
-
+    virtual bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed){};
     double getZPos(void) {
         return _zpos;
     }
@@ -89,25 +85,30 @@ class PipetterModule : public CDXModule {
     bool &getZAxisEnabledRef(void) {
         return _z_axis_enabled;
     }
-    double getFeedPlaneHeight(void) {
-        return _feed_plane_height;
+    double getFeedPlane(void) {
+        return _feed_plane;
     }
-    double &getFeedPlaneHeightRef(void) {
-        return _feed_plane_height;
+    double &getFeedPlaneRef(void) {
+        return _feed_plane;
+    }
+    double getTipPickupSpeed(void){
+        return _tip_pickup_speed;
+    }
+    double &getTipPickupSpeedRef(void){
+        return _tip_pickup_speed;
     }
 
     std::string type;
     std::string driver_name;
     std::string driver_path;
+    double _tip_pickup_speed;
 
   protected:
     double _zpos;
     double _zpos_min;
     double _zpos_max;
     bool _z_axis_enabled = 1;
-    double _feed_plane_height = 50;
-    // struct tip_params _tp;
-    /* data */
+    double _feed_plane = 1800;
 };
 
 
