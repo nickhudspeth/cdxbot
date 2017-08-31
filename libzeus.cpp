@@ -108,10 +108,10 @@ extern "C" void *thread_func(void *arg) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
                                 zm->setWaitingForMsgFlag(0);
-                                std::string err_msg = zm->parseErrors(msg);
+                                // std::string err_msg = zm->parseErrors(msg);
                                 if(PRINT_OUTPUT) {
-                                    printf("Received message: %s -> ", msg.c_str());
-                                    printf("%s\n", err_msg.c_str());
+                                    // printf("Received message: %s -> ", msg.c_str());
+                                    // printf("%s\n", err_msg.c_str());
                                 }
                                 msg.clear();
                             } else {
@@ -119,12 +119,6 @@ extern "C" void *thread_func(void *arg) {
                             }
                             // printf("Read a frame from da socket with DLC %d\n and data %s\n", ret.can_dlc, ret.data);
                         }
-                        // (zm->getFIFO()).push(ret);
-                        // for(int i = 0; i < ret.can_dlc; i++) {
-                        // printf("%d", ret.data[i]);
-                        // msg.append(reinterpret_cast<const char*>(ret.data[i]));
-                        // }
-                        // printf("\n");
                     }
                 }
             }
@@ -275,11 +269,11 @@ bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed)
     cmd += "tt" + zfill(std::to_string(tt_idx), 1) + \
            "go" + zfill(std::to_string(dg_idx), 2) + \
            "mt" + std::to_string(static_cast<unsigned int>(speed));
-    sendCommand(cmd);
+    return sendCommand(cmd);
 
     /* Here we should wait for the pipetter to indicate that a tip has been
      * picked up before returning. */
-    return false;
+    // return true;
 }
 
 bool ZeusModule::discardTip(unsigned int dg_idx) {
@@ -484,6 +478,20 @@ bool ZeusModule::waitForRemoteFrame(void) {
     return 0;
 }
 
+std::string ZeusModule::waitForResponse(void) {
+    time_t start = time(NULL);
+    while((time(NULL) - start) < 3){
+        if(_msg_ready_flag == 1){
+          setMsgReadyFlag(0);
+          std::string ret = parseErrors(_received_msg);
+          std::cout << "LIBZEUS: Returned string " << ret << std::endl;
+          setReceivedMsg(std::string(""));
+          return ret;
+        }
+    }
+    return std::string("LIBZEUS: ERROR: Timeout in waitForResponse()");
+}
+
 void ZeusModule::sendKickFrame(void) {
     // printf("Sending kick frame. \n");
     struct can_frame frame;
@@ -535,12 +543,13 @@ struct can_frame & ZeusModule::getLastFrame(void) {
     return _last_sent_frame;
 }
 
-void ZeusModule::sendCommand(std::string cmd) {
+bool ZeusModule::sendCommand(std::string cmd) {
     /* At the end of this function, we will block until a return string is sent
      * from the pipetter to avoid sending simultaneous commands. */
     _ready_for_new_command = 0;
+    setMsgReadyFlag(0);
     if(PRINT_OUTPUT) {
-        printf("Sending command: %s. -> ", cmd.c_str());
+        printf("LIBZEUS: Sending command: %s.\n", cmd.c_str());
     }
     std::vector<std::string> substrings;
     size_t sbegin = 0;
@@ -583,19 +592,18 @@ void ZeusModule::sendCommand(std::string cmd) {
         frame.can_dlc = 8;
         sendFrame(frame);
         if(byte & (1 << 7)) {
-            /* Instead of a blind delay, set a 'ready for new command' flag after error
-             * parsing the returned string in thread_func() */
+            std::string res = waitForResponse();
+            if(res.find("NONE") != std::string::npos) {
+                usleep(200000);
+                _ready_for_new_command = 1;
 
-            /* Wait until command completes, up to a maximum of 1 second. */
-            // time_t start = time(NULL);
-            // while((!_ready_for_new_command) && (time(NULL) < start + 1)) {
-            /* Sleep for 10ms between checks so that this section doesn't
-             * peg the CPU with calls to time() */
-            // usleep(10000);
-            // }
-            usleep(100000);
-            _ready_for_new_command = 1;
-            return;
+                return true;
+            } else {
+                usleep(200000);
+                _ready_for_new_command = 1;
+                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << 
+                return false;
+            }
         }
         waitForRemoteFrame();
     }

@@ -92,7 +92,7 @@ extern "C" {
         void dwell(int t);
         void emergencyStop(void);
         void emergencyStopReset(void);
-        int home(unsigned int axis);
+        bool home(unsigned int axis);
         int motorsDisable(unsigned int axis);
         int motorsEnable(void);
         int moveAbsolute(float x, float y, float z);

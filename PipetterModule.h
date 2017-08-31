@@ -49,17 +49,6 @@ LICENSE:
 #include <unistd.h>
 #include "CDXModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-// struct deck_geometry_t {
-// unsigned int index;
-// unsigned int min_feed_plane;
-// unsigned int min_z_pos;
-// unsigned int botpp; // Beginning of Tip Picking Position
-// unsigned int eotpp; // End of Tip Picking Position
-// unsigned int potdp; // Position of Tip Deposit Process
-// };
-
-
-/***********************    FUNCTION PROTOTYPES    ***********************/
 class PipetterModule : public CDXModule {
   public:
     PipetterModule (void) {};
@@ -67,10 +56,7 @@ class PipetterModule : public CDXModule {
     virtual bool aspirate(double vol) {};
     virtual bool dispense(double vol) {};
     virtual bool ejectTip(void) {};
-    virtual bool makeDeckGeometry(unsigned int index, double feed_plane,\
-                                  double container_offset_z, \
-                                  double tip_engagement_len, \
-                                  double tip_deposit_height);
+    virtual bool makeDeckGeometry(unsigned int index, double feed_plane, double container_offset_z, double tip_engagement_len, double tip_deposit_height) {};
     virtual bool moveZ(double pos, double vel) {};
     virtual bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed){};
     double getZPos(void) {
@@ -111,6 +97,6 @@ class PipetterModule : public CDXModule {
     double _feed_plane = 1800;
 };
 
-
+/***********************    FUNCTION PROTOTYPES    ***********************/
 typedef PipetterModule *create_t();
 typedef void destroy_t(PipetterModule *);

@@ -1,0 +1,153 @@
+home
+#shakersetfreq, 1900
+#shakerstart, 5
+move, 0, 0, 0
+#wait, 2000
+#move, 0, 0, 7
+#wait, 1000
+#move, 0, 11, 0
+#wait, 1000
+#move, 0, 11, 7
+#wait, 1000
+#move, 0, 4, 0
+#wait, 1000
+#move, 0, 3, 7
+#wait, 1000
+#move, 0, 11, 3
+#wait, 1000
+#move, 0, 8, 7
+#wait, 1000
+
+move, 1, 0, 0
+wait, 2000
+move, 1, 0, 7
+wait, 2000
+move, 1, 11, 0
+wait, 2000
+move, 1, 11, 7
+wait, 2000
+
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+move, 0, 0, 0
+wait, 2000
+move, 0, 0, 7
+wait, 2000
+move, 0, 11, 0
+wait, 2000
+move, 0, 11, 7
+wait, 2000
+
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+move, 1, 0, 0
+wait, 2000
+move, 1, 0, 7
+wait, 2000
+move, 1, 11, 0
+wait, 2000
+move, 1, 11, 7
+wait, 2000
+
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+move, 0, 0, 0
+wait, 2000
+move, 0, 0, 7
+wait, 2000
+move, 0, 11, 0
+wait, 2000
+move, 0, 11, 7
+wait, 2000
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+move, 1, 0, 0
+wait, 2000
+move, 1, 0, 7
+wait, 2000
+move, 1, 11, 0
+wait, 2000
+move, 1, 11, 7
+wait, 2000
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+move, 0, 0, 0
+wait, 2000
+move, 0, 0, 7
+wait, 2000
+move, 0, 11, 0
+wait, 2000
+move, 0, 11, 7
+wait, 2000
+
+move, 5, 0, 0
+wait, 2000
+move, 5, 0, 2
+wait, 2000
+move, 5, 7, 0
+wait, 2000
+move, 5, 7, 2
+wait, 2000
+
+#move, 1, 1, 4
+#wait, 2000
+#move, 1, 1, 5
+#wait, 2000
+#move, 1, 1, 6
+#wait, 2000
+#move, 1, 1, 7
+#wait, 2000
+
+#shakerstop
+#this is a comment.
+#pickup
+
+#shakersetfreq, 1990
+#shakerstart, 5
+#wait, 5000
+# shakersetfreq, 100
+#wait, 15000
+#shakerstop
+
+home
+end

@@ -44,6 +44,7 @@ LICENSE:
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/timer.hpp>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -51,10 +52,12 @@ LICENSE:
 #include <errno.h>
 #include <fcntl.h>
 #include <iostream>
+#include <iomanip>
 #include <mutex>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <pthread.h>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <termios.h>
@@ -62,7 +65,7 @@ LICENSE:
 #include <vector>
 #include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-#define NETBUFSIZE 128
+#define NETBUFSIZE 1024
 #define UNITS_MM 0
 
 typedef struct {
@@ -90,7 +93,7 @@ extern "C" {
         void dwell(int t);
         void emergencyStop(void);
         void emergencyStopReset(void);
-        int home(unsigned int axis);
+        bool home(unsigned int axis);
         int motorsDisable(unsigned int axis);
         int motorsEnable(void);
         int moveAbsolute(float x, float y, float z);
@@ -114,6 +117,7 @@ extern "C" {
         int readResponse(void);
         void waitForOK(void);
         void waitForString(std::string s, unsigned int timeout = 2);
+        bool verifyPosition(unsigned int axes, double x = 0.00, double y = 0.00, double z = 0.00, unsigned int timeout = 10);
         bool _units = UNITS_MM;
         /* Networking configuration */
         std::string _usb_addr = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AL03M8VU-if00-port0";

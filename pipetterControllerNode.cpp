@@ -140,9 +140,12 @@ bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
 
 bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
                        cdxbot::pipetterPickUpTip::Response &resp) {
-    return pc->pickUpTip(req.tip_type_table_index,
+    ROS_INFO_STREAM("PipetterControllerNode: PickUpTipCallback entered.");
+    bool success = pc->pickUpTip(req.tip_type_table_index,
                          req.deck_geometry_table_index,
                          req.tip_pickup_speed);
+    ROS_INFO_STREAM("PipetterControllerNode: pickUpTipCallback: result = " << success);
+    return success;
 
 }
 
@@ -163,8 +166,9 @@ bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
 
 bool makeDeckGeometryCallback(cdxbot::pipetterMakeDeckGeometry::Request &req,
                               cdxbot::pipetterMakeDeckGeometry::Response &resp) {
+    ROS_INFO_STREAM("PipetterControllerNode: MakeDeckGeometry callback entered.");
     pc->makeDeckGeometry(req.index, req.traverse_height, req.container_offset_z, req.engagement_length, req.tip_deposit_height);
-
+    return true;
 }
 
 

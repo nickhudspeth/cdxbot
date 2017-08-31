@@ -252,7 +252,7 @@ void SmoothieModule::emergencyStopReset(void) {
     sendCommand(ret);
 }
 
-int SmoothieModule::home(unsigned int axis) {
+bool SmoothieModule::home(unsigned int axis) {
     std::string ret = "$H";
     switch (axis) {
     case AXIS_ALL:

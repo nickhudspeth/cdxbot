@@ -47,10 +47,10 @@ LICENSE:
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define UNITS_MM 0
 #define UNITS_IN 1
-#define AXIS_ALL 0
+#define AXIS_ALL 7
 #define AXIS_X 1
 #define AXIS_Y 2
-#define AXIS_Z 3
+#define AXIS_Z 4
 #define MOVE_MODE_ABSOLUTE 0
 #define MOVE_MODE_RELATIVE 1
 
@@ -90,9 +90,9 @@ class GantryModule : public CDXModule {
     * Purpose  :   Homes the given axis. If no argument is passed, all three
     *              axes will be homed simultaneously.
     * Input    :   unsigned int axis
-    * Returns  :   virtual int
+    * Returns  :   virtual bool
     *************************************************************************/
-    virtual int home(unsigned int axis = 0) {};
+    virtual bool home(unsigned int axis = 0) {};
 
 
     /*************************************************************************

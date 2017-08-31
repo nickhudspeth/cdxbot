@@ -367,7 +367,7 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
     // while(  (gc->getPos('x') != req.x) |
             // (gc->getPos('y') != req.y) |
             // (gc->getPos('z') != req.z)) {
-        /* WAIT FOR GANTRY TO ARIVE */
+        /* WAIT FOR GANTRY TO ARRIVE */
     // }
 
     // ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
@@ -387,22 +387,23 @@ bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
 
 bool homeCallback(cdxbot::gantryHome::Request &req,
                   cdxbot::gantryHome::Response &resp) {
-    // ROS_INFO_STREAM("ENTERED HOME CALLBACK");
+    ROS_INFO_STREAM("ENTERED HOME CALLBACK");
+    bool res = true;
     if(req.all){
-        gc->home(AXIS_ALL);
+        res &= gc->home(AXIS_ALL);
     }
     if(req.x) {
-        gc->home(AXIS_X);
+        res &= gc->home(AXIS_X);
     }
     if(req.y) {
-        gc->home(AXIS_Y);
+        res &= gc->home(AXIS_Y);
     }
     if(req.z) {
-        gc->home(AXIS_Z);
+        res &= gc->home(AXIS_Z);
     }
-    // ROS_INFO_STREAM("LEAVING HOME CALLBACK");
-    resp.ok = true;
-    return true;
+    resp.ok = res;
+    ROS_INFO_STREAM("LEAVING HOME CALLBACK");
+    return res;
     // return (resp.ok = true);
 }
 

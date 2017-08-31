@@ -44,6 +44,7 @@ LICENSE:
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <map>
 #include <unistd.h>
@@ -64,7 +65,7 @@ LICENSE:
 #include <sys/stat.h>
 #include "PipetterModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-#define PRINT_OUTPUT 0
+#define PRINT_OUTPUT 1
 
 
 #define KICK_MASK 0b10000000000
@@ -149,6 +150,8 @@ extern "C" {
         unsigned int dispensing_settling_time;
         unsigned int flow_rate_transport_vol;
     };
+    
+    std::string _last_error_msg = "";
 
     class ZeusModule : public PipetterModule {
       public:
@@ -245,7 +248,7 @@ extern "C" {
         bool waitForRemoteFrame(void);
         void sendKickFrame(void);
         bool waitForKickFrame(void);
-        void sendCommand(std::string cmd);
+        bool sendCommand(std::string cmd);
         int sendFrame(struct can_frame f);
 
         std::string on_message_received();
@@ -259,7 +262,7 @@ extern "C" {
         struct can_frame getNextMessage(void);
         void setLastFrame(struct can_frame &f);
         struct can_frame & getLastFrame(void);
-
+        std::string waitForResponse(void);
         /* data */
         const int _id = 1;
         int _sockfd; // SocketCAN file descriptor

@@ -91,7 +91,7 @@ extern "C" void *thread_func(void *arg) {
         if((n = read(tp->usbfd, buffer, NETBUFSIZE - 1) > 0)) {
             s += std::string(buffer);
             if(s.find("\n") != std::string::npos)  {
-                printf("%s%s%s\n", KBLU, s.c_str(), KNRM);
+                // printf("%s%s%s\n", KBLU, s.c_str(), KNRM);
                 s.clear();
             }
         }
@@ -119,27 +119,114 @@ void RampsModule::waitForOK(void) {
 
 void RampsModule::waitForString(std::string s, unsigned int timeout) {
     int n = 0;
-    std::string s2;
-    char buffer[NETBUFSIZE];
-    std::memset(buffer, 0, NETBUFSIZE);
+    std::string s2 = "";
+    char buffer[NETBUFSIZE] = { 0 };
     time_t start = time(NULL);
+    write(_usbfd, "M114\n", 5);
+
+    /* Try to find string for [timeout] secomds */
     while((time(NULL) - start) < timeout) {
-        write(_usbfd, "M114\n", 5);
-        n = 0;
         std::memset(buffer, 0, NETBUFSIZE);
-        if((n = read(_usbfd, buffer, NETBUFSIZE - 1) > 0)) {
+        /* If there is a character available in the read buffer, append it to
+         * string s2.*/
+        if(read(_usbfd, buffer, 1) == 1) {
             s2 += std::string(buffer);
-            if(s2.find(s) != std::string::npos)  {
-                printf("LIBRAMPS::WORKER THREAD: %s\n", s2.c_str());
-                s2.clear();
-                return;
+            if(buffer[0] == '\n') {
+                // std::cout << KBLU << "LIBRAMPS::WORKER THREAD: Newline found. S2 = \"" << s2 << KNRM << std::endl;
+                if (s2.find(s) != std::string::npos) {
+                    std::cout << KBLU << "LIBRAMPS::WORKER THREAD: FOUND STRING: " << s2 << KNRM << std::endl;
+                    s2.clear();
+                    return;
+                } else {
+                    s2.clear();
+                }
             }
         }
-        // usleep(100000);
     }
 }
 
+bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z, unsigned int timeout) {
+    bool ax = false, ay = false, az = false;
+    int n = 0;
+    std::string s2 = "";
+    int idx;
+    char buffer[NETBUFSIZE] = { 0 };
+    std::string xdec = std::to_string(x);
+    idx = xdec.find(".");
+    std::string xpos = "X:" + xdec.substr(0, idx+3);
 
+    std::string ydec = std::to_string(y);
+    idx = ydec.find(".");
+    std::string ypos = "Y:" + ydec.substr(0, idx+3);
+
+    std::string zdec = std::to_string(z);
+    idx = zdec.find(".");
+    std::string zpos = "Z:" + zdec.substr(0, idx+3);
+    std::cout << "LIBZEUS: Waiting for gantry to arrive at position {" << xpos << ", "<< ypos << ", " << zpos << "}" << std::endl;
+    time_t start = time(NULL);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    
+    /* Try to find string for [timeout] secomds */
+    while((time(NULL) - start) < timeout) {
+        /* Issue M114 command every 250 milliseconds */
+        auto t2 = std::chrono::high_resolution_clock::now();
+        if(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() > 250) {
+            write(_usbfd, "M114\n", 5);
+            t1 = std::chrono::high_resolution_clock::now();
+            usleep(225);
+        }
+        std::memset(buffer, 0, NETBUFSIZE);
+        /* If there is a character available in the read buffer, append it to
+         * string s2.*/
+        if(read(_usbfd, buffer, 1) == 1) {
+            s2 += std::string(buffer);
+            /* Check to see if this marks the end of one line.*/
+            if(buffer[0] == '\n') {
+                // std::cout << KBLU << "LIBRAMPS::" << ": Newline found. S2 = \"" << s2 << "\""<< KNRM << std::endl;
+                /* If this line contains coordinate information, parse it.
+                 * Else, throw it away. */
+                if (s2.find(std::string("X:")) != std::string::npos) {
+                    std::cout << KBLU << "LIBRAMPS::" << ": FOUND STRING: " << s2 << KNRM << std::endl;
+                    if(axes & AXIS_X) {
+                        if(s2.find(xpos) != std::string::npos) {
+                            std::cout << "LIBRAAMPS: Gantry reached target in x-coordinate" << std::endl;
+                            ax = true;
+                        }
+                    } else {
+                        ax = true;
+                    }
+                    if(axes & AXIS_Y) {
+                        if(s2.find(ypos) != std::string::npos) {
+                            std::cout << "LIBRAAMPS: Gantry reached target in y-coordinate" << std::endl;
+                            ay = true;
+                        }
+                    } else {
+                        ay = true;
+                    }
+                    if(axes & AXIS_Z) {
+                        if(s2.find(zpos) != std::string::npos) {
+                            std::cout << "LIBRAAMPS: Gantry reached target in z-coordinate" << std::endl;
+                            az = true;
+                        }
+                    } else {
+                        az = true;
+                    }
+                    if((ax == true) && (ay == true) && (az ==true)) {
+                        std::cout << KBLU << "LIBRAMPS:: Gantry move complete." << KNRM << std::endl;
+                        s2.clear();
+                        return true;
+                    } else {
+                        s2.clear();
+                        // std::cout << KBLU << s2 << KNRM << std::endl;
+                    }
+                } else {
+                    s2.clear();
+                }
+            }
+        }
+    }
+    return false;
+}
 
 RampsModule::RampsModule() {}
 RampsModule::~RampsModule() {}
@@ -150,7 +237,7 @@ int RampsModule::init(void) {
     _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if(_usbfd < 0) {
         std::cout << __FILE__ << " " <<__PRETTY_FUNCTION__ << " ERROR: Code " << errno << \
-            " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
+                  " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
         return -1;
     }
     std::cout << "LIBRAMPS: Opened serial connection to USB device at " << _usb_addr << " with file descriptor " << _usbfd << std::endl;
@@ -239,43 +326,36 @@ void RampsModule::emergencyStopReset(void) {
     sendCommand(ret);
 }
 
-int RampsModule::home(unsigned int axis) {
+bool RampsModule::home(unsigned int axis) {
     std::string ret = "G28";
     switch (axis) {
     case AXIS_ALL:
         break;
     case AXIS_X:
-        ret += " X";
+        ret += "X";
         break;
     case AXIS_Y:
-        ret += " Y";
+        ret += "Y";
         break;
     case AXIS_Z:
-        ret += " Z";
+        ret += "Z";
         break;
     default:
         /* Jumps here if no argument is given. */
         break;
     }
     sendCommand(ret);
-    _pos[0] =  0;
-    _pos[1] = 0;
-    _pos[2] = 0;
-    return 0;
+    return verifyPosition((AXIS_X | AXIS_Y), 0.00f,0.00f,0.00f);
 }
 
 
 int RampsModule::sendCommand(std::string s, bool wfr) {
     s += "\n";
     int n = 0;
-    // n = write(_usbfd, s.c_str(), sizeof(s.c_str()) - 1);
     n = write(_usbfd, s.c_str(), s.length());
     std::cout << "LIBRAMPS: Sent " << n << " characters in command: " << s.c_str() << std::endl;
-    // if(wfr) {
-    waitForString("Count");
-    // }
     usleep((n+25) * 100);
-    // usleep(10000);
+    usleep(100000);
     return n;
 }
 
@@ -360,9 +440,7 @@ int RampsModule::moveAbsolute(float x, float y, float z) {
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret, 1);
-    // int stime = *std::max_element(move_times, move_times+3);
-    // printf("SLEEPING %d MICROSECONDS...\n", stime);
-    // usleep(stime);
+    verifyPosition((AXIS_X | AXIS_Y), x,y,z);
     return 0;
 }
 
@@ -385,6 +463,7 @@ int RampsModule::moveRelative(float x, float y, float z) {
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret, 1);
+    verifyPosition(x,y,z);
     return 0;
 }
 

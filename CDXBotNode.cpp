@@ -50,6 +50,7 @@ LICENSE:
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterMakeDeckGeometry.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
 #include "cdxbot/shakerReset.h"
@@ -105,6 +106,7 @@ ros::ServiceClient gantrySetUnitsClient;
 ros::ServiceClient pipetterAspirateClient;
 ros::ServiceClient pipetterDispenseClient;
 ros::ServiceClient pipetterEjectTipClient;
+ros::ServiceClient pipetterMakeDeckGeometryClient;
 ros::ServiceClient pipetterMoveZClient;
 ros::ServiceClient pipetterPickUpTipClient;
 ros::ServiceClient shakerResetClient;
@@ -118,28 +120,25 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
     char buf[64];
     memset(buf, ' ',64);
     int ret = 0;
+    cdxbot::pipetterMakeDeckGeometry::Request pmdgreq;
+    cdxbot::pipetterMakeDeckGeometry::Response pmdgresp;
+
     nh.getParam("/cdxbot/num_containers", ret);
     printf("Read value of %d for num_containers.\n", ret);
     if(!nh.getParam("/cdxbot/num_containers", ret)) {
         nh.getParam("/cdxbot_defaults/num_containers", ret);
         ROS_WARN("No parameter 'num_containers' found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                 cd.getNumContainers());
+                 std::to_string(cd.getNumContainers()));
     }
     cd.setNumContainers(ret);
-    // if(!nh.getParam("/cdxbot/num_containers", cd.getNumContainersRef())) {
-    // nh.getParam("/cdxbot_defaults/num_containers", cd.getNumContainersRef());
-    // ROS_WARN("No parameter 'num_containers' found in configuration file.\
-    // Initializing cdxbot with default value %s",\
-    // cd.getNumContainers());
-    // }
     memset(buf, ' ',64);
     sprintf(buf,"/cdxbot/pipetter_has_z");
     if(!nh.getParam(buf, cd.getPipetterHasZRef())) {
         nh.getParam("/cdxbot_defaults/pipetter_has_z", cd.getPipetterHasZRef());
         ROS_WARN("No parameter pipetter_has_z found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                 cd.getPipetterHasZRef());
+                 std::to_string(cd.getPipetterHasZRef()));
     }
     memset(buf, ' ',64);
     sprintf(buf,"/cdxbot/feed_plane");
@@ -147,7 +146,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         nh.getParam("/cdxbot_defaults/feed_plane", cd.getFeedPlaneHeightRef());
         ROS_WARN("No parameter feed_plane found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                 cd.getFeedPlaneHeightRef());
+                 std::to_string(cd.getFeedPlaneHeightRef()));
     }
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
@@ -160,122 +159,184 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         // printf("Container %d initialized with type %s.\n", i, cd.getContainer(i).getType().c_str());
 
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/length", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getLengthRef())) {
-            nh.getParam("/cdxbot_defaults/length", cd.getContainer(i).getLengthRef());
-            ROS_WARN("No parameter containers:%d:length found in configuration file.\
+        sprintf(buf,"/cdxbot/containers/c%d/len_y", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getLengthRef('y'))) {
+            nh.getParam("/cdxbot_defaults/len_y", cd.getContainer(i).getLengthRef('y'));
+            ROS_WARN("No parameter containers:%d:len_y found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getLengthRef());
+                     i, std::to_string(cd.getContainer(i).getLength('y')));
         }
-
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/width", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getWidthRef())) {
-            nh.getParam("/cdxbot_defaults/width", cd.getContainer(i).getWidthRef());
-            ROS_WARN("No parameter containers:%d:width found in configuration file.\
+        sprintf(buf,"/cdxbot/containers/c%d/len_x", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getLengthRef('x'))) {
+            nh.getParam("/cdxbot_defaults/len_x", cd.getContainer(i).getLengthRef('x'));
+            ROS_WARN("No parameter containers:%d:len_x found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getWidthRef());
+                     i, std::to_string(cd.getContainer(i).getLengthRef('x')));
         }
-
         memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/height", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getHeightRef())) {
-            nh.getParam("/cdxbot_defaults/height", cd.getContainer(i).getHeightRef());
-            ROS_WARN("No parameter containers:%d:height found in configuration file.\
+        sprintf(buf,"/cdxbot/containers/c%d/len_z", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getLengthRef('z'))) {
+            nh.getParam("/cdxbot_defaults/len_z", cd.getContainer(i).getLengthRef('z'));
+            ROS_WARN("No parameter containers:%d:len_z found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getHeightRef());
+                     i, std::to_string(cd.getContainer(i).getLengthRef('z')));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/rows", i);
         if(!nh.getParam(buf, cd.getContainer(i).getRowsRef())) {
             nh.getParam("/cdxbot_defaults/rows", cd.getContainer(i).getRowsRef());
             ROS_WARN("No parameter containers:%d:rows found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getRowsRef());
+                     i, std::to_string(cd.getContainer(i).getRowsRef()));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/cols", i);
         if(!nh.getParam(buf, cd.getContainer(i).getColsRef())) {
             nh.getParam("/cdxbot_defaults/cols", cd.getContainer(i).getColsRef());
             ROS_WARN("No parameter containers:%d:cols found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getColsRef());
+                     i, std::to_string(cd.getContainer(i).getColsRef()));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/row_spacing", i);
         if(!nh.getParam(buf, cd.getContainer(i).getRowSpacingRef())) {
             nh.getParam("/cdxbot_defaults/row_spacing", cd.getContainer(i).getRowSpacingRef());
             ROS_WARN("No parameter containers:%d:row_spacing found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getRowSpacingRef());
+                     i, std::to_string(cd.getContainer(i).getRowSpacingRef()));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/col_spacing", i);
         if(!nh.getParam(buf, cd.getContainer(i).getColSpacingRef())) {
             nh.getParam("/cdxbot_defaults/col_spacing", cd.getContainer(i).getColSpacingRef());
             ROS_WARN("No parameter containers:%d:col_spacing found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getColSpacingRef());
+                     i, std::to_string(cd.getContainer(i).getColSpacingRef()));
         }
-
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/offset_x", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getOffsetXRef())) {
-            nh.getParam("/cdxbot_defaults/offset_x", cd.getContainer(i).getOffsetXRef());
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetRef('x'))) {
+            nh.getParam("/cdxbot_defaults/offset_x", cd.getContainer(i).getOffsetRef('x'));
             ROS_WARN("No parameter containers:%d:offset_x found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getOffsetXRef());
+                     i, std::to_string(cd.getContainer(i).getOffsetRef('x')));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/offset_y", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getOffsetYRef())) {
-            nh.getParam("/cdxbot_defaults/offset_y", cd.getContainer(i).getOffsetYRef());
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetRef('y'))) {
+            nh.getParam("/cdxbot_defaults/offset_y", cd.getContainer(i).getOffsetRef('y'));
             ROS_WARN("No parameter containers:%d:offset_y found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getOffsetYRef());
+                     i, std::to_string(cd.getContainer(i).getOffsetRef('y')));
         }
-
         memset(buf, ' ',64);
         sprintf(buf,"/cdxbot/containers/c%d/offset_z", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getOffsetZRef())) {
-            nh.getParam("/cdxbot_defaults/offset_z", cd.getContainer(i).getOffsetZRef());
+        if(!nh.getParam(buf, cd.getContainer(i).getOffsetRef('z'))) {
+            nh.getParam("/cdxbot_defaults/offset_z", cd.getContainer(i).getOffsetRef('z'));
             ROS_WARN("No parameter containers:%d:offset_z found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getOffsetZRef());
+                     i, std::to_string(cd.getContainer(i).getOffsetRef('z')));
         }
 
-        memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_x", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_X))) {
-            nh.getParam("/cdxbot_defaults/tray_offset_x", cd.getContainer(i).getTrayOffsetRef(AXIS_X));
-            ROS_WARN("No parameter containers:%d:tray_offset_x found in configuration file.\
+        /* PARAMETERS SPECIFIC TO TIP-HOLDING CONTAINERS */
+        if(cd.getContainer(i).getType() == "tip") {
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/tip_engagement_len", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getTipEngagementLenRef())) {
+                nh.getParam("/cdxbot_defaults/tip_engagement_len", cd.getContainer(i).getTipEngagementLenRef());
+                ROS_WARN("No parameter containers:%d:tip_engagement_len found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getTrayOffset(AXIS_X));
+                         i, std::to_string(cd.getContainer(i).getTipEngagementLen()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/tip_deposit_height", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getTipDepositHeightRef())) {
+                nh.getParam("/cdxbot_defaults/tip_deposit_height", cd.getContainer(i).getTipDepositHeightRef());
+                ROS_WARN("No parameter containers:%d:tip_deposit_height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getTipDepositHeight()));
+            }
+
+            /* PARAMETERS SPECIFIC TO WELL-TYPE CONTAINERS */
+        } else if(cd.getContainer(i).getType() == "well") {
+            /* Only well-type containers require container geometry parameter
+             * specification. */
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/well_geometry", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getWellGeometryRef())) {
+                nh.getParam("/cdxbot_defaults/well_geometry", cd.getContainer(i).getWellGeometryRef());
+                ROS_WARN("No parameter containers:%d:well_geometry found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, cd.getContainer(i).getWellGeometry());
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/well_diameter", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getWellDiameterRef())) {
+                nh.getParam("/cdxbot_defaults/well_diameter", cd.getContainer(i).getWellDiameterRef());
+                ROS_WARN("No parameter containers:%d:well_diameter found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getWellDiameter()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/well_len_x", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getWellLenRef('x'))) {
+                nh.getParam("/cdxbot_defaults/well_len_x", cd.getContainer(i).getWellLenRef('x'));
+                ROS_WARN("No parameter containers:%d:well_len_x found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getWellLen('x')));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/well_len_y", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getWellLenRef('y'))) {
+                nh.getParam("/cdxbot_defaults/well_len_y", cd.getContainer(i).getWellLenRef('y'));
+                ROS_WARN("No parameter containers:%d:well_len_y found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getWellLen('y')));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/second_section_height", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionHeightRef())) {
+                nh.getParam("/cdxbot_defaults/second_section_height", cd.getContainer(i).getSecondSectionHeightRef());
+                ROS_WARN("No parameter containers:%d:second_section_height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getSecondSectionHeight()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/second_section", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionRef())) {
+                nh.getParam("/cdxbot_defaults/second_section", cd.getContainer(i).getSecondSectionRef());
+                ROS_WARN("No parameter containers:%d:second_section found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getSecondSection()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/min_height", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getMinHeightRef())) {
+                nh.getParam("/cdxbot_defaults/min_height", cd.getContainer(i).getMinHeightRef());
+                ROS_WARN("No parameter containers:%d:min_height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getMinHeight()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/start_position_offset", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getStartPositionOffsetRef())) {
+                nh.getParam("/cdxbot_defaults/start_position_offset", cd.getContainer(i).getStartPositionOffsetRef());
+                ROS_WARN("No parameter containers:%d:start_position_offset found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getStartPositionOffset()));
+            }
+            memset(buf, ' ',64);
+            sprintf(buf,"/cdxbot/containers/c%d/dispense_position", i);
+            if(!nh.getParam(buf, cd.getContainer(i).getDispensePositionRef())) {
+                nh.getParam("/cdxbot_defaults/dispense_position", cd.getContainer(i).getDispensePositionRef());
+                ROS_WARN("No parameter containers:%d:dispense_position found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                         i, std::to_string(cd.getContainer(i).getDispensePosition()));
+            }
+
         }
 
-        memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_y", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_Y))) {
-            nh.getParam("/cdxbot_defaults/tray_offset_y", cd.getContainer(i).getTrayOffsetRef(AXIS_Y));
-            ROS_WARN("No parameter containers:%d:tray_offset_y found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getTrayOffset(AXIS_Y));
-        }
-
-        memset(buf, ' ',64);
-        sprintf(buf,"/cdxbot/containers/c%d/tray_offset_z", i);
-        if(!nh.getParam(buf, cd.getContainer(i).getTrayOffsetRef(AXIS_Z))) {
-            nh.getParam("/cdxbot_defaults/tray_offset_z", cd.getContainer(i).getTrayOffsetRef(AXIS_Z));
-            ROS_WARN("No parameter containers:%d:tray_offset_z found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                     i, cd.getContainer(i).getTrayOffset(AXIS_Z));
-        }
         /* INITIALIZE CONTAINER CELL MATRIX */
         for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
             std::vector<struct container_cell> newRow;
@@ -290,7 +351,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         nh.getParam("/cdxbot_defaults/container_vol", c.vol);
                         ROS_WARN("No parameter containers:%d:container_vol found in configuration file.\
                         Initializing cdxbot with default value %f",\
-                                 i, c.vol);
+                                 i, std::to_string(c.vol));
                     }
 
                     memset(buf, ' ',64);
@@ -299,7 +360,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         nh.getParam("/cdxbot_defaults/well_depth", c.depth);
                         ROS_WARN("No parameter containers:%d:well_depth found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                                 i, c.depth);
+                                 i, std::to_string(c.depth));
                     }
                 } else if(cd.getContainer(i).getType() == "tip") {
                     memset(buf, ' ', 64);
@@ -309,30 +370,20 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         c.tt_index = 0;
                         ROS_WARN("No parameter containers:%d:tt_index found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                                 i, c.tt_index);
-                    }
-
-                    memset(buf, ' ', 64);
-                    sprintf(buf,"/cdxbot/containers/c%d/botpp", i);
-                    if(!nh.getParam(buf, c.botpp)) {
-                        nh.getParam("/cdxbot_defaults/tt_index", c.botpp);
-                        ROS_WARN("No parameter containers:%d:botpp found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                                 i, c.botpp);
-                    }
-
-                    memset(buf, ' ', 64);
-                    sprintf(buf,"/cdxbot/containers/c%d/eotpp", i);
-                    if(!nh.getParam(buf, c.eotpp)) {
-                        nh.getParam("/cdxbot_defaults/tt_index", c.eotpp);
-                        ROS_WARN("No parameter containers:%d:eotpp found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                                 i, c.eotpp);
+                                 i, std::to_string(c.tt_index));
                     }
                 }
                 newRow.push_back(c);
             }
             cd.getContainer(i).getCellsVecRef().push_back(newRow);
+        }
+        pmdgreq.index = i;
+        pmdgreq.traverse_height = cd.getFeedPlaneHeight();
+        pmdgreq.container_offset_z = cd.getContainer(i).getLength('z');
+        pmdgreq.engagement_length = cd.getContainer(i).getTipEngagementLen();
+        pmdgreq.tip_deposit_height = cd.getContainer(i).getTipDepositHeight();
+        if(!pipetterMakeDeckGeometryClient.call(pmdgreq, pmdgresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to create deck geometry table entry for container " << i << ".");
         }
     }
 
@@ -384,12 +435,9 @@ void parseAction(CDXBot &cd, const struct action a) {
         printf("CDXBotNode: Parsing move command.\n");
         unsigned int cidx = (int)a.args[0];
         printf("Calculating coordinates of container %d, row %d, column %d.\n", cidx, (int)a.args[1], (int)a.args[2]);
-        printf("\t Using x-offset %f\n", cd.getContainer(cidx).getOffsetX());
-        printf("\t Using y-offset %f\n", cd.getContainer(cidx).getOffsetY());
-        printf("\t Using z-offset %f\n", cd.getContainer(cidx).getOffsetZ());
-        printf("\t Using x tray offset %f\n", cd.getContainer(cidx).getTrayOffset(0));
-        printf("\t Using y tray offset %f\n", cd.getContainer(cidx).getTrayOffset(1));
-        printf("\t Using z tray offset %f\n", cd.getContainer(cidx).getTrayOffset(2));
+        printf("\t Using x-offset %f\n", cd.getContainer(cidx).getOffset('x'));
+        printf("\t Using y-offset %f\n", cd.getContainer(cidx).getOffset('y'));
+        printf("\t Using z-offset %f\n", cd.getContainer(cidx).getOffset('z'));
         double x = cd.getContainer(cidx).getGlobalCoords('x', (unsigned int)a.args[1], (unsigned int)a.args[2]);
         double y = cd.getContainer(cidx).getGlobalCoords('y', (unsigned int)a.args[1], (unsigned int)a.args[2]);
         double z = cd.getContainer(cidx).getGlobalCoords('z', (unsigned int)a.args[1], (unsigned int)a.args[2]);
@@ -404,7 +452,8 @@ void parseAction(CDXBot &cd, const struct action a) {
             if(cd.getPipetterHasZ()) {
                 cdxbot::pipetterMoveZ::Request pmzreq;
                 cdxbot::pipetterMoveZ::Response pmzresp;
-                pmzreq.pos = cd.getFeedPlaneHeight();
+                // pmzreq.pos = cd.getFeedPlaneHeight();
+                pmzreq.pos = cd.getContainer(cidx).getLength('z') + 10; /* Move end effector to 10mm above destination container */
                 pmzreq.vel = 0;
                 if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
                     ROS_ERROR_STREAM("CDXBotNode: Unable to move pipetter to (z = )" << z << ").");
@@ -432,6 +481,11 @@ void parseAction(CDXBot &cd, const struct action a) {
         if(!gantryMoveClient.call(gmxyreq, gmxyresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x=" << x << ", y=" << y << ", z = " << z);
         }
+
+
+        /* TODO: nam - WTF are we doing here? Why issue another z-move to the
+         * feed plane?  Tue 29 Aug 2017 02:57:14 PM MDT */
+
         if(cd.getPipetterHasZ()) {
             cdxbot::pipetterMoveZ::Request pmzreq2;
             cdxbot::pipetterMoveZ::Response pmzresp2;
@@ -453,25 +507,6 @@ void parseAction(CDXBot &cd, const struct action a) {
             }
         }
         ROS_INFO_STREAM("CDXBOTNODE: Leaving move callback.");
-        /* Rapid feed to calculated coordinates in feed plane */
-        // gmsg.cmd = "setvel";
-        // gmsg.vel = -1;   //  [> Feed at maximum velocity <]
-        // gc_pub.publish(gmsg);
-
-        // gmsg.cmd = "movexy";
-        // gmsg.x = x;
-        // gmsg.y = y;
-        // gc_pub.publish(gmsg);
-
-        /* Set velocity to plunge velocity */
-        // gmsg.cmd = "setvel";
-        // gmsg.vel = -1;    // [> Feed at maximum velocity <]
-        // gc_pub.publish(gmsg);
-
-        /* Move to top of container cell */
-        // gmsg.cmd = "movez";
-        // gmsg.z = z;
-        // gc_pub.publish(gmsg);
 
     } else if(a.cmd == "aspirate") {
         /* Check to see if current well volume < commanded fill volume */
@@ -516,71 +551,43 @@ void parseAction(CDXBot &cd, const struct action a) {
         /* Dispense drawn amount of fluid + 1 unit to flush pipette tip */
 
     } else if(a.cmd == "pickup") {
-        /* Get location of next available tip */
         ROS_DEBUG_STREAM("Received PICKUP command.");
-        /* TODO: nam - Refactor. Right now, the following routins scans through
-         * all tip locations until it finds an unused tip. This is pretty
-         * inefficient. Instead, store the location of the last used tip and
-         * increment every time a tip is used. - Tue 02 May 2017 02:38:54 PM MDT */
         double x = 0, y = 0, z = 0;
-        // unsigned int i = 0, j = 0, k = 0;
-        bool stop = false;
         Container c = cd.getContainer(a.args[0]);
-        if(c.getType() == "tip") {
-            if((c.getCell(a.args[1],a.args[2]).used == true)) {
-                ROS_ERROR_STREAM("No consumable item available at specified location [." << a.args[0] << ", " << a.args[1] << ", " << a.args[2]);
-                return;
-            } else {
-                ROS_ERROR_STREAM("Invalid container [" << a.args[0] << "] selected for pickup operation.");
-                return;
-            }
-            // for(i = 0; (i < cd.getNumContainers()) && !stop; i++) {
-            // Container c = cd.getContainer(i);
-            // ROS_INFO_STREAM("got valid container at position " << i);
-            // if(c.getType() == "tip") {
-            // for(j = 0; (j < c.getRows()) && !stop; j++) {
-            // for(k = 0; (k < c.getCols()) && !stop; j++) {
-            // if(c.getCell(j,k).used == 0) {
-            // Mark tip cell as used.
-            // c.getCellsVecRef()[j][k].used = 1;
-            // x = cd.getContainer(i).getGlobalCoords('x', j, k);
-            // ROS_DEBUG_STREAM("x = " << x);
-            // y = cd.getContainer(i).getGlobalCoords('y', j, k);
-            // ROS_DEBUG_STREAM("y = " << y);
-            // z = cd.getContainer(i).getGlobalCoords('z', j, k);
-            // ROS_DEBUG_STREAM("z = " << z);
-            // exit the main loop
-            // stop = true;
-            // ROS_INFO_STREAM("Pipette tip found in container " << i << " row " << j << " column " << k);
-            // }
-            // }
-            // }
-            // }
-            // }
-            // if(!stop) {
-            // ROS_ERROR_STREAM("CDXBotNode: No pipette tips remaining! Please reload.");
-            // }
-            /* Move to location */
-            cdxbot::gantryMove::Request gmzreq;
-            cdxbot::gantryMove::Response gmzresp;
-            gmzreq.move_mode = 0;
-            gmzreq.x = cd.getContainer(a.args[0]).getGlobalCoords('x', a.args[1], a.args[2]);
-            gmzreq.y = cd.getContainer(a.args[0]).getGlobalCoords('y', a.args[1], a.args[2]);
-            gmzreq.z = cd.getContainer(a.args[0]).getGlobalCoords('z', a.args[1], a.args[2]);
-            if(!gantryMoveClient.call(gmzreq, gmzresp)){
-                // Unable to move gantry. HALT!
-            }
-            /* Pick up Tip */
-            cdxbot::pipetterPickUpTip::Request pputreq;
-            cdxbot::pipetterPickUpTip::Response pputresp;
-            pputreq.tip_type_table_index = c.getTipTypeTableIndex();
-            pputreq.deck_geometry_table_index = c.getDeckGeometryTableIndex();
-
-            // pmsg.cmd = ("pickup");
-            // pmsg.type = cd.getContainer(i).getCellsVecRef()[j][k].tt_index;
-            // pc_pub.publish(pmsg);
-
+        if(c.getType() != "tip") {
+            /* ERROR: CANNOT PERFORM PICKUP OPERATION ON WELL-TYPE CONTAINER */
+            ROS_ERROR_STREAM("Invalid container [" << a.args[0] << "] selected for pickup operation.");
+            return;
         }
+        if((c.getCell(a.args[1],a.args[2]).used == true)) {
+            /* ERROR: NO TIP PRESENT AT THIS LOCATION */
+            ROS_ERROR_STREAM("No consumable item available at specified location [." << a.args[0] << ", " << a.args[1] << ", " << a.args[2]);
+            return;
+        }
+        /* Move to location */
+        cdxbot::gantryMove::Request gmzreq;
+        cdxbot::gantryMove::Response gmzresp;
+        gmzreq.move_mode = 0;
+        gmzreq.x = cd.getContainer(a.args[0]).getGlobalCoords('x', a.args[1], a.args[2]);
+        gmzreq.y = cd.getContainer(a.args[0]).getGlobalCoords('y', a.args[1], a.args[2]);
+        gmzreq.z = cd.getContainer(a.args[0]).getGlobalCoords('z', a.args[1], a.args[2]);
+        if(!gantryMoveClient.call(gmzreq, gmzresp)) {
+            // Unable to move gantry. HALT!
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
+            cd.setRunStatus(0);
+        }
+        /* Pick up Tip */
+        cdxbot::pipetterPickUpTip::Request pputreq;
+        cdxbot::pipetterPickUpTip::Response pputresp;
+        pputreq.tip_type_table_index = c.getTipTypeTableIndex();
+        pputreq.deck_geometry_table_index = c.getDeckGeometryTableIndex();
+        pputreq.tip_pickup_speed = 0; /* Slow tip pick-up */
+        if(!pipetterPickUpTipClient.call(pputreq, pputresp)) {
+            // Unable to pickup tip from specified location. HALT!
+            ROS_ERROR_STREAM("Unable to pick up tip from specified location. HALT!");
+            cd.setRunStatus(0);
+        }
+
     } else if(a.cmd == "eject") {
         /* Move tip to feed plane */
 
@@ -603,7 +610,8 @@ void parseAction(CDXBot &cd, const struct action a) {
         // ghomereq.x = ghomereq.y = ghomereq.z = 1;
         ghomereq.all = 1;
         if(!gantryHomeClient.call(ghomereq, ghomeresp)) {
-            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not home gantry.");
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not home gantry. HALT!");
+            cd.setRunStatus(0);
         }
         // gmsg.cmd = "home";
         // gc_pub.publish(gmsg);
