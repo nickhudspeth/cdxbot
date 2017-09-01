@@ -162,9 +162,9 @@ extern "C" {
         int init(void);
         int deinit(void);
         int lconf(void);
-        void seterrfunc(void(*ef)(std::string s)) {
-            PRINT_ERROR = ef;
-        }
+        // void seterrfunc(void(*ef)(std::string s)) {
+            // PRINT_ERROR = ef;
+        // }
         bool getTipStatus(void);
         bool moveZ(double pos, double vel);
         double getZPos(void);

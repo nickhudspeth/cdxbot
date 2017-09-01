@@ -58,27 +58,6 @@ extern "C" void destroy(GantryModule *gc) {
     delete gc;
 }
 
-// extern "C" void *thread_func(void *arg) {
-// int n = 0;
-// thread_params_t *tp = (thread_params_t *)arg;
-// char buffer[NETBUFSIZE];
-// std::memset(buffer, 0, NETBUFSIZE);
-// std::string s;
-// while(1) {
-// n = 0;
-// std::memset(buffer, 0, NETBUFSIZE);
-// if((n = read(tp->sockfd, buffer, NETBUFSIZE - 1) > 0)) {
-// s += std::string(buffer);
-// if(s.find("ok") != std::string::npos)  {
-// printf("LIBRAMPS::WORKER THREAD: %s\n", s.c_str());
-// s.clear();
-// std::lock_guard<std::mutex> lock(ready_flag_mutex);
-// ready_flag = 1;
-// }
-// }
-// }
-// }
-
 extern "C" void *thread_func(void *arg) {
     int n = 0;
     std::string s;
@@ -109,7 +88,9 @@ void RampsModule::waitForOK(void) {
         if((n = read(_usbfd, buffer, NETBUFSIZE - 1) > 0)) {
             s += std::string(buffer);
             if(s.find("ok") != std::string::npos)  {
+#ifdef PRINT_OUTPUT
                 printf("LIBRAMPS::WORKER THREAD: %s\n", s.c_str());
+#endif
                 s.clear();
                 return;
             }
@@ -132,9 +113,13 @@ void RampsModule::waitForString(std::string s, unsigned int timeout) {
         if(read(_usbfd, buffer, 1) == 1) {
             s2 += std::string(buffer);
             if(buffer[0] == '\n') {
-                // std::cout << KBLU << "LIBRAMPS::WORKER THREAD: Newline found. S2 = \"" << s2 << KNRM << std::endl;
+#ifdef PRINT_OUTPUT
+                std::cout << KBLU << "LIBRAMPS::WORKER THREAD: Newline found. S2 = \"" << s2 << KNRM << std::endl;
+#endif
                 if (s2.find(s) != std::string::npos) {
+#ifdef PRINT_OUTPUT
                     std::cout << KBLU << "LIBRAMPS::WORKER THREAD: FOUND STRING: " << s2 << KNRM << std::endl;
+#endif
                     s2.clear();
                     return;
                 } else {
@@ -162,10 +147,12 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
     std::string zdec = std::to_string(z);
     idx = zdec.find(".");
     std::string zpos = "Z:" + zdec.substr(0, idx+3);
+#ifdef PRINT_OUTPUT
     std::cout << "LIBZEUS: Waiting for gantry to arrive at position {" << xpos << ", "<< ypos << ", " << zpos << "}" << std::endl;
+#endif
     time_t start = time(NULL);
     auto t1 = std::chrono::high_resolution_clock::now();
-    
+
     /* Try to find string for [timeout] secomds */
     while((time(NULL) - start) < timeout) {
         /* Issue M114 command every 250 milliseconds */
@@ -186,10 +173,14 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                 /* If this line contains coordinate information, parse it.
                  * Else, throw it away. */
                 if (s2.find(std::string("X:")) != std::string::npos) {
+#ifdef PRINT_OUTPUT
                     std::cout << KBLU << "LIBRAMPS::" << ": FOUND STRING: " << s2 << KNRM << std::endl;
+#endif
                     if(axes & AXIS_X) {
                         if(s2.find(xpos) != std::string::npos) {
+#ifdef PRINT_OUTPUT
                             std::cout << "LIBRAAMPS: Gantry reached target in x-coordinate" << std::endl;
+#endif
                             ax = true;
                         }
                     } else {
@@ -197,7 +188,9 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Y) {
                         if(s2.find(ypos) != std::string::npos) {
+#ifdef PRINT_OUTPUT
                             std::cout << "LIBRAAMPS: Gantry reached target in y-coordinate" << std::endl;
+#endif
                             ay = true;
                         }
                     } else {
@@ -205,14 +198,18 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Z) {
                         if(s2.find(zpos) != std::string::npos) {
+#ifdef PRINT_OUTPUT
                             std::cout << "LIBRAAMPS: Gantry reached target in z-coordinate" << std::endl;
+#endif
                             az = true;
                         }
                     } else {
                         az = true;
                     }
                     if((ax == true) && (ay == true) && (az ==true)) {
+#ifdef PRINT_OUTPUT
                         std::cout << KBLU << "LIBRAMPS:: Gantry move complete." << KNRM << std::endl;
+#endif
                         s2.clear();
                         return true;
                     } else {
@@ -306,9 +303,9 @@ int RampsModule::lconf(void) {
 
 }
 
-void RampsModule::seterrfunc(void(*ef)(std::string s)) {
-    PRINT_ERROR = ef;
-}
+// void RampsModule::seterrfunc(void(*ef)(std::string s)) {
+    // PRINT_ERROR = ef;
+// }
 
 void RampsModule::dwell(int t) {
     std::string ret = "G4 P";
@@ -514,65 +511,3 @@ int RampsModule::setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {
     }
     return 0;
 }
-
-
-
-// int loadConfig(const std::string file) {
-// cfg_t *cfg;
-// cfg_opt_t linearStageOpts[] = {
-// CFG_FLOAT((char *)"steps_per_revolution", 0.0, CFGF_NONE),
-// CFG_FLOAT((char *)"leadscrew_pitch", 0.0, CFGF_NONE),
-// CFG_FLOAT((char *)"limit_min", 0.0, CFGF_NONE),
-// CFG_FLOAT((char *)"limit_max", 0.0, CFGF_NONE),
-// CFG_END(),
-// };
-// cfg_opt_t opts[] = {
-// CFG_INT((char *)"id", 1, CFGF_NONE),
-// CFG_STR((char *)"pipetter_type",(char *) "NONE", CFGF_NONE),
-// CFG_STR((char *)"pipetter_path", (char *)"NONE", CFGF_NONE),
-// CFG_STR((char *)"controller_type", (char *)"NONE", CFGF_NONE),
-// CFG_STR((char *)"controller_interface", (char *)"NONE", CFGF_NONE),
-// CFG_STR((char *)"controller_IP", (char *)"NONE", CFGF_NONE),
-// CFG_INT((char *)"controller_port", 0, CFGF_NONE),
-// CFG_INT((char *)"controller_net_recv_timeout", 0, CFGF_NONE),
-// CFG_STR((char *)"controller_path", (char *)"NONE", CFGF_NONE),
-// CFG_STR((char *)"controller_protocol", (char *)"NONE", CFGF_NONE),
-// CFG_SEC((char *)"linear_stage", linearStageOpts, CFGF_MULTI | CFGF_TITLE),
-// CFG_END(),
-// };
-// cfg = cfg_init(opts, CFGF_NOCASE);
-// if(cfg_parse(cfg, file.c_str()) == CFG_PARSE_ERROR) {
-// perror("Error parsing config file.\n");
-// return -1;
-// }
-// _id = cfg_getint(cfg, "id");
-// _pipetterType = cfg_getstr(cfg, "pipetter_type");
-// std::cout << "pipetter type = " << _pipetterType << std::endl;
-// _pipetterPath = cfg_getstr(cfg, "pipetter_path");
-// std::cout << "pipetter path = " << _pipetterPath << std::endl;
-// _controllerType = cfg_getstr(cfg, "controller_type");
-// std::cout << "controller type = " << _controllerType << std::endl;
-// _controllerPath = cfg_getstr(cfg, "controller_path");
-// std::cout << "controller path = " << _controllerPath << std::endl;
-// _comInterface = cfg_getstr(cfg, "controller_interface");
-// std::cout << "comms interface = " << _comInterface << std::endl;
-// _comProtocol = cfg_getstr(cfg, "controller_protocol");
-// std::cout << "controller protocol = " << _comProtocol << std::endl;
-// _host_ip  = cfg_getstr(cfg, "controller_IP");
-// std::cout << "host IP = " << _host_ip << std::endl;
-// _host_port = cfg_getint(cfg, "controller_port");
-// std::cout << "host port = " << _host_port << std::endl;
-// _netTimeoutMS = cfg_getint(cfg, "controller_net_recv_timeout");
-// std::cout << "network timeout = " << _netTimeoutMS << "ms" << std::endl;
-
-// int n = cfg_size(cfg, "linear_stage");
-// std::cout << "Machine configured with " << n << " linear stages." << std::endl;
-// for (unsigned int i = 0; i < n; i++) {
-// cfg_t *ls = cfg_getnsec(cfg, "linear_stage", i);
-// std::cout << "Axis " << cfg_title(ls) << std::endl;
-// std::cout << "Steps per revolution: " << \
-// cfg_getfloat(ls,"steps_per_revolution") << std::endl;
-// }
-// cfg_free(cfg);
-// return 0;
-// }

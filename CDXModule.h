@@ -40,19 +40,23 @@ LICENSE:
 *************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <stdlib.h>
-#include <stdio.h>
-#include <string>
+#include "Container.h"
+#include <boost/function.hpp>
 #include <dlfcn.h>
 #include <pthread.h>
-#include "Container.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-
+// typedef boost::function<void(const std::string&)> DebugMsgCallback;
+// typedef boost::function<void(const std::string&)> InfoMsgCallback;
+// typedef boost::function<void(const std::string&)> WarningMsgCallback;
+// typedef boost::function<void(const std::string&)> ErrorMsgCallback;
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
 class CDXModule {
   public:
-    CDXModule (void){};
+    CDXModule (void) {};
     virtual ~CDXModule (void) {};
     virtual int init(void) {
         return 0;
@@ -63,10 +67,28 @@ class CDXModule {
     virtual int lconf(void) {
         return 0;
     }
-    virtual void seterrfunc(void(*ef)(std::string s)) {
-        PRINT_ERROR = ef;
+    // virtual void seterrfunc(void(*ef)(std::string s)) {
+        // PRINT_ERROR = ef;
+    // }
+    void setDebugMsgCallback(boost::function<void(const std::string&)> f) {
+        PRINT_DEBUG = f;
     }
+    void setInfoMsgCallback(boost::function<void(const std::string&)> f) {
+        PRINT_INFO = f;
+    };
+    void setWarningMsgCallback(boost::function<void(const std::string&)> f) {
+        PRINT_WARNING = f;
+    };
+    void setErrorMsgCallback(boost::function<void(const std::string&)> f) {
+        PRINT_ERROR = f;
+    };
+
   protected:
-    void(*PRINT_ERROR)(std::string s);
+    boost::function<void(const std::string&)> PRINT_DEBUG;
+    boost::function<void(const std::string&)> PRINT_INFO;
+    boost::function<void(const std::string&)> PRINT_WARNING;
+    boost::function<void(const std::string&)> PRINT_ERROR;
+
+    // void(*PRINT_ERROR)(std::string s);
 
 };

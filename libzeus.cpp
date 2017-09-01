@@ -107,6 +107,7 @@ extern "C" void *thread_func(void *arg) {
                             if(ret.data[7] & EOM_MASK) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
+                                std::cout << "Set msgreadyflag to 1." << std::endl;
                                 zm->setWaitingForMsgFlag(0);
                                 // std::string err_msg = zm->parseErrors(msg);
                                 if(PRINT_OUTPUT) {
@@ -480,7 +481,7 @@ bool ZeusModule::waitForRemoteFrame(void) {
 
 std::string ZeusModule::waitForResponse(void) {
     time_t start = time(NULL);
-    while((time(NULL) - start) < 3){
+    while((time(NULL) - start) < 5){
         if(_msg_ready_flag == 1){
           setMsgReadyFlag(0);
           std::string ret = parseErrors(_received_msg);
@@ -601,7 +602,7 @@ bool ZeusModule::sendCommand(std::string cmd) {
             } else {
                 usleep(200000);
                 _ready_for_new_command = 1;
-                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << 
+                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << res << "\"" << std::endl; 
                 return false;
             }
         }

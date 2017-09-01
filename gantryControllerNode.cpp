@@ -61,6 +61,18 @@ void *driver_handle;
 create_t *create_gm;
 destroy_t *destroy_gm;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
+void handleDebugMessages(const std::string &msg) {
+    ROS_DEBUG("PipetterControllerNode: %s", msg.c_str());
+}
+void handleInfoMessages(const std::string &msg) {
+    ROS_INFO("PipetterControllerNode: %s", msg.c_str());
+}
+void handleWarningMessages(const std::string &msg) {
+    ROS_WARN("PipetterControllerNode: %s", msg.c_str());
+}
+void handleErrorMessages(const std::string &msg) {
+    ROS_ERROR("PipetterControllerNode: %s", msg.c_str());
+}
 
 
 GantryModule * loadDriver(std::string file) {
@@ -71,7 +83,7 @@ GantryModule * loadDriver(std::string file) {
                          file);
         std::cerr << dlerror() << std::endl;
         //exit(-1);
-        gc->deinit();
+        gc->deinit(); /* What if deinit() is not present due to improperly written driver? */
         ros::shutdown();
     }
     dlerror();
@@ -89,7 +101,10 @@ GantryModule * loadDriver(std::string file) {
         ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
         dlerror();
     }
-
+    gm->setDebugMsgCallback(handleDebugMessages);
+    gm->setInfoMsgCallback(handleInfoMessages);
+    gm->setWarningMsgCallback(handleWarningMessages);
+    gm->setErrorMsgCallback(handleErrorMessages);
     return gm;
 }
 
@@ -365,9 +380,9 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
         gc->moveRelative(req.x, req.y, req.z);
     }
     // while(  (gc->getPos('x') != req.x) |
-            // (gc->getPos('y') != req.y) |
-            // (gc->getPos('z') != req.z)) {
-        /* WAIT FOR GANTRY TO ARRIVE */
+    // (gc->getPos('y') != req.y) |
+    // (gc->getPos('z') != req.z)) {
+    /* WAIT FOR GANTRY TO ARRIVE */
     // }
 
     // ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
@@ -389,7 +404,7 @@ bool homeCallback(cdxbot::gantryHome::Request &req,
                   cdxbot::gantryHome::Response &resp) {
     ROS_INFO_STREAM("ENTERED HOME CALLBACK");
     bool res = true;
-    if(req.all){
+    if(req.all) {
         res &= gc->home(AXIS_ALL);
     }
     if(req.x) {

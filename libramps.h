@@ -67,6 +67,7 @@ LICENSE:
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define NETBUFSIZE 1024
 #define UNITS_MM 0
+#define PRINT_OUTPUT 0
 
 typedef struct {
     int usbfd;

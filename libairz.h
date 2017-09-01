@@ -59,9 +59,9 @@ class airZModule : public PipetterModule {
     int init(void);
     int deinit(void);
     int lconf(void);
-    void seterrfunc(void(*ef)(std::string s)) {
-        PRINT_ERROR = ef;
-    }
+    // void seterrfunc(void(*ef)(std::string s)) {
+        // PRINT_ERROR = ef;
+    // }
     void moveZ(double pos, double vel) {};
     void pickUpTip(int index) {};
     void pickUpTip(struct container_cell c) {};

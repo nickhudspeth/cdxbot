@@ -155,9 +155,9 @@ int TeleshakeModule::lconf(void) {
 
 }
 
-void TeleshakeModule::seterrfunc(void(*ef)(std::string s)) {
-    PRINT_ERROR = ef;
-}
+// void TeleshakeModule::seterrfunc(void(*ef)(std::string s)) {
+    // PRINT_ERROR = ef;
+// }
 
 unsigned int TeleshakeModule::queryAll(void) {
     command_telegram_t t;
