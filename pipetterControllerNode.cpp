@@ -1,3 +1,36 @@
+/************************************************************************
+Title:    pipetterControllerNode.cpp
+Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
+File:     pipetterControllerNode.cpp
+Software: C Standard Library
+Hardware: Platform Independent
+License:  The MIT License (MIT)
+Usage:    Refer to the header file pipetterControllerNode.h, if available.
+
+LICENSE:
+    Copyright (C) 2016 Nicholas Morrow
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to
+    deal in the Software without restriction, including without limitation the
+    rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+
+************************************************************************/
+
+/**********************    INCLUDE DIRECTIVES    ***********************/
 #include "PipetterModule.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/pc_cmd.h"
@@ -12,6 +45,8 @@
 #include <ros/ros.h>
 #include <stdlib.h>
 
+
+/***********************    GLOBAL VARIABLES    ************************/
 PipetterModule *pc;
 std::string type;
 std::string driver_path, driver_name;
@@ -19,6 +54,19 @@ void *driver_handle;
 create_t *create_pm;
 destroy_t *destroy_pm;
 
+/*******************    FUNCTION IMPLEMENTATIONS    ********************/
+void handleDebugMessages(const std::string &msg) {
+    ROS_DEBUG("PipetterControllerNode: %s", msg.c_str());
+}
+void handleInfoMessages(const std::string &msg) {
+    ROS_INFO("PipetterControllerNode: %s", msg.c_str());
+}
+void handleWarningMessages(const std::string &msg) {
+    ROS_WARN("PipetterControllerNode: %s", msg.c_str());
+}
+void handleErrorMessages(const std::string &msg) {
+    ROS_ERROR("PipetterControllerNode: %s", msg.c_str());
+}
 
 PipetterModule * loadDriver(std::string file) {
     char *error;
@@ -46,6 +94,10 @@ PipetterModule * loadDriver(std::string file) {
         ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
         dlerror();
     }
+    pm->setDebugMsgCallback(handleDebugMessages);
+    pm->setInfoMsgCallback(handleInfoMessages);
+    pm->setWarningMsgCallback(handleWarningMessages);
+    pm->setErrorMsgCallback(handleErrorMessages);
 
     return pm;
 }
@@ -116,13 +168,13 @@ void gcPubCallback(const cdxbot::gc_cmd &msg) {
 
 void pcPubCallback(const cdxbot::pc_cmd &msg) {
     // if(msg.cmd == "aspirate") {
-        // pc->aspirate(msg.vol);
+    // pc->aspirate(msg.vol);
     // } else if(msg.cmd == "dispense") {
-        // pc->dispense(msg.vol);
+    // pc->dispense(msg.vol);
     // } else if(msg.cmd == "eject") {
-        // pc->ejectTip();
+    // pc->ejectTip();
     // } else if(msg.cmd == "pickup") {
-        // pc->pickUpTip(msg.type);
+    // pc->pickUpTip(msg.type);
     // }
 }
 
@@ -142,8 +194,8 @@ bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
                        cdxbot::pipetterPickUpTip::Response &resp) {
     ROS_INFO_STREAM("PipetterControllerNode: PickUpTipCallback entered.");
     bool success = pc->pickUpTip(req.tip_type_table_index,
-                         req.deck_geometry_table_index,
-                         req.tip_pickup_speed);
+                                 req.deck_geometry_table_index,
+                                 req.tip_pickup_speed);
     ROS_INFO_STREAM("PipetterControllerNode: pickUpTipCallback: result = " << success);
     return success;
 
@@ -151,17 +203,17 @@ bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
 
 bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
                       cdxbot::pipetterEjectTip::Response &resp) {
-
+    return pc->ejectTip(req.dg_idx);
 }
 
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
-
+    return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface );
 }
 
 bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
                       cdxbot::pipetterDispense::Response &resp) {
-
+    return pc->dispense(req.vol, req.gc_idx, req.dg_idx, req.lc_idx,  req.liquid_surface);
 }
 
 bool makeDeckGeometryCallback(cdxbot::pipetterMakeDeckGeometry::Request &req,

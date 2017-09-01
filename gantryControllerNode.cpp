@@ -1,11 +1,11 @@
 /************************************************************************
-Title:    gantry-controller.cpp
+Title:    gantryControllerNode.cpp
 Author:   Nicholas Morrow <nickhudspeth@gmail.com> http://www.nickhudspeth.com
-File:     gantry-controller.cpp
+File:     gantryControllerNode.cpp
 Software: C Standard Library
 Hardware: Platform Independent
 License:  The MIT License (MIT)
-Usage:    Refer to the header file gantry-controller.h.
+Usage:    Refer to the header file gantry-controller.h, if available.
 
 LICENSE:
     Copyright (C) 2016 Nicholas Morrow
@@ -62,26 +62,25 @@ create_t *create_gm;
 destroy_t *destroy_gm;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 void handleDebugMessages(const std::string &msg) {
-    ROS_DEBUG("PipetterControllerNode: %s", msg.c_str());
+    ROS_DEBUG("GantryControllerNode: %s", msg.c_str());
 }
 void handleInfoMessages(const std::string &msg) {
-    ROS_INFO("PipetterControllerNode: %s", msg.c_str());
+    ROS_INFO("GantryControllerNode: %s", msg.c_str());
 }
 void handleWarningMessages(const std::string &msg) {
-    ROS_WARN("PipetterControllerNode: %s", msg.c_str());
+    ROS_WARN("GantryControllerNode: %s", msg.c_str());
 }
 void handleErrorMessages(const std::string &msg) {
-    ROS_ERROR("PipetterControllerNode: %s", msg.c_str());
+    ROS_ERROR("GantryControllerNode: %s", msg.c_str());
 }
-
 
 GantryModule * loadDriver(std::string file) {
     char *error;
     void *driver_handle = dlopen(file.c_str(), RTLD_LAZY);
     if(driver_handle == NULL) {
         ROS_ERROR_STREAM("Error loading gantry controller driver from " <<\
-                         file);
-        std::cerr << dlerror() << std::endl;
+                         file << dlerror());
+        // std::cerr << dlerror() << std::endl;
         //exit(-1);
         gc->deinit(); /* What if deinit() is not present due to improperly written driver? */
         ros::shutdown();

@@ -1,3 +1,27 @@
+# Aspiration volume (uL) [0, 1100]
+float64 vol
+
+# Geometry of container table index [0, 99]
+int16 gc_idx
+
+# Deck geometry table index [0, 99]
+int16 dg_idx
+
+# Liquid class table index [0, 99]
+int16 lg_idx
+
+# QPM [0=off, 1=on]
+bool qpm
+
+# Liquid level detection [0=off, 1=on]
+bool lld
+
+# LLD search height [0,180]
+float64 lld_search_height
+
+# Check height of fibrin detection above current surface of the liquid [0,180]
+float64 check_height
+
 # Aspirate from top and follow liquid level (0) / from bottom and hold (1)
 bool orientation
 
@@ -7,7 +31,5 @@ float64 speed
 # Tip pre-wetting (true/false)
 bool prewet
 
-# Aspiration volume (uL)
-float64 vol
 ---
 bool ok

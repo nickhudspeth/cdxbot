@@ -114,6 +114,7 @@ ros::ServiceClient shakerSetFreqClient;
 ros::ServiceClient shakerSetPowerClient;
 ros::ServiceClient shakerStartClient;
 ros::ServiceClient shakerStopClient;
+
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int loadConfig(ros::NodeHandle nh, CDXBot &cd) {

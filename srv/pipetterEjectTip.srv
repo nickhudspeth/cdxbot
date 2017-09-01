@@ -1,4 +1,4 @@
-# Beginning of tip deposit process
-float64 botpp
+# Deck geometry table index [0, 99]
+int16 dg_idx
 ---
 bool ok

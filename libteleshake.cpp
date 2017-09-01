@@ -85,14 +85,14 @@ int TeleshakeModule::init(void) {
     /* Open USB Device */
     _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY);
     if(_usbfd < 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << "opening " << _usb_addr << " : " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " opening " + _usb_addr + " : " + strerror(errno));
         return -1;
     }
-    std::cout << "LIBTELESHAKE: Opened serial connection to USB device at " << _usb_addr << " with file descriptor " << _usbfd << std::endl;
+    PRINT_ERROR("LIBTELESHAKE: Opened serial connection to USB device at " + _usb_addr + " with file descriptor " + std::to_string(_usbfd));
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " from tcgetattr: " + strerror(errno));
         return -1;
     }
     /* Set baud rate */
@@ -112,17 +112,9 @@ int TeleshakeModule::init(void) {
     tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CRTSCTS;
     if(tcsetattr(_usbfd, TCSANOW, &tty) != 0) {
-        std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcsetattr: " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + "Error: " + std::to_string(errno) + " from tcsetattr: " + strerror(errno));
         return -1;
     }
-    /* Set serial port to non-blocking */
-    // memset(&tty, 0, sizeof tty);
-    // if(tcgetattr(_usbfd, &tty) != 0){
-    // std::cout << __FILE__ << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
-    // return -1;
-    // }
-    // tty.c_cc[VMIN] = 0;
-    // tty.c_cc[VTIME] = 5;
 
     /* Create a listener thread */
     _thread_params.usbfd = _usbfd;
@@ -144,20 +136,16 @@ int TeleshakeModule::init(void) {
 int TeleshakeModule::deinit(void) {
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
-    printf("LIBTELESHAKE: Killed worker thread.\n");
     close(_usbfd);
-    printf("LIBTELESHAKE: Closed socket connection to hardware.\n");
+    PRINT_INFO("Closed socket connection to hardware.");
+    PRINT_INFO("Successfully shut down driver.");
     return 0;
-    // PRINT_ERROR("LIBTELESHAKE: Successfully shut down driver.\n");
 }
 
 int TeleshakeModule::lconf(void) {
 
 }
 
-// void TeleshakeModule::seterrfunc(void(*ef)(std::string s)) {
-    // PRINT_ERROR = ef;
-// }
 
 unsigned int TeleshakeModule::queryAll(void) {
     command_telegram_t t;
@@ -166,11 +154,11 @@ unsigned int TeleshakeModule::queryAll(void) {
     sendCommand(t);
     t = readResponse();
     if(t.data_0 > 0) {
-        printf("LIBTELESHAKE: Located %d shaker module(s)", t.data_0);
+        PRINT_INFO("Located " + std::to_string(t.data_0) + " shaker module(s)");
         _device_addr = t.data_0;
         return true;
     } else {
-        printf("LIBTELESHAKE: Unable to locate shaker module(s)");
+        PRINT_INFO("Unable to locate shaker module(s)");
         return false;
     }
 }
@@ -215,18 +203,18 @@ bool TeleshakeModule::stop(void) {
 
 bool TeleshakeModule::setFrequency(unsigned int f) {
     command_telegram_t t;
-    std::string s = "LIBTELESHAKE: WARNING - Commanded frequency " + \
+    std::string s = "Commanded frequency " + \
                     std::to_string(f) + " is out of range. Setting frequency \
                     to ";
     t.control = CB_ADDRESS_MASK | _device_addr;
     t.command = CMD_SET_CYCLE_TIME;
     if(f < SHAKE_FREQUENCY_MIN ) {
         s += " " + std::to_string(SHAKE_FREQUENCY_MIN);
-        std::cout << s << std::endl;
+        PRINT_WARNING( s);
         f = SHAKE_FREQUENCY_MIN;
     } else if(f >  SHAKE_FREQUENCY_MAX) {
         s += " " + std::to_string(SHAKE_FREQUENCY_MAX);
-        std::cout << s << std::endl;
+        PRINT_INFO(s);
         f = SHAKE_FREQUENCY_MAX;
     }
     /* Convert frequency to cycle time. Round to nearest integer */
@@ -236,7 +224,7 @@ bool TeleshakeModule::setFrequency(unsigned int f) {
     t.data_2 = (uint8_t)(c_time >> 16);
     t.data_1 = (uint8_t)(c_time >> 8);
     t.data_0 = (uint8_t)(c_time);
-    std::cout << "LIBTELESHAKE: INFO - Setting frequency to: " << f << std::endl;
+    PRINT_INFO("Setting Teleshake vibratory frequency to: " + f);
     sendCommand(t);
     t = readResponse();
     return true;
@@ -245,18 +233,18 @@ bool TeleshakeModule::setFrequency(unsigned int f) {
 bool TeleshakeModule::setPower(float percent) {
     command_telegram_t t;
     float pwr = 255.0f;
-    std::string s = "LIBTELESHAKE: WARNING - Commanded power level percentage " + \
+    std::string s = "Commanded power level percentage " + \
                     std::to_string(percent) + " is out of range. Setting power level \
                     to ";
     t.control = CB_ADDRESS_MASK | _device_addr;
     t.command = CMD_SET_POWER;
     if(percent < 0.0f) {
         s += " " + std::to_string(0.0f);
-        std::cout << s << std::endl;
+        PRINT_WARNING(s);
         percent = 0.0f;
     } else if(percent > 100.0f) {
         s += " " + std::to_string(100.0f);
-        std::cout << s << std::endl;
+        PRINT_WARNING(s);
         percent = 100.0f;
     }
     pwr *= percent;
@@ -295,8 +283,8 @@ unsigned int TeleshakeModule::getLastError(void) {
     return t.data_0;
 }
 
-void parseErrors(unsigned int e) {
-    std::string s = "LIBTELESHAKE: ERROR - ";
+void TeleshakeModule::parseErrors(unsigned int e) {
+    std::string s = "Teleshake returned error - ";
     switch (e) {
     case ERR_BUFFER_OVERFLOW:
         s += "Buffer overflow.";
@@ -344,7 +332,7 @@ void parseErrors(unsigned int e) {
         s += "Module returned unknown error code '" + std::to_string(e) +"'";
         break;
     }
-    std::cout << s << std::endl;
+    PRINT_ERROR(s);
 }
 
 int TeleshakeModule::sendCommand(command_telegram_t t) {
@@ -358,17 +346,15 @@ int TeleshakeModule::sendCommand(command_telegram_t t) {
     out[3] = (uint8_t)t.data_1;
     out[4] = (uint8_t)t.data_0;
     out[5] = (uint8_t)t.checksum;
-    if(PRINT_OUTPUT) {
-        std::cout << "\nSent command telegram with data:" << std::endl;
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.control)  << " (" << (int)t.control << "),\n";
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.command)  << " (" << (int)t.command << "),\n";
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_2)   << " (" << (int)t.data_2 << "),\n";
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_1)   << " (" << (int)t.data_1 << "),\n";
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_0)   << " (" << (int)t.data_0 << "),\n";
-        std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.checksum) << " (" << (int)t.checksum << ")" << std::endl;
-    }
+    // PRINT_DEBUG("\nSent command telegram with data:");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.control)  + " (" + (int)t.control + "),");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.command)  + " (" + (int)t.command + "),");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.data_2)   + " (" + (int)t.data_2 + "),");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.data_1)   + " (" + (int)t.data_1 + "),");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.data_0)   + " (" + (int)t.data_0 + "),");
+    // PRINT_DEBUG("\t" + std::setfill('0') + std::setw(8) + d2b(t.checksum) + " (" + (int)t.checksum + ")");
     n = write(_usbfd, out, 6*sizeof(uint8_t));
-    // std::cout << "LIBTELESHAKE: Sent " << n << " characters." << std::endl;
+    PRINT_DEBUG("LIBTELESHAKE: Sent " + std::to_string(n) +  " characters.");
     usleep(500); // Wait 500 us for characters to transmit
     usleep(300000); // Wait 200ms for shaker to interpret command
     return n;
@@ -379,20 +365,16 @@ command_telegram_t TeleshakeModule::readResponse(void) {
     boost::timer tmr;
     command_telegram_t t;
     bool success = false;
-    /* Receive date information and print it */
-
-    /* TODO: nam - Do we need to memset() the buffer again here?
-     * Thu 01 Dec 2016 01:59:16 PM MST */
     time_t start = time(NULL);
+
     while((time(NULL) - start) < 2) {
         if((n = read(_usbfd, _buffer, 6)) > 0) {
-            // printf("Received %s", _buffer);
+            // PRINT_DEBUG("Received " + std::string(_buffer));
             success = true;
             break;
         }
         if(n < 0) {
-            /* Socket read error */
-            perror("LIBTELESHAKE: Read Error.");
+            PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) +" Socket read error.");
         }
     }
     if(success) {
@@ -402,20 +384,20 @@ command_telegram_t TeleshakeModule::readResponse(void) {
         t.data_1   = _buffer[3];
         t.data_0   = _buffer[4];
         t.checksum = _buffer[5];
-        if(PRINT_OUTPUT) {
-            std::cout << "\nReceived command telegram with data:" << std::endl;
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.control)  << " (" << (int)t.control << "),\n";
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.command)  << " (" << (int)t.command << "),\n";
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_2)   << " (" << (int)t.data_2 << "),\n";
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_1)   << " (" << (int)t.data_1 << "),\n";
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_0)   << " (" << (int)t.data_0 << "),\n";
-            std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.checksum) << " (" << (int)t.checksum << ")" << std::endl;
-        }
+        // if(PRINT_OUTPUT) {
+            // std::cout << "\nReceived command telegram with data:" << std::endl;
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.control)  << " (" << (int)t.control << "),\n";
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.command)  << " (" << (int)t.command << "),\n";
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_2)   << " (" << (int)t.data_2 << "),\n";
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_1)   << " (" << (int)t.data_1 << "),\n";
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.data_0)   << " (" << (int)t.data_0 << "),\n";
+            // std::cout << "\t" << std::setfill('0') << std::setw(8) << d2b(t.checksum) << " (" << (int)t.checksum << ")" << std::endl;
+        // }
         if(HAS_ERROR(t.control)) {
             parseErrors(getLastError());
         }
     } else {
-        perror("LIBTELESHAKE: Error - Timeout waiting for response from Teleshake module.");
+        PRINT_ERROR("Error - Timeout waiting for response from Teleshake module.");
     }
     return t;
 }

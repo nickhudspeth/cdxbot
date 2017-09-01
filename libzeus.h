@@ -173,7 +173,7 @@ extern "C" {
                       unsigned int lc_idx, double liquid_surface);
         bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                       unsigned int lc_idx, double liquid_surface);
-        bool discardTip(unsigned int dg_idx);
+        bool ejectTip(unsigned int dg_idx);
         bool emergencyStop(void);
         bool emergencyStopReset(void);
         bool getContainerGeometryParams(unsigned int index);

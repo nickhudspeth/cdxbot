@@ -10,7 +10,10 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/ros.h>
 #include <stdlib.h>
+/*********************    CONSTANTS AND MACROS    **********************/
 
+
+/***********************    GLOBAL VARIABLES    ************************/
 ShakerModule *sm;
 std::string type;
 std::string driver_path, driver_name;
@@ -19,7 +22,19 @@ create_t *create_sm;
 destroy_t *destroy_sm;
 bool timeout_flag = false;
 float timeout_dur = 0.0;
-
+/*******************    FUNCTION IMPLEMENTATIONS    ********************/
+void handleDebugMessages(const std::string &msg) {
+    ROS_DEBUG("GantryControllerNode: %s", msg.c_str());
+}
+void handleInfoMessages(const std::string &msg) {
+    ROS_INFO("GantryControllerNode: %s", msg.c_str());
+}
+void handleWarningMessages(const std::string &msg) {
+    ROS_WARN("GantryControllerNode: %s", msg.c_str());
+}
+void handleErrorMessages(const std::string &msg) {
+    ROS_ERROR("GantryControllerNode: %s", msg.c_str());
+}
 
 ShakerModule * loadDriver(std::string file) {
     char *error;
@@ -47,6 +62,10 @@ ShakerModule * loadDriver(std::string file) {
         ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
         dlerror();
     }
+    sm->setDebugMsgCallback(handleDebugMessages);
+    sm->setInfoMsgCallback(handleInfoMessages);
+    sm->setWarningMsgCallback(handleWarningMessages);
+    sm->setErrorMsgCallback(handleErrorMessages);
 
     return s;
 }

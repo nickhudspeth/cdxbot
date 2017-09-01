@@ -81,15 +81,15 @@ extern "C" void *thread_func(void *arg) {
                 n = read(soc, &ret, sizeof(struct can_frame));
                 if(n != 0) {
                     if(n < 0) {
-                        printf("LIBZEUS: Error reading from CAN socket.\n");
+                        zm->PRINT_ERROR("LIBZEUS: Error reading from CAN socket.");
                     } else if(n < sizeof(struct can_frame)) {
-                        printf("LIBZEUS: Incomplete frame read from CAN socket.\n");
+                        zm->PRINT_ERROR("LIBZEUS: Incomplete frame read from CAN socket.");
                     } else {
                         if(ret.can_id & KICK_MASK) {
                             /* Received kick frame. */
                             //zm->setKickFlag(1);
                             zm->sendRemoteFrame(1);
-                            // printf("Received kick frame with byte %04X.\n", ret.data[7]);
+                            // PRINT_DEBUG("Received kick frame with byte %04X.\n", ret.data[7]);
                             // } else if(!strcmp((const char*)ret.data,"")) {
                         } else if(ret.can_id & CAN_RTR_FLAG) {
                             /* Data field is empty, but this is not a kick frame.
@@ -101,24 +101,22 @@ extern "C" void *thread_func(void *arg) {
                             memset(&retbuf, 0, sizeof(retbuf));
                             snprintf(retbuf, 7,"%s", ret.data);
                             msg.append(retbuf);
-                            // printf("Received message: %s\n", msg.c_str());
+                            zm->PRINT_DEBUG("Received message: " + msg);
 
                             /*If frame data contains EOM flag, process the returned string. */
                             if(ret.data[7] & EOM_MASK) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
-                                std::cout << "Set msgreadyflag to 1." << std::endl;
+                                zm->PRINT_DEBUG("Set msgreadyflag to 1.");
                                 zm->setWaitingForMsgFlag(0);
-                                // std::string err_msg = zm->parseErrors(msg);
-                                if(PRINT_OUTPUT) {
-                                    // printf("Received message: %s -> ", msg.c_str());
-                                    // printf("%s\n", err_msg.c_str());
-                                }
+                                std::string err_msg = zm->parseErrors(msg);
+                                zm->PRINT_DEBUG("Received message: " + msg);
+                                zm->PRINT_DEBUG(err_msg);
                                 msg.clear();
                             } else {
                                 zm->sendRemoteFrame(8);
                             }
-                            // printf("Read a frame from da socket with DLC %d\n and data %s\n", ret.can_dlc, ret.data);
+                            zm->PRINT_DEBUG("Read a frame from da socket with DLC " + std::to_string(ret.can_dlc) + " and data " + std::to_string(ret.data));
                         }
                     }
                 }
@@ -161,14 +159,10 @@ int ZeusModule::init(void) {
     struct can_frame f;
     memset(&f, 0, sizeof(struct can_frame));
     setLastFrame(f);
-    // if(pthread_mutex_init(&_lock_msg, NULL) != 0) {
-    // printf("ERROR: LibZeus: Could not create mutex.\n");
-    // Unable to create mutex. Throw error.
-    // }
     initCANBus();
     // usleep(100000);
     pthread_create(&_thread_id, NULL, &thread_func, this);
-    // printf("Thread function created.\n");
+    PRINT_INFO("Thread function created.");
     initZDrive();
     initDosingDrive();
     // getInitializationStatus();
@@ -189,13 +183,10 @@ int ZeusModule::deinit(void) {
     std::string cmd = cmdHeader("AV");
     sendCommand(cmd);
     close(_sockfd);
-    // printf("Closed socket.\n");
+    PRINT_INFO("Closed socket.");
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
-    // printf("Killed thread function.\n");
-    // pthread_mutex_destroy(&_lock_msg);
-    // printf("Destroyed mutex.\n");
-    // printf("fin.\n");
+    PRINT_INFO("Killed thread function.");
     return 0;
 }
 
@@ -208,9 +199,10 @@ bool ZeusModule::moveZ(double pos, double vel) {
     std::string cmd = cmdHeader("GZ");
     pos = (1800 - 10*pos) + 370;
     if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
-        printf("LIBZEUS: Requested z-position %f out of range.\
-                Valid range for z-position is [%f,%f]",\
-               pos, (ZPOS_MIN/10.0), (ZPOS_MAX/10.0));
+        PRINT_ERROR("LIBZEUS: Requested z-position " + std::to_string(pos) \
+                    + " out of range. Valid range for z-position is [" \
+                    + std::to_string(ZPOS_MIN/10.0) + ", " \
+                    + std::to_string(ZPOS_MAX/10.0) + "]");
         return 0;
     }
     if(vel < 1.0) {
@@ -277,19 +269,21 @@ bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed)
     // return true;
 }
 
-bool ZeusModule::discardTip(unsigned int dg_idx) {
+bool ZeusModule::ejectTip(unsigned int dg_idx) {
     if((dg_idx > 99)) {
-        //throw error
+        PRINT_ERROR("ZeusModule: Deck geometry index out of range.");
         return false;
     }
     std::string cmd = cmdHeader("GU");
     cmd += "go" + zfill(std::to_string(dg_idx), 2);
-    sendCommand(cmd);
-
+    if(sendCommand(cmd) == true)) {
+        PRINT_DEBUG("Received message from sendCommand: " + _received_msg);
+    } else {
+        return false;
+    };
     /* TODO: nam - Check if has been successfully discarded
      * before returning. - Thu 24 Aug 2017 04:34:57 PM MDT */
     return false;
-
 }
 
 bool ZeusModule::aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
@@ -481,16 +475,16 @@ bool ZeusModule::waitForRemoteFrame(void) {
 
 std::string ZeusModule::waitForResponse(void) {
     time_t start = time(NULL);
-    while((time(NULL) - start) < 5){
-        if(_msg_ready_flag == 1){
-          setMsgReadyFlag(0);
-          std::string ret = parseErrors(_received_msg);
-          std::cout << "LIBZEUS: Returned string " << ret << std::endl;
-          setReceivedMsg(std::string(""));
-          return ret;
+    while((time(NULL) - start) < 5) {
+        if(_msg_ready_flag == 1) {
+            setMsgReadyFlag(0);
+            std::string ret = parseErrors(_received_msg);
+            PRINT_DEBUG("LIBZEUS: Returned string " + ret);
+            setReceivedMsg(std::string(""));
+            return ret;
         }
     }
-    return std::string("LIBZEUS: ERROR: Timeout in waitForResponse()");
+    PRINT_ERROR("LIBZEUS: Timeout in waitForResponse()");
 }
 
 void ZeusModule::sendKickFrame(void) {
@@ -549,9 +543,7 @@ bool ZeusModule::sendCommand(std::string cmd) {
      * from the pipetter to avoid sending simultaneous commands. */
     _ready_for_new_command = 0;
     setMsgReadyFlag(0);
-    if(PRINT_OUTPUT) {
-        printf("LIBZEUS: Sending command: %s.\n", cmd.c_str());
-    }
+    PRINT_DEBUG("LIBZEUS: Sending command: " + cmd);
     std::vector<std::string> substrings;
     size_t sbegin = 0;
 
@@ -602,7 +594,7 @@ bool ZeusModule::sendCommand(std::string cmd) {
             } else {
                 usleep(200000);
                 _ready_for_new_command = 1;
-                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << res << "\"" << std::endl; 
+                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << res << "\"" << std::endl;
                 return false;
             }
         }

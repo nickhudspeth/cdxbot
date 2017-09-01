@@ -147,9 +147,9 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
     std::string zdec = std::to_string(z);
     idx = zdec.find(".");
     std::string zpos = "Z:" + zdec.substr(0, idx+3);
-#ifdef PRINT_OUTPUT
-    std::cout << "LIBZEUS: Waiting for gantry to arrive at position {" << xpos << ", "<< ypos << ", " << zpos << "}" << std::endl;
-#endif
+    PRINT_INFO("Waiting for gantry to arrive at position " + \
+            xdec + ", " + ydec + ", " + \
+            zdec + "}");
     time_t start = time(NULL);
     auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -179,7 +179,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     if(axes & AXIS_X) {
                         if(s2.find(xpos) != std::string::npos) {
 #ifdef PRINT_OUTPUT
-                            std::cout << "LIBRAAMPS: Gantry reached target in x-coordinate" << std::endl;
+                            std::cout << "LIBRAMPS: Gantry reached target in x-coordinate" << std::endl;
 #endif
                             ax = true;
                         }

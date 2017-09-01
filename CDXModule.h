@@ -68,7 +68,7 @@ class CDXModule {
         return 0;
     }
     // virtual void seterrfunc(void(*ef)(std::string s)) {
-        // PRINT_ERROR = ef;
+    // PRINT_ERROR = ef;
     // }
     void setDebugMsgCallback(boost::function<void(const std::string&)> f) {
         PRINT_DEBUG = f;
@@ -83,11 +83,12 @@ class CDXModule {
         PRINT_ERROR = f;
     };
 
-  protected:
     boost::function<void(const std::string&)> PRINT_DEBUG;
     boost::function<void(const std::string&)> PRINT_INFO;
     boost::function<void(const std::string&)> PRINT_WARNING;
     boost::function<void(const std::string&)> PRINT_ERROR;
+
+  protected:
 
     // void(*PRINT_ERROR)(std::string s);
 

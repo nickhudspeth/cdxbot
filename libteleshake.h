@@ -195,15 +195,13 @@ extern "C" {
         uint8_t getDeviceAddr() {
             return _device_addr;
         };
-        long d2b(long n);
-        // struct sockaddr_in _remote;
         bool _ready_flag = 1;
         double _netTimeoutMS = 200.0;
         int _usb_baud = B9600;
         int _usbfd = 0;
+        long d2b(long n);
         pthread_t _thread_id;
         std::string _usb_addr = "/dev/serial/by-id/usb-FTDI_UT232R_FTYO7XCW-if00-port0";
-        // std::string _usb_addr = "/dev/ttyUSB0";
         thread_params_t _thread_params;
         uint8_t _buffer[6];
         uint8_t _device_addr = 0;
