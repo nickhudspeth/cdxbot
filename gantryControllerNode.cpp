@@ -124,52 +124,36 @@ void loadParams(ros::NodeHandle &nh) {
 
     if(!nh.getParam("/gc_conf/driver_name", driver_name)) {
         nh.getParam("/gcdefaults/driver_name", driver_name);
-        ROS_WARN("No parameter \"driver_name\" found in configuration file.\
-                            Initializing gantry controller with default value\
-                            %s", driver_name);
+        ROS_WARN("No parameter \"driver_name\" found in configuration file. Initializing gantry controller with default value %s", driver_name);
     }
     if(!nh.getParam("/gc_conf/driver_path", driver_path)) {
         nh.getParam("/gcdefaults/driver_path", driver_path);
-        ROS_WARN_STREAM("No parameter \"driver_path\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        driver_path);
+        ROS_WARN_STREAM("No parameter \"driver_path\" found in configuration file. Initializing gantry controller with default value " << driver_path);
     }
 
     gc = loadDriver(driver_path + driver_name);
 
     if(!nh.getParam("/gc_conf/type", gc->getTypeRef())) {
         nh.getParam("/gcdefaults/type", gc->getTypeRef());
-        ROS_WARN("No parameter 'type' found in configuration file.\
-                        Initializing gantry controller with default value %s",\
-                 gc->getType());
+        ROS_WARN("No parameter 'type' found in configuration file. Initializing gantry controller with default value %s", gc->getType());
     }
 
     if(!nh.getParam("/gc_conf/ip_address", gc->getIPAddressRef())) {
         nh.getParam("/gcdefaults/ip_address", gc->getIPAddressRef());
-        ROS_WARN_STREAM("No parameter \"ip_address\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getIPAddress());
+        ROS_WARN_STREAM("No parameter \"ip_address\" found in configuration file. Initializing gantry controller with default value " << gc->getIPAddress());
     }
-
-
 
     if(!nh.getParam("/gc_conf/port", gc->getPortRef())) {
         nh.getParam("/gcdefaults/port", gc->getPortRef());
-        ROS_WARN_STREAM("No parameter \"port\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getPort());
+        ROS_WARN_STREAM("No parameter \"port\" found in configuration file. Initializing gantry controller with default value " << gc->getPort());
     }
     if(!nh.getParam("/gc_conf/timeout", gc->getTimeoutRef())) {
         nh.getParam("/gcdefaults/timeout", gc->getTimeoutRef());
-        ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getTimeout());
+        ROS_WARN_STREAM("No parameter \"timeout\" found in configuration file. Initializing gantry controller with default value " << gc->getTimeout());
     }
     if(!nh.getParam("/gc_conf/buffer_size", gc->getBufferSizeRef())) {
         nh.getParam("/gcdefaults/buffer_size", gc->getBufferSizeRef());
-        ROS_WARN_STREAM("No parameter \"buffer_size\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getBufferSize());
+        ROS_WARN_STREAM("No parameter \"buffer_size\" found in configuration file. Initializing gantry controller with default value " << gc->getBufferSize());
     }
     // if(!nh.getParam("/gc_conf/units", gc->getUnitsRef())) {
     // ROS_WARN_STREAM("No parameter \"units\" found in configuration file.\
@@ -178,63 +162,59 @@ void loadParams(ros::NodeHandle &nh) {
     // }
     if(!nh.getParam("/gc_conf/traverse_velocity", gc->getTraverseVelocityRef())) {
         nh.getParam("/gcdefaults/traverse_velocity", gc->getTraverseVelocityRef());
-        ROS_WARN_STREAM("No parameter \"traverse_velocity\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getTraverseVelocity());
+        ROS_WARN_STREAM("No parameter \"traverse_velocity\" found in configuration file. Initializing gantry controller with default value " << gc->getTraverseVelocity());
     }
     if(!nh.getParam("/gc_conf/rapid_feed_velocity", gc->getRapidFeedVelocityRef())) {
         nh.getParam("/gcdefaults/rapid_feed_velocity", gc->getRapidFeedVelocityRef());
-        ROS_WARN_STREAM("No parameter \"rapid_feed_velocity\" found in configuration file.\
-         Initializing gantry controller with default value " <<\
-                        gc->getRapidFeedVelocity());
+        ROS_WARN_STREAM("No parameter \"rapid_feed_velocity\" found in configuration file. Initializing gantry controller with default value " << gc->getRapidFeedVelocity());
     }
     if(!nh.getParam("/gc_conf/xpos_min", gc->getXPosMinRef())) {
         nh.getParam("/gcdefaults/xpos_min", gc->getXPosMinRef());
-        ROS_WARN_STREAM("No parameter \"xpos_min\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getXPosMin());
+        ROS_WARN_STREAM("No parameter \"xpos_min\" found in configuration file. Initializing gantry controller with default value " << gc->getXPosMin());
     }
     if(!nh.getParam("/gc_conf/xpos_max", gc->getXPosMaxRef())) {
         nh.getParam("/gcdefaults/xpos_max", gc->getXPosMaxRef());
-        ROS_WARN_STREAM("No parameter \"xpos_max\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getXPosMax());
+        ROS_WARN_STREAM("No parameter \"xpos_max\" found in configuration file. Initializing gantry controller with default value " << gc->getXPosMax());
     }
     if(!nh.getParam("/gc_conf/ypos_min", gc->getYPosMinRef())) {
         nh.getParam("/gcdefaults/ypos_min", gc->getYPosMinRef());
-        ROS_WARN_STREAM("No parameter \"ypos_min\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getYPosMin());
+        ROS_WARN_STREAM("No parameter \"ypos_min\" found in configuration file. Initializing gantry controller with default value " << gc->getYPosMin());
     }
     if(!nh.getParam("/gc_conf/ypos_max", gc->getYPosMaxRef())) {
         nh.getParam("/gcdefaults/ypos_max", gc->getYPosMaxRef());
-        ROS_WARN_STREAM("No parameter \"ypos_max\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getYPosMax());
+        ROS_WARN_STREAM("No parameter \"ypos_max\" found in configuration file. Initializing gantry controller with default value " << gc->getYPosMax());
     }
     if(!nh.getParam("/gc_conf/zpos_min", gc->getZPosMinRef())) {
         nh.getParam("/gcdefaults/zpos_min", gc->getZPosMinRef());
-        ROS_WARN_STREAM("No parameter \"zpos_min\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getZPosMin());
+        ROS_WARN_STREAM("No parameter \"zpos_min\" found in configuration file. Initializing gantry controller with default value " << gc->getZPosMin());
     }
     if(!nh.getParam("/gc_conf/zpos_max", gc->getZPosMaxRef())) {
         nh.getParam("/gcdefaults/zpos_max", gc->getZPosMaxRef());
-        ROS_WARN_STREAM("No parameter \"zpos_max\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        gc->getZPosMax());
+        ROS_WARN_STREAM("No parameter \"zpos_max\" found in configuration file. Initializing gantry controller with default value " << gc->getZPosMax());
     }
     std::string tmp = "";
     if(!nh.getParam("/gc_conf/move_mode", tmp)) {
         nh.getParam("/gcdefaults/move_mode", tmp);
-        ROS_WARN_STREAM("No parameter \"move_mode\" found in configuration file.\
-                                Initializing gantry controller with default value " <<\
-                        tmp);
+        ROS_WARN_STREAM("No parameter \"move_mode\" found in configuration file. Initializing gantry controller with default value " << tmp);
     }
     if(tmp == "relative") {
         gc->setMoveMode(1);
     } else {
         gc->setMoveMode(0);
+    }
+
+    double steps_tmp = 0;
+    if(!nh.getParam("/gc_conf/axis_steps_per_unit_x", steps_tmp)) {
+        nh.getParam("/gcdefaults/axis_steps_per_unit_x", steps_tmp);
+        ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_x\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_X, steps_tmp));
+    }
+    if(!nh.getParam("/gc_conf/axis_steps_per_unit_y", steps_tmp)) {
+    nh.getParam("/gcdefaults/axis_steps_per_unit_y", steps_tmp);
+        ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_y\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_Y, steps_tmp));
+    }
+    if(!nh.getParam("/gc_conf/axis_steps_per_unit_z", steps_tmp)) {
+    nh.getParam("/gcdefaults/axis_steps_per_unit_z", steps_tmp);
+        ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_z\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_Z, steps_tmp));
     }
 }
 
@@ -453,17 +433,14 @@ bool setUnitsCallback(cdxbot::gantrySetUnits::Request &req,
 
 bool setAxisStepsPerUnitCallback(cdxbot::gantrySetAxisStepsPerUnit::Request &req,
                                  cdxbot::gantrySetAxisStepsPerUnit::Response &resp) {
-    if(req.axis == 0) {
-        gc->setAxisStepsPerUnit(AXIS_X, req.steps);
-    } else if(req.axis == 1) {
-        gc->setAxisStepsPerUnit(AXIS_Y, req.steps);
-    } else if(req.axis == 2) {
-        gc->setAxisStepsPerUnit(AXIS_Z, req.steps);
-    } else if(req.axis == 3) {
-        gc->setAxisStepsPerUnit(AXIS_ALL, req.steps);
-    } else {
-        /* Error: Invalid axis specified. */
-        return false;
+    if(req.steps_x > 0) {
+        gc->setAxisStepsPerUnit(AXIS_X, req.steps_x);
+    }
+    if(req.steps_y > 0) {
+        gc->setAxisStepsPerUnit(AXIS_Y, req.steps_y);
+    }
+    if(req.steps_z > 0) {
+        gc->setAxisStepsPerUnit(AXIS_Z, req.steps_z);
     }
     return true;
 }

@@ -509,5 +509,6 @@ int RampsModule::setAxisStepsPerUnit(unsigned int axis, unsigned int steps) {
     default:
         return -1;
     }
+    sendCommand(ret);
     return 0;
 }

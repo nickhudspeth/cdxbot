@@ -116,7 +116,7 @@ extern "C" void *thread_func(void *arg) {
                             } else {
                                 zm->sendRemoteFrame(8);
                             }
-                            zm->PRINT_DEBUG("Read a frame from da socket with DLC " + std::to_string(ret.can_dlc) + " and data " + std::to_string(ret.data));
+                            // zm->PRINT_DEBUG("Read a frame from da socket with DLC " + std::to_string(ret.can_dlc) + " and data " + std::to_string(ret.data));
                         }
                     }
                 }
@@ -196,6 +196,9 @@ int ZeusModule::lconf(void) {
 
 bool ZeusModule::moveZ(double pos, double vel) {
     printf("Moving pipetter head to: %f mm.\n", pos);
+    /* Where does this offset of 370 come from?
+     * If this is the z-offset on the gantry, we need to set this in the
+     * configuration file. */
     std::string cmd = cmdHeader("GZ");
     pos = (1800 - 10*pos) + 370;
     if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
@@ -276,7 +279,7 @@ bool ZeusModule::ejectTip(unsigned int dg_idx) {
     }
     std::string cmd = cmdHeader("GU");
     cmd += "go" + zfill(std::to_string(dg_idx), 2);
-    if(sendCommand(cmd) == true)) {
+    if(sendCommand(cmd) == true) {
         PRINT_DEBUG("Received message from sendCommand: " + _received_msg);
     } else {
         return false;

@@ -208,7 +208,7 @@ bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
 
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
-    return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface );
+    return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface);
 }
 
 bool dispenseCallback(cdxbot::pipetterDispense::Request & req,

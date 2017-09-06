@@ -4,7 +4,9 @@ cdxbot:
     origin_z: 0.00
     extent_x: 406.40
     extent_y: 406.40
-    extent_z: 406.40 
+    extent_z: 406.40
+    eject_x: 300.0
+    eject_y: -30.0
     num_containers: 6
     pipetter_has_z: true
     feed_plane: 70.00
@@ -53,6 +55,7 @@ cdxbot:
             offset_x: 291.255        # X-offset Between Container Origin and Deck Origin
             offset_y: 30.950        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
+            vol:  1100          # Container cell volume, uL
         c3:              # Container ID Number
             type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
@@ -66,6 +69,7 @@ cdxbot:
             offset_x: 45.19        # X-offset Between Container Origin and Deck Origin
             offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            vol:  1100          # Container cell volume, uL
         c4:              # Container ID Number
             type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
@@ -79,6 +83,7 @@ cdxbot:
             offset_x: 162.66        # X-offset Between Container Origin and Deck Origin
             offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
+            vol:  1100          # Container cell volume, uL
         c5:              # Container ID Number
             type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
@@ -92,3 +97,6 @@ cdxbot:
             offset_x: 295.725        # X-offset Between Container Origin and Deck Origin
             offset_y: 176.725        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
+            vol:  1100          # Container cell volume, uL
+
+

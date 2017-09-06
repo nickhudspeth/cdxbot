@@ -53,9 +53,11 @@ class PipetterModule : public CDXModule {
   public:
     PipetterModule (void) {};
     virtual ~PipetterModule (void) {};
-    virtual bool aspirate(double vol) {};
-    virtual bool dispense(double vol) {};
-    virtual bool ejectTip(void) {};
+    virtual bool aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
+            unsigned int lc_idx, double liquid_surface) {};
+    virtual bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
+            unsigned int lc_idx, double liquid_surface) {};
+    virtual bool ejectTip(unsigned int index) {};
     virtual bool makeDeckGeometry(unsigned int index, double feed_plane, double container_offset_z, double tip_engagement_len, double tip_deposit_height) {};
     virtual bool moveZ(double pos, double vel) {};
     virtual bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed){};

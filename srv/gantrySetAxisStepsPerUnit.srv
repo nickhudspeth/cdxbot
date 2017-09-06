@@ -1,5 +1,5 @@
-# Axis X,Y,Z {0,1,2}
-int16 axis
-int32 steps
+int32 steps_x
+int32 steps_y
+int32 steps_z
 ---
 bool ok

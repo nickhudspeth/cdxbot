@@ -121,8 +121,6 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
     char buf[64];
     memset(buf, ' ',64);
     int ret = 0;
-    cdxbot::pipetterMakeDeckGeometry::Request pmdgreq;
-    cdxbot::pipetterMakeDeckGeometry::Response pmdgresp;
 
     nh.getParam("/cdxbot/num_containers", ret);
     printf("Read value of %d for num_containers.\n", ret);
@@ -149,6 +147,21 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                         Initializing cdxbot with default value %s",\
                  std::to_string(cd.getFeedPlaneHeightRef()));
     }
+
+    memset(buf, ' ',64);
+    sprintf(buf,"/cdxbot/eject_x");
+    if(!nh.getParam(buf, cd.getEjectPosRef(AXIS_X))) {
+        nh.getParam("/cdxbot_defaults/eject_x", cd.getEjectPosRef(AXIS_X));
+        ROS_WARN_STREAM("No parameter eject_x found in configuration file. Initializing cdxbot with default value " << cd.getEjectPos(AXIS_X));
+    }
+
+    memset(buf, ' ',64);
+    sprintf(buf,"/cdxbot/eject_y");
+    if(!nh.getParam(buf, cd.getEjectPosRef(AXIS_Y))) {
+        nh.getParam("/cdxbot_defaults/eject_y", cd.getEjectPosRef(AXIS_Y));
+        ROS_WARN_STREAM("No parameter eject_y found in configuration file. Initializing cdxbot with default value " << cd.getEjectPosRef(AXIS_Y));
+    }
+
     for(unsigned int i=0; i < cd.getNumContainers(); i++) {
         sprintf(buf,"/cdxbot/containers/c%d/type", i);
         if(!nh.getParam(buf, cd.getContainer(i).getTypeRef())) {
@@ -336,6 +349,14 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                          i, std::to_string(cd.getContainer(i).getDispensePosition()));
             }
 
+            // memset(buf, ' ',64);
+            // sprintf(buf,"/cdxbot/containers/c%d/vol", i);
+            // if(!nh.getParam(buf, c.vol)) {
+            // nh.getParam("/cdxbot_defaults/vol", c.vol);
+            // ROS_WARN("No parameter containers:%d:vol found in configuration file.\
+            // Initializing cdxbot with default value %f",\
+            // i, std::to_string(c.vol));
+            // }
         }
 
         /* INITIALIZE CONTAINER CELL MATRIX */
@@ -347,10 +368,10 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                 c.test_type = " ";
                 if(cd.getContainer(i).getType() == "well") {
                     memset(buf, ' ',64);
-                    sprintf(buf,"/cdxbot/containers/c%d/container_vol", i);
+                    sprintf(buf,"/cdxbot/containers/c%d/vol", i);
                     if(!nh.getParam(buf, c.vol)) {
-                        nh.getParam("/cdxbot_defaults/container_vol", c.vol);
-                        ROS_WARN("No parameter containers:%d:container_vol found in configuration file.\
+                        nh.getParam("/cdxbot_defaults/vol", c.vol);
+                        ROS_WARN("No parameter containers:%d:vol found in configuration file.\
                         Initializing cdxbot with default value %f",\
                                  i, std::to_string(c.vol));
                     }
@@ -378,6 +399,9 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
             }
             cd.getContainer(i).getCellsVecRef().push_back(newRow);
         }
+
+        cdxbot::pipetterMakeDeckGeometry::Request pmdgreq;
+        cdxbot::pipetterMakeDeckGeometry::Response pmdgresp;
         pmdgreq.index = i;
         pmdgreq.traverse_height = cd.getFeedPlaneHeight();
         pmdgreq.container_offset_z = cd.getContainer(i).getLength('z');
@@ -591,10 +615,32 @@ void parseAction(CDXBot &cd, const struct action a) {
 
     } else if(a.cmd == "eject") {
         /* Move tip to feed plane */
+        cdxbot::pipetterMozeZ::Request pmzreq;
+cdxbot::PipetterMoveZ:
+        Response pmzresp;
+        pmzreq.pos = pc->getFeedPlane();
+        pmzreq.vel = 1.0 /* Fast move using Zeus pipetter.*/
+        if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+            ROS_ERROR_STREAM("Unable to move z-axis to feed plane during eject command. HALT!");
+            cd.setRunStatus(0);
+        }
 
         /* Rapid feed to center of eject bin */
+        cdxbot::gantryMove::Request gmzreq;
+        cdxbot::gantryMove::Response gmzresp;
+        gmzreq.move_mode = 0;
+        gmzreq.x = cd.getContainer(a.args[0]).getGlobalCoords('x', a.args[1], a.args[2]);
+        gmzreq.y = cd.getContainer(a.args[0]).getGlobalCoords('y', a.args[1], a.args[2]);
+        gmzreq.z = cd.getContainer(a.args[0]).getGlobalCoords('z', a.args[1], a.args[2]);
+        if(!gantryMoveClient.call(gmzreq, gmzresp)) {
+            // Unable to move gantry. HALT!
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
+            cd.setRunStatus(0);
+        }
 
         /* Eject tip from pipetter */
+        cdxbot::pipetterEjectTip::Request petreq;
+        cdxbot::pipetterEjectTip::Response petresp;
 
         /* Move to home position? */
     } else if(a.cmd == "wait") {
@@ -697,7 +743,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
     ros::Rate rate(100);
-    loadConfig(nh, cd);
+    // loadConfig(nh, cd);
 
     ros::Subscriber sd = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     /* Subscribe to GUI topic */
@@ -726,6 +772,7 @@ int main(int argc, char **argv) {
     pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
     pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
     pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
+    pipetterMakeDeckGeometryClient = nh.serviceClient<cdxbot::pipetterMakeDeckGeometry>("pipetter_make_deck_geometry");
     pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");
     pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
     shakerResetClient = nh.serviceClient<cdxbot::shakerReset>("shaker_reset");
@@ -734,6 +781,8 @@ int main(int argc, char **argv) {
     shakerStartClient = nh.serviceClient<cdxbot::shakerStart>("shaker_start");
     shakerStopClient = nh.serviceClient<cdxbot::shakerStop>("shaker_stop");
     /* Check for and load/parse HLMD file */
+
+    loadConfig(nh, cd);
 
     /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */
 

@@ -98,7 +98,7 @@ class CDXBot {
         return _feed_plane;
     }
 
-    void setFeedPlaneHeight(double z){
+    void setFeedPlaneHeight(double z) {
         _feed_plane = z;
     };
 
@@ -144,18 +144,65 @@ class CDXBot {
         _eepos[i] = pos;
     }
 
+    void setEjectPos(unsigned int axis, double pos) {
+        switch(axis) {
+        case AXIS_X:
+            _eject_x = pos;
+            break;
+        case AXIS_Y:
+            _eject_y = pos;
+            break;
+        case AXIS_Z:
+            _eject_z = pos;
+            break;
+        }
+    }
+
+    double getEjectPos(unsigned int axis) {
+        double ret = 0.0f;
+        switch(axis) {
+        case AXIS_X:
+            ret = _eject_x;
+            break;
+        case AXIS_Y:
+            ret = _eject_y;
+            break;
+        case AXIS_Z:
+            ret = _eject_z;
+            break;
+        }
+        return ret;
+    }
+
+    double &getEjectPosRef(unsigned int axis) {
+        double ret = 0.0f;
+        switch(axis) {
+        case AXIS_X:
+            ret = _eject_x;
+            break;
+        case AXIS_Y:
+            ret = _eject_y;
+            break;
+        case AXIS_Z:
+            ret = _eject_z;
+            break;
+        }
+        return ret;
+    }
+
   private:
     double _feed_plane;  /* Feed plane height (mm) */
     const char *d = ","; /*HLMD File delimiter */
     unsigned int _runStatus = 0;
     unsigned int _action_index = 0;
-    double origin_x = 0.0;
-    double origin_y = 0.0;
-    double origin_z = 0.0;
-    double extents_x = 0.0;
-    double extents_y = 0.0;
-    double extents_z = 0.0;
-
+    double _origin_x = 0.0;
+    double _origin_y = 0.0;
+    double _origin_z = 0.0;
+    double _extents_x = 0.0;
+    double _extents_y = 0.0;
+    double _extents_z = 0.0;
+    double _eject_x -0;
+    double _eject_y = 0;
     bool _gantry_status = 0;
     bool _pipetter_has_z;
     double _eepos[3];

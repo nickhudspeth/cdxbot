@@ -8,7 +8,7 @@ int16 gc_idx
 int16 dg_idx
 
 # Liquid class table index [0, 99]
-int16 lg_idx
+int16 lc_idx
 
 # QPM [0=off, 1=on]
 bool qpm
@@ -19,8 +19,12 @@ bool lld
 # LLD search height [0,180]
 float64 lld_search_height
 
-# Check height of fibrin detection above current surface of the liquid [0,180]
-float64 check_height
+
+# Height of liquid surface (used with LLD disabled)
+float64 liquid_surface
+
+# Search bottom mode activated? [0=off, 1=on]
+bool search_bottom_mode
 
 # Aspirate from top and follow liquid level (0) / from bottom and hold (1)
 bool orientation
