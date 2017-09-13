@@ -20,9 +20,9 @@ gc_conf:
     zpos_min: 0.0
     zpos_max: 300.0
     move_mode: "absolute"
-    axis_steps_per_mm_x : 393
-    axis_steps_per_mm_y : 396
-    axis_steps_per_mm_z : 393
+    axis_steps_per_unit_x : 393
+    axis_steps_per_unit_y : 394.75
+    axis_steps_per_unit_z : 393
     # CONFIGURATION SETTINGS FOR CONTROLLERS WITH CHARACTER INTERFACEs
         # path: /dev/usbtty0
 

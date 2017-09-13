@@ -33,7 +33,7 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "libzeus.h"
 /*********************    CONSTANTS AND MACROS    **********************/
-
+#define TO_ZEUS_COORDS(pos, offset) (1800 - (10*(pos)) + offset)
 
 /***********************    GLOBAL VARIABLES    ************************/
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
@@ -245,14 +245,22 @@ bool ZeusModule::makeDeckGeometry(unsigned int index, double feed_plane,\
     if(container_offset_z < tip_engagement_len) {
         return false;
     }
+    // pos = (1800 - 10*feed_plane) + 370;
+
+    PRINT_INFO("Making deck geometry at index " + std::to_string(index) + " with feed plane " + std::to_string(feed_plane) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
     std::string cmd = cmdHeader("GO");
     cmd +=  "go" + zfill(std::to_string(index), 2) + \
-            "th" + zfill(std::to_string(static_cast<unsigned int>(feed_plane * 10)), 4) + \
-            "te" + zfill(std::to_string(static_cast<unsigned int>(10*(container_offset_z - tip_engagement_len))), 4) + \
-            "tm" + zfill(std::to_string(static_cast<unsigned int>(10*container_offset_z)), 4 )+ \
-            "tn" + zfill(std::to_string(static_cast<unsigned int>(10*(container_offset_z - tip_engagement_len))), 4) + \
-            "tr" + zfill(std::to_string(static_cast<unsigned int>(10*tip_deposit_height)), 4);
-
+            /*"th" + zfill(std::to_string(static_cast<unsigned int>(feed_plane * 10)), 4) + \ */
+            "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z + 5, 370))), 4) + \
+            /*"te" + zfill(std::to_string(static_cast<unsigned int>((1800 - 10*(container_offset_z - tip_engagement_len)))), 4) + \*/
+            "te" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z + 60, 370))), 4) + \
+            /*"tm" + zfill(std::to_string(static_cast<unsigned int>(10*container_offset_z)), 4 )+ \ */
+            "tm" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z + 5, 370))), 4 )+ \
+            "tn" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z - tip_engagement_len, 370))), 4) + \
+            "tr" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(tip_deposit_height, 370))), 4);
+    _current_dg_index = index;
+    sendCommand(cmd);
+    return true;
 }
 
 bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed) {
@@ -260,7 +268,7 @@ bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed)
         // ROS_ERROR_STREAM("Tip type index (" << tt_idx << ") or deck geometry index (" << dg_idx << ") out of range.")
         return false;
     }
-
+    // PRINT_INFO("PipetterControllerNode: Picking up tip with tt_idx " + std::to_string(tt_idx)+ " and dg_idx " + std::to_string(dg_idx));
     std::string cmd = cmdHeader("GT");
     cmd += "tt" + zfill(std::to_string(tt_idx), 1) + \
            "go" + zfill(std::to_string(dg_idx), 2) + \
@@ -270,23 +278,17 @@ bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed)
     /* Here we should wait for the pipetter to indicate that a tip has been
      * picked up before returning. */
     // return true;
+    // if(!getTipStatus() ) {
+    // return false;
+    // }
 }
 
-bool ZeusModule::ejectTip(unsigned int dg_idx) {
-    if((dg_idx > 99)) {
-        PRINT_ERROR("ZeusModule: Deck geometry index out of range.");
-        return false;
-    }
+bool ZeusModule::ejectTip(void) {
     std::string cmd = cmdHeader("GU");
-    cmd += "go" + zfill(std::to_string(dg_idx), 2);
-    if(sendCommand(cmd) == true) {
-        PRINT_DEBUG("Received message from sendCommand: " + _received_msg);
-    } else {
-        return false;
-    };
+    cmd += "go" + zfill(std::to_string(_current_dg_index), 2);
     /* TODO: nam - Check if has been successfully discarded
      * before returning. - Thu 24 Aug 2017 04:34:57 PM MDT */
-    return false;
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
@@ -546,7 +548,7 @@ bool ZeusModule::sendCommand(std::string cmd) {
      * from the pipetter to avoid sending simultaneous commands. */
     _ready_for_new_command = 0;
     setMsgReadyFlag(0);
-    PRINT_DEBUG("LIBZEUS: Sending command: " + cmd);
+    PRINT_INFO("LIBZEUS: Sending command: " + cmd);
     std::vector<std::string> substrings;
     size_t sbegin = 0;
 
@@ -606,11 +608,18 @@ bool ZeusModule::sendCommand(std::string cmd) {
 }
 
 bool ZeusModule::getTipStatus(void) {
+    unsigned int timeout = 5;
     std::string cmd = cmdHeader("RT");
     setWaitingForMsgFlag(1);
     sendCommand(cmd);
-    while(getWaitingForMsgFlag() == 1) {}
-    std::string ret = getReceivedMsg().substr(getReceivedMsg().find("rt")+2, 1);
+    unsigned int start = time(NULL);
+    while(getWaitingForMsgFlag() == 1 ) {
+        if((time(NULL) - start) > timeout) {
+            PRINT_ERROR("LIBZEUS::getTipStatus: Timeout waiting for response.");
+            return 0;
+        }
+    }
+    std::string ret = getReceivedMsg().substr(getReceivedMsg().find("rt") + 2, 1);
 
     return stoi(ret);
 }

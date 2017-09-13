@@ -47,19 +47,29 @@ LICENSE:
 #include <stdbool.h>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 struct container_cell {
-    std::string test_type;
-    bool used;
-    double vol;            // Well volume (mL)
-    double filled_vol;
-    double depth;
+    bool used = false;
+    double len_x = 0.0f;
+    double len_y = 0.0f;
+    double len_z = 0.0f;
+    double vol_max = 0.0f;            // Well volume (mL)
+    double vol_filled = 0.0f;
+    double liquid_height = 0.0f;
     /* Pipette tip properties */
-    int tt_index; // tip type table index.
-    double min_traverse_height;
-    double min_z_pos;
-    double botpp;
-    double eotpp;
-    double potdp;
+    int tt_index = 0; // tip type table index.
+    int lc_index = 0;
 };
+
+// void initContainerCell(container_cell *c){
+    // c->used = false;
+    // c->len_x = 0.0f;
+    // c->len_y = 0.0f;
+    // c->len_z = 0.0f;
+    // c->vol_max = 0.0f;
+    // c->vol_filled = 0.0f;
+    // c->liquid_height = 0.0f;
+    // c->tt_index = 0;
+    // c->lc_index = 0;
+// }
 
 
 class Container {

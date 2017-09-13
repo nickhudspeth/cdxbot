@@ -141,14 +141,14 @@ void loadParams(ros::NodeHandle &nh) {
          * z-axis. */
         if(!nh.getParam("/cdxbot/feed_plane", pc->getFeedPlaneRef())) {
             nh.getParam("/pc_defaults/feed_plane", pc->getFeedPlaneRef());
-            ROS_WARN_STREAM("No paramater \"_feed_plane\" found in configuration file.\
+            ROS_WARN_STREAM("No parameter \"feed_plane\" found in configuration file.\
                Initializing pipetter with default value " << pc->getFeedPlane());
         }
 
     }
     if(!nh.getParam("/cdxbot/tip_pickup_speed", pc->getTipPickupSpeedRef())) {
         nh.getParam("/pc_defaults/pickup_speed",pc->getTipPickupSpeedRef());
-        ROS_WARN_STREAM("No paramater \"_tip_pickup_speed\" found in configuration file.\
+        ROS_WARN_STREAM("No parameter \"tip_pickup_speed\" found in configuration file.\
                Initializing pipetter with default value " << pc->getTipPickupSpeed());
     }
 }
@@ -187,7 +187,6 @@ void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
                    cdxbot::pipetterMoveZ::Response &resp) {
     return pc->moveZ(req.pos, 1);
-
 }
 
 bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
@@ -198,12 +197,11 @@ bool pickUpTipCallback(cdxbot::pipetterPickUpTip::Request &req,
                                  req.tip_pickup_speed);
     ROS_INFO_STREAM("PipetterControllerNode: pickUpTipCallback: result = " << success);
     return success;
-
 }
 
 bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
                       cdxbot::pipetterEjectTip::Response &resp) {
-    return pc->ejectTip(req.dg_idx);
+    return pc->ejectTip();
 }
 
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,

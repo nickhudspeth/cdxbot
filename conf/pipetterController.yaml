@@ -5,3 +5,5 @@ pc_conf:
     z_axis_enabled: TRUE
     feed_plane_height: 100
     tip_pickup_speed: 0
+    lld: 1
+    qpm: 1

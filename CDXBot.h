@@ -39,19 +39,20 @@ LICENSE:
 *************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-#include <stdlib.h>
-#include <stdio.h>
+#include "Container.h"
+#include "common.h"
 #include <algorithm>
+#include <boost/tokenizer.hpp>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <string>
 #include <map>
-#include <vector>
+#include <map>
 #include <ros/ros.h>
-#include <boost/tokenizer.hpp>
-#include <map>
-#include "Container.h"
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <vector>
 
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 class CDXBot {
@@ -152,9 +153,6 @@ class CDXBot {
         case AXIS_Y:
             _eject_y = pos;
             break;
-        case AXIS_Z:
-            _eject_z = pos;
-            break;
         }
     }
 
@@ -167,27 +165,17 @@ class CDXBot {
         case AXIS_Y:
             ret = _eject_y;
             break;
-        case AXIS_Z:
-            ret = _eject_z;
-            break;
         }
         return ret;
     }
 
     double &getEjectPosRef(unsigned int axis) {
-        double ret = 0.0f;
         switch(axis) {
         case AXIS_X:
-            ret = _eject_x;
-            break;
+            return _eject_x;
         case AXIS_Y:
-            ret = _eject_y;
-            break;
-        case AXIS_Z:
-            ret = _eject_z;
-            break;
+            return _eject_y;
         }
-        return ret;
     }
 
   private:
@@ -195,14 +183,14 @@ class CDXBot {
     const char *d = ","; /*HLMD File delimiter */
     unsigned int _runStatus = 0;
     unsigned int _action_index = 0;
-    double _origin_x = 0.0;
-    double _origin_y = 0.0;
-    double _origin_z = 0.0;
-    double _extents_x = 0.0;
-    double _extents_y = 0.0;
-    double _extents_z = 0.0;
-    double _eject_x -0;
-    double _eject_y = 0;
+    double _origin_x = 0.0f;
+    double _origin_y = 0.0f;
+    double _origin_z = 0.0f;
+    double _extents_x = 0.0f;
+    double _extents_y = 0.0f;
+    double _extents_z = 0.0f;
+    double _eject_x  = 0.0f;
+    double _eject_y = 0.0f;
     bool _gantry_status = 0;
     bool _pipetter_has_z;
     double _eepos[3];

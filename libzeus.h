@@ -150,7 +150,7 @@ extern "C" {
         unsigned int dispensing_settling_time;
         unsigned int flow_rate_transport_vol;
     };
-    
+
     std::string _last_error_msg = "";
 
     class ZeusModule : public PipetterModule {
@@ -163,7 +163,7 @@ extern "C" {
         int deinit(void);
         int lconf(void);
         // void seterrfunc(void(*ef)(std::string s)) {
-            // PRINT_ERROR = ef;
+        // PRINT_ERROR = ef;
         // }
         bool getTipStatus(void);
         bool moveZ(double pos, double vel);
@@ -173,7 +173,7 @@ extern "C" {
                       unsigned int lc_idx, double liquid_surface);
         bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                       unsigned int lc_idx, double liquid_surface);
-        bool ejectTip(unsigned int dg_idx);
+        bool ejectTip(void);
         bool emergencyStop(void);
         bool emergencyStopReset(void);
         bool getContainerGeometryParams(unsigned int index);
@@ -312,14 +312,14 @@ extern "C" {
             {"85", "No communication to the digital potentiometer."},
         };
 
-        int _cgt_index = 1;
-        int _lct_index = 1;
-        bool _gpm = 0;
-        bool _qpm = 0;
-        bool _lld = 0;
+        unsigned int _cgt_index = 1;
+        unsigned int _lct_index = 1;
+        unsigned int _current_dg_index = 0;
+        bool _qpm = 1;
+        bool _lld = 1;
         unsigned int _lld_search_height = 0;
         unsigned int _check_height = 0;
-        int _search_bottom_mode = 0;
+        int _search_bottom_mode = 1;
         // Mixing parameters
         unsigned int _mix_vol = 0;
         unsigned int _mix_flow_rate = 0;

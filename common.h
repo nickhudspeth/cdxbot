@@ -42,12 +42,14 @@ LICENSE:
 #include <cstdlib>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 
-#define AXIS_X   0
-#define AXIS_Y   1
-#define AXIS_Z   2
-
 #define UNITS_MM 0
 #define UNITS_IN 1
+#define AXIS_ALL 7
+#define AXIS_X 1
+#define AXIS_Y 2
+#define AXIS_Z 4
+#define MOVE_MODE_ABSOLUTE 0
+#define MOVE_MODE_RELATIVE 1
 
 #define COM_ETHERNET 0
 #define COM_USB      1

@@ -114,11 +114,11 @@ void RampsModule::waitForString(std::string s, unsigned int timeout) {
             s2 += std::string(buffer);
             if(buffer[0] == '\n') {
 #ifdef PRINT_OUTPUT
-                std::cout << KBLU << "LIBRAMPS::WORKER THREAD: Newline found. S2 = \"" << s2 << KNRM << std::endl;
+                // std::cout << KBLU << "LIBRAMPS::WORKER THREAD: Newline found. S2 = \"" << s2 << KNRM << std::endl;
 #endif
                 if (s2.find(s) != std::string::npos) {
 #ifdef PRINT_OUTPUT
-                    std::cout << KBLU << "LIBRAMPS::WORKER THREAD: FOUND STRING: " << s2 << KNRM << std::endl;
+                    // std::cout << KBLU << "LIBRAMPS::WORKER THREAD: FOUND STRING: " << s2 << KNRM << std::endl;
 #endif
                     s2.clear();
                     return;
@@ -148,8 +148,8 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
     idx = zdec.find(".");
     std::string zpos = "Z:" + zdec.substr(0, idx+3);
     PRINT_INFO("Waiting for gantry to arrive at position " + \
-            xdec + ", " + ydec + ", " + \
-            zdec + "}");
+               xdec + ", " + ydec + ", " + \
+               zdec + "}");
     time_t start = time(NULL);
     auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -173,14 +173,10 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                 /* If this line contains coordinate information, parse it.
                  * Else, throw it away. */
                 if (s2.find(std::string("X:")) != std::string::npos) {
-#ifdef PRINT_OUTPUT
-                    std::cout << KBLU << "LIBRAMPS::" << ": FOUND STRING: " << s2 << KNRM << std::endl;
-#endif
+                    // PRINT_INFO("LIBRAMPS::FOUND STRING: " + s2);
                     if(axes & AXIS_X) {
                         if(s2.find(xpos) != std::string::npos) {
-#ifdef PRINT_OUTPUT
-                            std::cout << "LIBRAMPS: Gantry reached target in x-coordinate" << std::endl;
-#endif
+                            PRINT_INFO("LIBRAMPS: Gantry reached target in x-coordinate");
                             ax = true;
                         }
                     } else {
@@ -188,9 +184,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Y) {
                         if(s2.find(ypos) != std::string::npos) {
-#ifdef PRINT_OUTPUT
-                            std::cout << "LIBRAAMPS: Gantry reached target in y-coordinate" << std::endl;
-#endif
+                            PRINT_INFO("LIBRAMPS: Gantry reached target in y-coordinate");
                             ay = true;
                         }
                     } else {
@@ -198,18 +192,14 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Z) {
                         if(s2.find(zpos) != std::string::npos) {
-#ifdef PRINT_OUTPUT
-                            std::cout << "LIBRAAMPS: Gantry reached target in z-coordinate" << std::endl;
-#endif
+                            PRINT_INFO("LIBRAAMPS: Gantry reached target in z-coordinate");
                             az = true;
                         }
                     } else {
                         az = true;
                     }
                     if((ax == true) && (ay == true) && (az ==true)) {
-#ifdef PRINT_OUTPUT
-                        std::cout << KBLU << "LIBRAMPS:: Gantry move complete." << KNRM << std::endl;
-#endif
+                        PRINT_INFO("LIBRAMPS:: Gantry move complete.");
                         s2.clear();
                         return true;
                     } else {
@@ -304,7 +294,7 @@ int RampsModule::lconf(void) {
 }
 
 // void RampsModule::seterrfunc(void(*ef)(std::string s)) {
-    // PRINT_ERROR = ef;
+// PRINT_ERROR = ef;
 // }
 
 void RampsModule::dwell(int t) {
@@ -342,7 +332,7 @@ bool RampsModule::home(unsigned int axis) {
         break;
     }
     sendCommand(ret);
-    return verifyPosition((AXIS_X | AXIS_Y), 0.00f,0.00f,0.00f);
+    return verifyPosition((AXIS_X | AXIS_Y), 0.00f, 406.5f, 0.00f, 20);
 }
 
 
@@ -350,7 +340,7 @@ int RampsModule::sendCommand(std::string s, bool wfr) {
     s += "\n";
     int n = 0;
     n = write(_usbfd, s.c_str(), s.length());
-    std::cout << "LIBRAMPS: Sent " << n << " characters in command: " << s.c_str() << std::endl;
+    PRINT_INFO("LIBRAMPS: Sent " + std::to_string(n) + " characters in command: " + s);
     usleep((n+25) * 100);
     usleep(100000);
     return n;
@@ -408,7 +398,8 @@ int RampsModule::moveAbsolute(float x, float y, float z) {
 
     /* TODO: nam - Modify function such that x,y,z destinations less than zero are
      * supported. Tue 28 Mar 2017 11:08:51 AM MDT */
-    std::string ret;
+    std::string ret = "";
+    double diff = 0.0f;
     int move_times[] = {0, 0, 0};
     double tvel = _traverse_velocity / 60.0f;
     if (_move_mode != MOVE_MODE_ABSOLUTE) {
@@ -417,24 +408,18 @@ int RampsModule::moveAbsolute(float x, float y, float z) {
         _move_mode = MOVE_MODE_ABSOLUTE;
     }
     ret = std::string("G0");
-    if(x > 0) {
-        ret += std::string(" X") + std::to_string(x);
-        double diff = std::abs(x - _pos[0]);
-        move_times[0] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
-        _pos[0] = x;
-    }
-    if(y > 0) {
-        ret += std::string(" Y") + std::to_string(y);
-        double diff = std::abs(y - _pos[1]);
-        move_times[1] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
-        _pos[1] = y;
-    }
-    if(z > 0) {
-        ret += std::string(" Z") + std::to_string(z);
-        double diff = std::abs(z - _pos[2]);
-        move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
-        _pos[2] = z;
-    }
+    ret += std::string(" X") + std::to_string(x);
+    diff = std::abs(x - _pos[0]);
+    move_times[0] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+    _pos[0] = x;
+    ret += std::string(" Y") + std::to_string(y);
+    diff = std::abs(y - _pos[1]);
+    move_times[1] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+    _pos[1] = y;
+    ret += std::string(" Z") + std::to_string(z);
+    diff = std::abs(z - _pos[2]);
+    move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
+    _pos[2] = z;
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret, 1);
     verifyPosition((AXIS_X | AXIS_Y), x,y,z);

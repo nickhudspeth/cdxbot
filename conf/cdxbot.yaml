@@ -18,7 +18,7 @@ cdxbot:
             len_y: 127.91         # Container Exterior Length
             len_z: 69.22          # Container Exterior Height
             offset_x: 56.275        # X-offset Between Container Origin and Deck Origin
-            offset_y: 30.95        # Y-offset Between Container Origin and Deck Origin
+            offset_y: 29        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
             rows: 12            # Number of Rows in Container
             cols: 8             # Number of Columns in Container
@@ -26,11 +26,10 @@ cdxbot:
             col_spacing: 9     # Spacing Between Adjacent Cells in Column
             tt_index: 4        # Tip type table index
             well_depth:  41.3     # Depth of Well from Deck to Lowest Floor Point
-            tip_engagement_len: 5
-            tip_deposit_height: 10
+            tip_engagement_len: 15
+            tip_deposit_height: 144
         c1:              # Container ID Number
-            type: "tip"        # Container type [tip/well]
-            tt_index: 4        # Tip type table index
+            type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
             len_x:  85.93         # Container Exterior Width
             len_z: 69.22          # Container Exterior Height
@@ -38,10 +37,19 @@ cdxbot:
             cols: 8             # Number of Columns in Container
             row_spacing: 9     # Spacing Between Adjacent Cells in Row
             col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
             offset_x: 173.750        # X-offset Between Container Origin and Deck Origin
             offset_y: 28        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68        # Z-offset Between Container Origin and Deck Origin
+            vol: 1100.0
+            well_geometry: "square"
+            well_diameter: 0
+            well_len_x: 8.5
+            well_len_y: 8.5
+            well_len_z: 48 # Depth of well from container deck to lowest interior point
+            second_section: 0
+            second_section_height: 0
+            start_position_offset: 0
+            dispense_position: 0
         c2:              # Container ID Number
             type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
@@ -56,8 +64,16 @@ cdxbot:
             offset_y: 30.950        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
             vol:  1100          # Container cell volume, uL
+            well_geometry: "round"
+            well_diameter: 0
+            well_len_x: 8.5
+            well_len_y: 8.5
+            second_section: 0
+            second_section_height: 0
+            start_position_offset: 0
+            dispense_position: 0
         c3:              # Container ID Number
-            type: "well"        # Container type [tip/well]
+            type: "tip"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
             len_x:  85.93         # Container Exterior Width
             len_z: 69.22         # Container Exterior Height
@@ -70,8 +86,9 @@ cdxbot:
             offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
             vol:  1100          # Container cell volume, uL
+            tt_index: 4        # Tip type table index
         c4:              # Container ID Number
-            type: "well"        # Container type [tip/well]
+            type: "tip"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
             len_x:  85.93         # Container Exterior Width
             len_z: 69.22         # Container Exterior Height
@@ -84,6 +101,7 @@ cdxbot:
             offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
             offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
             vol:  1100          # Container cell volume, uL
+            tt_index: 4        # Tip type table index
         c5:              # Container ID Number
             type: "well"        # Container type [tip/well]
             len_y: 127.91         # Container Exterior Length
@@ -98,5 +116,13 @@ cdxbot:
             offset_y: 176.725        # Y-offset Between Container Origin and Deck Origin
             offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
             vol:  1100          # Container cell volume, uL
+            well_geometry: "square"
+            well_diameter: 0
+            well_len_x: 8.5
+            well_len_y: 8.5
+            second_section: 0
+            second_section_height: 0
+            start_position_offset: 0
+            dispense_position: 0
 
 

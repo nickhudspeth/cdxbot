@@ -3,6 +3,7 @@ home
 #shakerstart, 5
 #move, 0, 0, 0
 pickup, 0, 0, 0
+eject
 #wait, 2000
 #move, 0, 0, 7
 #wait, 1000
