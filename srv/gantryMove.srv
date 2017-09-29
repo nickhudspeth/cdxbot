@@ -1,5 +1,8 @@
 # 0=absolute, 1=relative
 bool move_mode
+bool movex
+bool movey
+bool movez
 float64 x
 float64 y
 float64 z

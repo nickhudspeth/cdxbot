@@ -108,10 +108,11 @@ class GantryModule : public CDXModule {
     * Function :   moveAbsolute()
     * Purpose  :   Command the end effector to move to position specified by
     *              the position vector <x,y,z>.
-    * Input    :   std::float x, std::float y, std::float z
+    * Input    :   std::float x, std::float y, std::float z, bool movex, bool
+    * movey, bool movez
     * Returns  :   int
     *************************************************************************/
-    virtual int moveAbsolute(float x, float y, float z) {};
+    virtual int moveAbsolute(float x, float y, float z, bool movex, bool movey, bool movez) {};
 
     /*************************************************************************
     * Function :   moveRelative()
@@ -119,10 +120,11 @@ class GantryModule : public CDXModule {
     *              by the position vector <cx + x, cy + y, cz +z>, where c(n)
     *              is the nth element of the vector specifying the current
     *              position of the end effector.
-    * Input    :   float x, float y, float z
+    * Input    :   float x, float y, float z, bool movex, bool movey, bool
+    * movez
     * Returns  :   int
     *************************************************************************/
-    virtual int moveRelative(float x, float y, float z) {};
+    virtual int moveRelative(float x, float y, float z, bool movex, bool movey, bool movez) {};
 
     /*************************************************************************
     * Function :   setAxisStepsPerUnit()

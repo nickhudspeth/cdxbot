@@ -20,7 +20,7 @@ gc_conf:
     zpos_min: 0.0
     zpos_max: 300.0
     move_mode: "absolute"
-    axis_steps_per_unit_x : 393
+    axis_steps_per_unit_x : 394
     axis_steps_per_unit_y : 394.75
     axis_steps_per_unit_z : 393
     # CONFIGURATION SETTINGS FOR CONTROLLERS WITH CHARACTER INTERFACEs

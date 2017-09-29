@@ -41,11 +41,11 @@ LICENSE:
 
 
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
-int airZModule::init() {
+int AirZModule::init() {
     // set up communications interface
     // start thread to read incoming data
     // send pump initialize command
-    sendCommand("Z");
+    sendCommand(makeCommandString("Z"));
     // enable microliter increment mode
 
     /* TODO: nam - Check to see if this command requires the run parameter to be
@@ -54,11 +54,11 @@ int airZModule::init() {
 
 }
 
-int airZModule::deinit() {
+int AirZModule::deinit() {
 
 }
 
-void airZModule::pickUpTip() {
+void AirZModule::pickUpTip() {
     /* The air-Z pipetter does not have an z-axis drive independent of the
      * gantry, therefore the pickup motion must be performed by the gantry
      * z-axis drive. We simply enable tip loss monitoring for the duration that
@@ -67,7 +67,7 @@ void airZModule::pickUpTip() {
     sendCommand(s);
 }
 
-void airZModule::ejectTip() {
+void AirZModule::ejectTip() {
     // eject tip and enable successful tip ejection monitoring
     std::string s = "E0";
     sendCommand(s);
@@ -77,7 +77,7 @@ void airZModule::ejectTip() {
 
 }
 
-void airZModule::aspirate(float volume) {
+void AirZModule::aspirate(float volume) {
     std::string s = "";
     if((_volume + volume) > MICROLITER_INCREMENT_MAX) {
         // print a warning
@@ -93,7 +93,7 @@ void airZModule::aspirate(float volume) {
     // get verification [q]
 }
 
-void airZModule::dispense(float volume) {
+void AirZModule::dispense(float volume) {
     std::string s = "";
     if((_volume - volume) < 0) {
         // print a warning
@@ -109,12 +109,20 @@ void airZModule::dispense(float volume) {
     // get verification [q]
 }
 
-void airZModule::sendCommand(std::string s, bool run) {
-    s = "/" + std::to_string(_id) + s;
-    if(run) s += "R";
+bool AirZModule::sendCommand(std::string s) {
+    if(s.length > 128) {
+        /* String is limited to 128 bytes by command buffer size. */
+        PRINT_ERROR("Command string exceeds maximum allowed length of 128 bytes.");
+        return false;
+    }
+
+    /* TODO: nam - Paste code from libZeus::SendCommand here. - Wed 20 Sep 2017 05:27:58 PM MDT */
+
+    // s = "/" + std::to_string(_id) + s;
+    return waitForReadyStatus();
 }
 
-bool airZModule::liquidLevelDetect(int timeout) {
+bool AirZModule::liquidLevelDetect(int timeout) {
     /* Activate capacitive liquid level sensing. Wait up to [timeout] seconds
      * for pipetter to return valid indication of liquid level. Terminate and
      * throw error if not found. */
@@ -130,7 +138,9 @@ bool airZModule::liquidLevelDetect(int timeout) {
     }
 }
 
-void airZModule::terminate(void) {
+void AirZModule::terminate(void) {
     std::string s = "T";
     sendCommand(s);
 }
+
+std::string AirZModule::makeCommandString

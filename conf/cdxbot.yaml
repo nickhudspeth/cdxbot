@@ -10,119 +10,180 @@ cdxbot:
     num_containers: 6
     pipetter_has_z: true
     feed_plane: 70.00
+# CONTAINER PROPERTIES
     containers:
-        # Container Properties
-        c0:              # Container ID Number
-            type: "tip"        # Container type [tip/well]
-            len_x:  85.93        # Container Exterior Width
-            len_y: 127.91         # Container Exterior Length
-            len_z: 69.22          # Container Exterior Height
-            offset_x: 56.275        # X-offset Between Container Origin and Deck Origin
-            offset_y: 29        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 9     # Spacing Between Adjacent Cells in Row
-            col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            tt_index: 4        # Tip type table index
-            well_depth:  41.3     # Depth of Well from Deck to Lowest Floor Point
-            tip_engagement_len: 15
-            tip_deposit_height: 144
-        c1:              # Container ID Number
-            type: "well"        # Container type [tip/well]
-            len_y: 127.91         # Container Exterior Length
-            len_x:  85.93         # Container Exterior Width
-            len_z: 69.22          # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 9     # Spacing Between Adjacent Cells in Row
-            col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            offset_x: 173.750        # X-offset Between Container Origin and Deck Origin
-            offset_y: 28        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68        # Z-offset Between Container Origin and Deck Origin
-            vol: 1100.0
+        c0:                             # Container Class ID Number
+            # GENERAL CONTAINER PARAMETERS
+            type: "tip"                 # Container type [tip/well]
+            len_x:  85.93               # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 56.275            # X-offset Between Container Origin and Deck Origin
+            offset_y: 30.95             # Y-offset Between Container Origin and Deck Origin
+            offset_z: 68.0              # Z-offset Between Container Origin and Deck Origin
+            rows: 12                    # Number of Rows in Container
+            cols: 8                     # Number of Columns in Container
+            row_spacing: 9              # Spacing Between Adjacent Cells in Row
+            col_spacing: 9              # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 1           # Tip type table index
+            tip_engagement_len: 15      # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 144     # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
             well_geometry: "square"
             well_diameter: 0
             well_len_x: 8.5
             well_len_y: 8.5
-            well_len_z: 48 # Depth of well from container deck to lowest interior point
+            well_len_z: 41.3            # Depth of well from container deck to lowest interior point
             second_section: 0
             second_section_height: 0
-            start_position_offset: 0
-            dispense_position: 0
-        c2:              # Container ID Number
-            type: "well"        # Container type [tip/well]
-            len_y: 127.91         # Container Exterior Length
-            len_x:  85.93         # Container Exterior Width
-            len_z: 69.22          # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 9     # Spacing Between Adjacent Cells in Row
-            col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            offset_x: 291.255        # X-offset Between Container Origin and Deck Origin
-            offset_y: 30.950        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
-            vol:  1100          # Container cell volume, uL
+            bottom_search_offset: 0     # Height above container floor to start bottom search
+            dispense_offset: 0          # Height above container floor to start dispense
+        c1:                             # Container ID Number
+            # GENERAL CONTAINER PARAMETERS
+            type: "well"                # Container type [tip/well]
+            len_x:  85.93               # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 173.75            # X-offset Between Container Origin and Deck Origin
+            offset_y: 30.95             # Y-offset Between Container Origin and Deck Origin
+            offset_z: 68.0              # Z-offset Between Container Origin and Deck Origin
+            rows: 12                    # Number of Rows in Container
+            cols: 8                     # Number of Columns in Container
+            row_spacing: 9              # Spacing Between Adjacent Cells in Row
+            col_spacing: 9              # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 0           # Tip type table index
+            tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 0       # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
+            well_geometry: "square"
+            well_diameter: 0.0
+            well_len_x: 8.0
+            well_len_y: 8.0
+            well_len_z: 40.0            # Depth of well from container deck to lowest interior point
+            second_section: 0
+            second_section_height: 0
+            bottom_search_offset: 5     # Height above container floor to start bottom search
+            dispense_offset: 5          # Height above container floor to start dispense
+        c2:                             # Container ID Number
+            # GENERAL CONTAINER PARAMETERS
+            type: "well"                # Container type [tip/well]
+            len_x: 85.93                # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 291.255           # X-offset Between Container Origin and Deck Origin
+            offset_y: 30.95             # Y-offset Between Container Origin and Deck Origin
+            offset_z: 68.0              # Z-offset Between Container Origin and Deck Origin
+            rows: 12                    # Number of Rows in Container
+            cols: 8                     # Number of Columns in Container
+            row_spacing: 9              # Spacing Between Adjacent Cells in Row
+            col_spacing: 9              # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 0           # Tip type table index
+            tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 0       # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
+            well_geometry: "round"
+            well_diameter: 9.0
+            well_len_x: 0.0
+            well_len_y: 0.0
+            well_len_z: 10.0            # Depth of well from container deck to lowest interior point
+            second_section: 6180
+            second_section_height: 3.0
+            bottom_search_offset: 5     # Height above container floor to start bottom search
+            dispense_offset: 5          # Height above container floor to start dispense
+        c3:                             # Container ID Number
+            # GENERAL CONTAINER PARAMETERS
+            type: "none"                # Container type [tip/well]
+            len_x: 85.93                # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 45.19             # X-offset Between Container Origin and Deck Origin
+            offset_y: 157.97            # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5              # Z-offset Between Container Origin and Deck Origin
+            rows: 0                     # Number of Rows in Container
+            cols: 0                     # Number of Columns in Container
+            row_spacing: 0              # Spacing Between Adjacent Cells in Row
+            col_spacing: 0              # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 0           # Tip type table index
+            tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 0       # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
             well_geometry: "round"
             well_diameter: 0
-            well_len_x: 8.5
-            well_len_y: 8.5
+            well_len_x: 0.0
+            well_len_y: 0.0
+            well_len_z: 0               # Depth of well from container deck to lowest interior point
             second_section: 0
             second_section_height: 0
-            start_position_offset: 0
-            dispense_position: 0
-        c3:              # Container ID Number
-            type: "tip"        # Container type [tip/well]
-            len_y: 127.91         # Container Exterior Length
-            len_x:  85.93         # Container Exterior Width
-            len_z: 69.22         # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 9     # Spacing Between Adjacent Cells in Row
-            col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            offset_x: 45.19        # X-offset Between Container Origin and Deck Origin
-            offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
-            vol:  1100          # Container cell volume, uL
-            tt_index: 4        # Tip type table index
+            bottom_search_offset: 0     # Height above container floor to start bottom search
+            dispense_offset: 0          # Height above container floor to start dispense
         c4:              # Container ID Number
-            type: "tip"        # Container type [tip/well]
-            len_y: 127.91         # Container Exterior Length
-            len_x:  85.93         # Container Exterior Width
-            len_z: 69.22         # Container Exterior Height
-            rows: 12            # Number of Rows in Container
-            cols: 8             # Number of Columns in Container
-            row_spacing: 9     # Spacing Between Adjacent Cells in Row
-            col_spacing: 9     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            offset_x: 162.66        # X-offset Between Container Origin and Deck Origin
-            offset_y: 157.97        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 90.5        # Z-offset Between Container Origin and Deck Origin
-            vol:  1100          # Container cell volume, uL
-            tt_index: 4        # Tip type table index
-        c5:              # Container ID Number
-            type: "well"        # Container type [tip/well]
-            len_y: 127.91         # Container Exterior Length
-            len_x:  85.93         # Container Exterior Width
-            len_z: 69.22         # Container Exterior Height
-            rows: 8            # Number of Rows in Container
-            cols: 3             # Number of Columns in Container
-            row_spacing: 18     # Spacing Between Adjacent Cells in Row
-            col_spacing: 27     # Spacing Between Adjacent Cells in Column
-            well_depth:  48     # Depth of Well from Deck to Lowest Floor Point
-            offset_x: 295.725        # X-offset Between Container Origin and Deck Origin
-            offset_y: 176.725        # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68.0        # Z-offset Between Container Origin and Deck Origin
-            vol:  1100          # Container cell volume, uL
-            well_geometry: "square"
+            # GENERAL CONTAINER PARAMETERS
+            type: "none"                # Container type [tip/well]
+            len_x: 85.93                # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 162.66            # X-offset Between Container Origin and Deck Origin
+            offset_y: 157.97            # Y-offset Between Container Origin and Deck Origin
+            offset_z: 90.5              # Z-offset Between Container Origin and Deck Origin
+            rows: 0                     # Number of Rows in Container
+            cols: 0                     # Number of Columns in Container
+            row_spacing: 0              # Spacing Between Adjacent Cells in Row
+            col_spacing: 0              # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 0           # Tip type table index
+            tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 0       # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
+            well_geometry: "round"
             well_diameter: 0
-            well_len_x: 8.5
-            well_len_y: 8.5
+            well_len_x: 0.0
+            well_len_y: 0.0
+            well_len_z: 0               # Depth of well from container deck to lowest interior point
             second_section: 0
             second_section_height: 0
-            start_position_offset: 0
-            dispense_position: 0
-
+            bottom_search_offset: 0     # Height above container floor to start bottom search
+            dispense_offset: 0          # Height above container floor to start dispense
+        c5:                             # Container ID Number
+            # GENERAL CONTAINER PARAMETERS
+            type: "well"                # Container type [tip/well]
+            len_x: 85.93                # Container Exterior Width
+            len_y: 127.91               # Container Exterior Length
+            len_z: 69.22                # Container Exterior Height
+            offset_x: 295.725           # X-offset Between Container Origin and Deck Origin
+            offset_y: 176.725           # Y-offset Between Container Origin and Deck Origin
+            offset_z: 68                # Z-offset Between Container Origin and Deck Origin
+            rows: 8                     # Number of Rows in Container
+            cols: 3                     # Number of Columns in Container
+            row_spacing: 18.0           # Spacing Between Adjacent Cells in Row
+            col_spacing: 27.0           # Spacing Between Adjacent Cells in Column
+            traverse_height: 10         # Clearance above container at which to traverse
+            # TIP PARAMETERS
+            tip_type_index: 0           # Tip type table index
+            tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
+            tip_deposit_height: 0       # Height above the deck at which the tip should be ejected
+            # CONTAINER GEOMETRY DEFINITION
+            volume: 1000.00
+            well_geometry: "round"
+            well_diameter: 3.5
+            well_len_x: 0.0
+            well_len_y: 0.0
+            well_len_z: 5               # Depth of well from container deck to lowest interior point
+            second_section: 0
+            second_section_height: 0
+            bottom_search_offset: 5     # Height above container floor to start bottom search
+            dispense_offset: 3          # Height above container floor to start dispense
 

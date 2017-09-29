@@ -174,6 +174,7 @@ extern "C" {
         bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                       unsigned int lc_idx, double liquid_surface);
         bool ejectTip(void);
+        bool home(void);
         bool emergencyStop(void);
         bool emergencyStopReset(void);
         bool getContainerGeometryParams(unsigned int index);
@@ -184,9 +185,15 @@ extern "C" {
                               double container_offset_z, \
                               double tip_engagement_len, \
                               double tip_deposit_height);
+        bool makeContainerGeometry(unsigned int index, bool geometry,
+                                   double diameter, double len_x, double len_y,
+                                   double second_section_height,
+                                   double second_section, double max_depth,
+                                   double bottom_search_offset,
+                                   double dispense_offset);
         bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed);
-        bool setContainerGeometryParams(struct container_geometry_t c);
-        bool setDeckGeometryParams(struct deck_geometry_t d);
+        // bool setContainerGeometryParams(struct container_geometry_t c);
+        // bool setDeckGeometryParams(struct deck_geometry_t d);
         bool setLiquidClassParams(struct liquid_class_t l);
         int getSockFD(void) {
             return _sockfd;

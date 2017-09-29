@@ -60,15 +60,15 @@ struct container_cell {
 };
 
 // void initContainerCell(container_cell *c){
-    // c->used = false;
-    // c->len_x = 0.0f;
-    // c->len_y = 0.0f;
-    // c->len_z = 0.0f;
-    // c->vol_max = 0.0f;
-    // c->vol_filled = 0.0f;
-    // c->liquid_height = 0.0f;
-    // c->tt_index = 0;
-    // c->lc_index = 0;
+// c->used = false;
+// c->len_x = 0.0f;
+// c->len_y = 0.0f;
+// c->len_z = 0.0f;
+// c->vol_max = 0.0f;
+// c->vol_filled = 0.0f;
+// c->liquid_height = 0.0f;
+// c->tt_index = 0;
+// c->lc_index = 0;
 // }
 
 
@@ -152,13 +152,16 @@ class Container {
     double getLength(const char axis) {
         switch(axis) {
         case 'x':
-            return _len_x;
+            // return _len_x;
+            return _len[0];
             break;
         case 'y':
-            return _len_y;
+            // return _len_y;
+            return _len[1];
             break;
         case 'z':
-            return _len_z;
+            // return _len_z;
+            return _len[2];
             break;
         }
         return -1;
@@ -173,13 +176,16 @@ class Container {
     double& getLengthRef (const char axis) {
         switch(axis) {
         case 'x':
-            return _len_x;
+            // return _len_x;
+            return _len[0];
             break;
         case 'y':
-            return _len_y;
+            // return _len_y;
+            return _len[1];
             break;
         case 'z':
-            return _len_z;
+            // return _len_z;
+            return _len[2];
             break;
         }
     }
@@ -193,13 +199,16 @@ class Container {
     void setLength(const char axis, double l) {
         switch(axis) {
         case 'x':
-            _len_x = l;
+            _len[0] = l;
+            // _len_x = l;
             break;
         case 'y':
-            _len_y = l;
+            _len[1] = l;
+            // _len_y = l;
             break;
         case 'z':
-            _len_z = l;
+            _len[2] = l;
+            // _len_z = l;
             break;
         }
     }
@@ -265,6 +274,70 @@ class Container {
     }
 
     /*************************************************************************
+    * Function :   getOffset()
+    * Purpose  :   Getter for the variable _offset_{axis}
+    * Input    :   const char axis
+    * Returns  :   double
+    *************************************************************************/
+    double getOffset(const char axis) {
+        switch(axis) {
+        case 'x':
+            return _offset[0];
+            break;
+        case 'y':
+            return _offset[1];
+            break;
+        case 'z':
+            return _offset[2];
+            break;
+        }
+        return -1;
+    }
+
+    /*************************************************************************
+    * Function :   getOffsetRef()
+    * Purpose  :   Returns a reference to the variable Container::_offset_{axis}
+    * Input    :   const char axis
+    * Returns  :   double&
+    *************************************************************************/
+    double& getOffsetRef (const char axis) {
+        switch(axis) {
+        case 'x':
+            return _offset[0];
+            break;
+        case 'y':
+            return _offset[1];
+            break;
+        case 'z':
+            return _offset[2];
+            break;
+        }
+    }
+
+    /*************************************************************************
+    * Function :   setOffset()
+    * Purpose  :   Setter for the variable _offset_{axis}
+    * Input    :   const char axis, double o
+    * Returns  :   void
+    *************************************************************************/
+    void setOffset(const char axis, double o) {
+        switch(axis) {
+        case 'x':
+            _offset[0] = o;
+            // _offset_x = o;
+            break;
+        case 'y':
+            _offset[1] = o;
+            // _offset_y = o;
+            break;
+        case 'z':
+            _offset[2] = o;
+            // _offset_z = o;
+            break;
+        }
+    }
+
+    /*************************************************************************
     * Function :   getRowSpacing()
     * Purpose  :   Getter for the variable _row_spacing
     * Input    :   void
@@ -325,35 +398,66 @@ class Container {
     }
 
     /*************************************************************************
-    * Function :   getWellDepth()
-    * Purpose  :   Getter for the variable _well_depth
+    * Function :   getTraverseHeight()
+    * Purpose  :   Getter for the variable _traverse_height
     * Input    :   void
     * Returns  :   double
     *************************************************************************/
-    double getWellDepth(void) {
-        return _well_depth;
+    double getTraverseHeight(void) {
+        return _traverse_height + _offset[2];
     }
 
     /*************************************************************************
-    * Function :   getWellDepthRef()
-    * Purpose  :   Returns a reference to the variable Container::_well_depth
+    * Function :   getTraverseHeightRef()
+    * Purpose  :   Returns a reference to the variable
+    * Container::_traverse_height
     * Input    :   void
     * Returns  :   double&
     *************************************************************************/
-    double& getWellDepthRef (void) {
-        return _well_depth;
+    double& getTraverseHeightRef (void) {
+        return _traverse_height;
     }
 
     /*************************************************************************
-    * Function :   setWellDepth()
-    * Purpose  :   Setter for the variable _well_depth
-    * Input    :   double d
+    * Function :   setTraverseHeight()
+    * Purpose  :   Setter for the variable _traverse_height
+    * Input    :   double h
     * Returns  :   void
     *************************************************************************/
-    void setWellDepth(double d) {
-        _well_depth = d;
+    void setTraverseHeight(double h) {
+        _traverse_height = h;
     }
 
+    /*************************************************************************
+    * Function :   getTipType()
+    * Purpose  :   Getter for the variable _tip_engagement_len
+    * Input    :   void
+    * Returns  :   unsigned int
+    *************************************************************************/
+    int getTipType(void) {
+        return _tip_type_table_index;
+    }
+
+    /*************************************************************************
+    * Function :   getTipTypeRef()
+    * Purpose  :   Returns a reference to the variable
+    * Container::_tip_type_table_index
+    * Input    :   void
+    * Returns  :   unsigned int&
+    *************************************************************************/
+    int& getTipTypeRef (void) {
+        return _tip_type_table_index;
+    }
+
+    /*************************************************************************
+    * Function :   setTipType()
+    * Purpose  :   Setter for the variable _tip_type_table_index
+    * Input    :   unsigned int d
+    * Returns  :   void
+    *************************************************************************/
+    void setTipType(int d) {
+        _tip_type_table_index = static_cast<unsigned int>(abs(d));
+    }
 
     /*************************************************************************
     * Function :   getTipEngagementLen()
@@ -386,7 +490,6 @@ class Container {
         _tip_engagement_len = d;
     }
 
-
     /*************************************************************************
     * Function :   getTipDepositHeight()
     * Purpose  :   Getter for the variable _tip_deposit_height
@@ -418,7 +521,6 @@ class Container {
         _tip_deposit_height = d;
     }
 
-
     /*************************************************************************
     * Function :   getWellGeometry()
     * Purpose  :   Getter for the variable _well_geometry
@@ -448,7 +550,6 @@ class Container {
     void setWellGeometry(std::string g) {
         _well_geometry = g;
     }
-
 
     /*************************************************************************
     * Function :   getWellDiameter()
@@ -481,58 +582,69 @@ class Container {
         _well_diameter = d;
     }
 
-
     /*************************************************************************
-    * Function :   getWellLen()
+    * Function :   getWellLength()
     * Purpose  :   Getter for the variable _well_len_{axis}
     * Input    :   const char axis
     * Returns  :   double
     *************************************************************************/
-    double getWellLen(const char axis) {
+    double getWellLength(const char axis) {
         switch(axis) {
         case 'x':
-            return _well_len_x;
+            return _well_len[0];
+            break;
         case 'y':
-            return _well_len_y;
-        default:
-            /* Throw error. Invalid axis specified */
-            return 0.0f;
+            return _well_len[1];
+            break;
+        case 'z':
+            return _well_len[2];
+            break;
         }
+        return -1;
     }
 
     /*************************************************************************
-    * Function :   getWellLenRef()
+    * Function :   getWellLengthRef()
     * Purpose  :   Returns a reference to the variable Container::_well_len_{axis}
     * Input    :   const char axis
     * Returns  :   double&
     *************************************************************************/
-    double& getWellLenRef (const char axis) {
+    double& getWellLengthRef (const char axis) {
         switch(axis) {
         case 'x':
-            return _well_len_x;
+            return _well_len[0];
+            break;
         case 'y':
-            return _well_len_y;
-        default:
-            /* Throw error. Invalid axis specified */
+            return _well_len[1];
+            break;
+        case 'z':
+            return _well_len[2];
             break;
         }
     }
 
     /*************************************************************************
-    * Function :   setWellLen()
+    * Function :   setWellLength()
     * Purpose  :   Setter for the variable _well_len_{axis}
-    * Input    :   const char axis, double d
+    * Input    :   const char axis, double l
     * Returns  :   void
     *************************************************************************/
-    void setWellLen(const char axis, double d) {
+    void setWellLength(const char axis, double l) {
         switch(axis) {
         case 'x':
-            _well_len_x = d;
+            _well_len[0] = l;
+            // _well_len_x = o;
+            break;
         case 'y':
-            _well_len_y = d;
+            _well_len[1] = l;
+            // _well_len_y = o;
+            break;
+        case 'z':
+            _well_len[2] = l;
+            // _well_len_z = o;
+            break;
         }
     }
-
 
     /*************************************************************************
     * Function :   getSecondSectionHeight()
@@ -596,142 +708,99 @@ class Container {
         _second_section = d;
     }
 
-
     /*************************************************************************
-    * Function :   getMinHeight()
-    * Purpose  :   Getter for the variable _min_height
+    * Function :   getBottomSearchOffset()
+    * Purpose  :   Getter for the variable _bottom_search_offset
     * Input    :   void
     * Returns  :   double
     *************************************************************************/
-    double getMinHeight(void) {
-        return _min_height;
+    double getBottomSearchOffset(void) {
+        return _bottom_search_offset;
     }
 
     /*************************************************************************
-    * Function :   getMinHeightRef()
+    * Function :   getBottomSearchOffsetRef()
     * Purpose  :   Returns a reference to the variable
-    * Container::_min_height
+    * Container::_bottom_search_offset
     * Input    :   void
     * Returns  :   double&
     *************************************************************************/
-    double& getMinHeightRef (void) {
-        return _min_height;
+    double& getBottomSearchOffsetRef (void) {
+        return _bottom_search_offset;
     }
 
     /*************************************************************************
-    * Function :   setMinHeight()
-    * Purpose  :   Setter for the variable _min_height
+    * Function :   setBottomSearchOffset()
+    * Purpose  :   Setter for the variable _bottom_search_offset
     * Input    :   double d
     * Returns  :   void
     *************************************************************************/
-    void setMinHeight(double d) {
-        _min_height = d;
+    void setBottomSearchOffset(double d) {
+        _bottom_search_offset = d;
     }
 
-
     /*************************************************************************
-    * Function :   getStartPositionOffset()
-    * Purpose  :   Getter for the variable _start_pos_offset
+    * Function :   getDispensePositionOffset()
+    * Purpose  :   Getter for the variable _dispense_pos_offset
     * Input    :   void
     * Returns  :   double
     *************************************************************************/
-    double getStartPositionOffset(void) {
-        return _start_pos_offset;
+    double getDispensePositionOffset(void) {
+        return _dispense_pos_offset;
     }
 
     /*************************************************************************
-    * Function :   getStartPositionOffsetRef()
+    * Function :   getDispensePositionOffsetRef()
     * Purpose  :   Returns a reference to the variable
-    * Container::_start_pos_offset
+    * Container::_dispense_pos_offset
     * Input    :   void
     * Returns  :   double&
     *************************************************************************/
-    double& getStartPositionOffsetRef (void) {
-        return _start_pos_offset;
+    double& getDispensePositionOffsetRef (void) {
+        return _dispense_pos_offset;
     }
 
     /*************************************************************************
-    * Function :   setStartPositionOffset()
-    * Purpose  :   Setter for the variable _start_pos_offset
+    * Function :   setDispensePositionOffset()
+    * Purpose  :   Setter for the variable _dispense_pos_offset
     * Input    :   double d
     * Returns  :   void
     *************************************************************************/
-    void setStartPositionOffset(double d) {
-        _start_pos_offset = d;
+    void setDispensePositionOffset(double d) {
+        _dispense_pos_offset = d;
     }
 
-
     /*************************************************************************
-    * Function :   getDispensePosition()
-    * Purpose  :   Getter for the variable _dispense_pos
+    * Function :   getVolume()
+    * Purpose  :   Getter for the variable _volume
     * Input    :   void
     * Returns  :   double
     *************************************************************************/
-    double getDispensePosition(void) {
-        return _dispense_pos;
+    double getVolume(void) {
+        return _volume;
     }
 
     /*************************************************************************
-    * Function :   getDispensePositionRef()
+    * Function :   getVolumeRef()
     * Purpose  :   Returns a reference to the variable
-    * Container::_dispense_pos
+    * Container::_volume
     * Input    :   void
     * Returns  :   double&
     *************************************************************************/
-    double& getDispensePositionRef (void) {
-        return _dispense_pos;
+    double& getVolumeRef (void) {
+        return _volume;
     }
 
     /*************************************************************************
-    * Function :   setDispensePosition()
-    * Purpose  :   Setter for the variable _dispense_pos
-    * Input    :   double d
+    * Function :   setVolume()
+    * Purpose  :   Setter for the variable _volume
+    * Input    :   double v
     * Returns  :   void
     *************************************************************************/
-    void setDispensePosition(double d) {
-        _dispense_pos = d;
+    void setVolume(double v) {
+        _volume = v;
     }
 
-    /*************************************************************************
-    * Function :   getOffset()
-    * Purpose  :   Getter for the variable _offset_{axis}
-    * Input    :   const char axis
-    * Returns  :   double
-    *************************************************************************/
-    double getOffset(const char axis) {
-        switch(axis) {
-        case 'x':
-            return _offset_x;
-            break;
-        case 'y':
-            return _offset_y;
-            break;
-        case 'z':
-            return _offset_z;
-            break;
-        }
-        return -1;
-    }
-
-    /*************************************************************************
-    * Function :   getOffsetRef()
-    * Purpose  :   Returns a reference to the variable Container::_offset_{axis}
-    * Input    :   const char axis
-    * Returns  :   double&
-    *************************************************************************/
-    double& getOffsetRef (const char axis) {
-        switch(axis) {
-        case 'x':
-            return _offset_x;
-            break;
-        case 'y':
-            return _offset_y;
-            break;
-        case 'z':
-            return _offset_z;
-            break;
-        }
-    }
 
     /*************************************************************************
     * Function :   getCellsVecRef()
@@ -744,16 +813,6 @@ class Container {
     }
 
     /*************************************************************************
-    * Function :   getTipTypeTableIndex()
-    * Purpose  :   Returns the tip type table index for this container
-    * Input    :   void
-    * Returns  :   unsigned int
-    *************************************************************************/
-    unsigned int getTipTypeTableIndex(void) {
-        return _tip_type_table_index;
-    }
-
-    /*************************************************************************
     * Function :   getDeckGeometryTableIndex()
     * Purpose  :   Returns the deck geometry table index for this container
     * Input    :   void
@@ -763,35 +822,70 @@ class Container {
         return _deck_geometry_table_index;
     }
 
+    /*************************************************************************
+    * Function :   setDeckGeometryTableIndex()
+    * Purpose  :   Sets the deck geometry table index for this container
+    * Input    :   unsigned int d
+    * Returns  :   void
+    *************************************************************************/
+    void setDeckGeometryTableIndex(unsigned int d) {
+        _deck_geometry_table_index = d;
+    }
+
+    /*************************************************************************
+    * Function :   getContainerGeometryTableIndex()
+    * Purpose  :   Returns the container geometry table index for this container
+    * Input    :   void
+    * Returns  :   unsigned int
+    *************************************************************************/
+    unsigned int getContainerGeometryTableIndex(void) {
+        return _container_geometry_table_index;
+    }
+
+    /*************************************************************************
+    * Function :   setContainerGeometryTableIndex()
+    * Purpose  :   Sets the container geometry table index for this container
+    * Input    :   unsigned int d
+    * Returns  :   void
+    *************************************************************************/
+    void setContainerGeometryTableIndex(unsigned int d) {
+        _container_geometry_table_index = d;
+    }
+
+    /*************************************************************************
+    * Function :   getCheckHeight()
+    * Purpose  :   Returns the check height for this container
+    * Input    :   void
+    * Returns  :   double
+    *************************************************************************/
+    double getCheckHeight(void) {
+        return _check_height;
+    }
 
   private:
+    std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
     std::string _type = "tip";      // Type of container.(tip rack, well plate, etc.)
-    double _len_x = 0.0f;
-    double _len_y = 0.0f;
-    double _len_z = 0.0f;
+    std::vector<double> _len = {0.0f, 0.0f, 0.0f};
+    std::vector<double> _offset = {0.0f, 0.0f, 0.0f};
     int _rows = 0;
     int _cols = 0;
-    double _offset_x = 0.0f;       // Container origin offset from gantry origin (mm)
-    double _offset_y = 0.0f;
-    double _offset_z = 0.0f;
     double _row_spacing = 0.0f;
     double _col_spacing = 0.0f;
-    std::vector<std::vector<struct container_cell>> _cells; // Vector of cell properties;
+    double _traverse_height = 0.0f;
+    double _check_height = 0.0f;
     unsigned int _deck_geometry_table_index = 0;
     /* TIP TRAY-SPECIFIC PROPERTIES */
+    int _tip_type_table_index = 0;
     double _tip_engagement_len;
     double _tip_deposit_height;
-    unsigned int _tip_type_table_index = 0;
     /* WELL-SPECIFIC PROPERTIES */
-    std::string _well_geometry = "";
-    double _well_diameter = 0.0f;
-    double _well_len_x = 0.0f;
-    double _well_len_y = 0.0f;
-    double _second_section_height = 0.0f;
+    double _bottom_search_offset = 0.0f;
+    double _dispense_pos_offset = 0.0f;
     double _second_section = 0.0f;
-    double _min_height = 0.0f;
-    double _start_pos_offset = 0.0f;
-    double _dispense_pos = 0.0f;
-    double _well_depth = 0.0f;     // Well depth measured from top of deck (mm)
+    double _second_section_height = 0.0f;
+    double _well_diameter = 0.0f;
+    double _volume = 0.0f;
+    std::string _well_geometry = "";
+    std::vector<double> _well_len = {0.0f, 0.0f, 0.0f};
     unsigned int _container_geometry_table_index = 0;
 };

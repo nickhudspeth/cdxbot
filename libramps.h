@@ -97,8 +97,8 @@ extern "C" {
         bool home(unsigned int axis);
         int motorsDisable(unsigned int axis);
         int motorsEnable(void);
-        int moveAbsolute(float x, float y, float z);
-        int moveRelative(float x, float y, float z);
+        int moveAbsolute(float x, float y, float z, bool movex, bool movey, bool movez);
+        int moveRelative(float x, float y, float z, bool movex, bool movey, bool movez);
         int setUnits(unsigned int u = UNITS_MM);
         int setAxisStepsPerUnit(unsigned int axis, unsigned int steps);
         int getSocket(void) {

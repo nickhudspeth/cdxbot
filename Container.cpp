@@ -59,15 +59,15 @@ double Container::getGlobalCoords(const char axis, unsigned int row, unsigned in
 
     switch(axis) {
     case 'x':
-        ret = _offset_x + (col * _col_spacing);
+        ret = _offset[0] + (col * _col_spacing);
         break;
 
     case 'y':
-        ret = _offset_y +  (row * _row_spacing);
+        ret = _offset[1] +  (row * _row_spacing);
         break;
 
     case 'z':
-        ret = _len_z;
+        ret = _len[2];
         break;
 
     default:

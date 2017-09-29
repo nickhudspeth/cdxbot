@@ -209,11 +209,11 @@ void loadParams(ros::NodeHandle &nh) {
         ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_x\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_X, steps_tmp));
     }
     if(!nh.getParam("/gc_conf/axis_steps_per_unit_y", steps_tmp)) {
-    nh.getParam("/gcdefaults/axis_steps_per_unit_y", steps_tmp);
+        nh.getParam("/gcdefaults/axis_steps_per_unit_y", steps_tmp);
         ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_y\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_Y, steps_tmp));
     }
     if(!nh.getParam("/gc_conf/axis_steps_per_unit_z", steps_tmp)) {
-    nh.getParam("/gcdefaults/axis_steps_per_unit_z", steps_tmp);
+        nh.getParam("/gcdefaults/axis_steps_per_unit_z", steps_tmp);
         ROS_WARN_STREAM("No parameter \"axis_steps_per_unit_z\" found in configuration file. Initializing gantry controller with default value " << gc->setAxisStepsPerUnit(AXIS_Z, steps_tmp));
     }
 }
@@ -231,119 +231,6 @@ void waitForGantry(const cdxbot::gc_cmd &msg) {
     return;
 }
 
-
-
-void gcPubCallback(const cdxbot::gc_cmd &msg) {
-    gc->setMoveMode(0);
-    //ROS_DEBUG_STREAM("Got message: " << msg.cmd << msg.x << msg.y << msg.z << msg.vel);
-
-    /* TODO: nam - Publish gantry status 1, and delay for calculated travel time
-     * so that pipette motion is delayed until gantry is in place. Publish
-     * gantry status 0 after delay. - Mon 10 Apr 2017 03:39:52 PM MDT */
-
-    double coords[3] = {msg.x, msg.y, msg.z};
-    /* Bounds check on all coordinates. If out of bounds, trim coordinate to
-     * range and print error. THIS SHOULD PROBABLY NOT FAIL GRACEFULLY IN THE
-     * PRODUCTION VERSION OF THIS SOFTWARE. */
-    std::string modifier;
-    std::string axis;
-    double orig = 0;
-    bool coord_err = 0;
-
-    if(msg.x < gc->getXPosMin()) {
-        coord_err = 1;
-        orig = coords[0];
-        coords[0] = gc->getXPosMin();
-        axis = "x";
-        modifier = "less";
-    }
-    if(coords[0] > gc->getXPosMax()) {
-        coord_err = 1;
-        orig = coords[0];
-        coords[0] = gc->getXPosMax();
-        axis = "x";
-        modifier = "greater";
-    }
-    if(msg.y < gc->getYPosMin()) {
-        coord_err = 1;
-        orig = coords[1];
-        coords[1] = gc->getYPosMin();
-        axis = "y";
-        modifier = "less";
-    }
-    if(coords[1] > gc->getYPosMax()) {
-        coord_err = 1;
-        orig = coords[1];
-        coords[1] = gc->getYPosMax();
-        axis = "y";
-        modifier = "greater";
-    }
-    if(msg.z < gc->getZPosMin()) {
-        coord_err = 1;
-        orig = coords[2];
-        coords[2] = gc->getZPosMin();
-        axis = "z";
-        modifier = "less";
-    }
-    if(coords[2] > gc->getZPosMax()) {
-        coord_err = 1;
-        orig = coords[2];
-        coords[2] = gc->getZPosMax();
-        axis = "z";
-        modifier = "greater";
-    }
-
-    if(coord_err == 1) {
-        ROS_ERROR_STREAM("GantryControllerNode:: Commanded "<< axis <<
-                         "-coordinate (" << orig << ") is " << modifier
-                         << " than the maximum allowable " << axis << " coordinate "
-                         << gc->getXPosMin() << "." << std::endl);
-        coord_err = 0;
-    }
-
-    if(msg.cmd == "move") {
-        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(coords[0], coords[1], coords[2]);
-            // waitForGantry(msg);
-        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(coords[0], coords[1], coords[2]);
-            // waitForGantry(msg);
-        }
-    } else if(msg.cmd == "wait") {
-        gc->dwell(msg.time);
-    } else if(msg.cmd == "movexy") {
-        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(coords[0], coords[1], 0);
-            // waitForGantry(msg);
-        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(coords[0], coords[1], 0);
-            // waitForGantry(msg);
-        }
-    } else if (msg.cmd == "movez") {
-        if(gc->getMoveMode() == MOVE_MODE_ABSOLUTE) {
-            gc->moveAbsolute(0, 0, coords[2]);
-            // waitForGantry(msg);
-        } else if(gc->getMoveMode() == MOVE_MODE_RELATIVE) {
-            gc->moveRelative(0, 0, coords[2]);
-            // waitForGantry(msg);
-        }
-    } else if(msg.cmd == "setvel") {
-        if(msg.vel < 0) {
-            gc->setTraverseVelocity(gc->getRapidFeedVelocity());
-        } else {
-            gc->setTraverseVelocity(msg.vel);
-        }
-        ROS_INFO_STREAM("Setting velocity to "<< gc->getTraverseVelocity() << " mm/min.");
-    } else if(msg.cmd == "estop") {
-        gc->emergencyStop();
-    } else if(msg.cmd == "estoprst") {
-        gc->emergencyStopReset();
-    } else if(msg.cmd == "home") {
-        gc->home();
-        // waitForGantry(msg);
-    }
-}
-
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
@@ -354,17 +241,10 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
                   cdxbot::gantryMove::Response &resp) {
     /* Should bounds-check coordinates here */
     if(!req.move_mode) {
-        gc->moveAbsolute(req.x, req.y, req.z);
+        gc->moveAbsolute(req.x, req.y, req.z, req.movex, req.movey, req.movez);
     } else {
-        gc->moveRelative(req.x, req.y, req.z);
+        gc->moveRelative(req.x, req.y, req.z, req.movex, req.movey, req.movez);
     }
-    // while(  (gc->getPos('x') != req.x) |
-    // (gc->getPos('y') != req.y) |
-    // (gc->getPos('z') != req.z)) {
-    /* WAIT FOR GANTRY TO ARRIVE */
-    // }
-
-    // ROS_INFO_STREAM("LEAVING MOVE CALLBACK");
     resp.ok = true;
     return true;
 }
@@ -381,7 +261,6 @@ bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
 
 bool homeCallback(cdxbot::gantryHome::Request &req,
                   cdxbot::gantryHome::Response &resp) {
-    ROS_INFO_STREAM("ENTERED HOME CALLBACK");
     bool res = true;
     if(req.all) {
         res &= gc->home(AXIS_ALL);
@@ -396,9 +275,10 @@ bool homeCallback(cdxbot::gantryHome::Request &req,
         res &= gc->home(AXIS_Z);
     }
     resp.ok = res;
-    ROS_INFO_STREAM("LEAVING HOME CALLBACK");
+    if(!res) {
+        ROS_ERROR_STREAM("PipetterControllerNode: Could not home gantry. HALT!");
+    }
     return res;
-    // return (resp.ok = true);
 }
 
 bool motorsToggleCallback(cdxbot::gantryMotorsToggle::Request &req,

@@ -18,6 +18,7 @@ respawn="false"
 output="screen"
 />
 <rosparam file ="$(find cdxbot)/conf/cdxbot.yaml" command="load"/>
+<rosparam file ="$(find cdxbot)/conf/liquids.yaml" command="load"/>
 
 <node
 pkg="cdxbot"

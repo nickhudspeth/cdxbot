@@ -10,11 +10,8 @@ int16 dg_idx
 # Liquid class table index [0, 99]
 int16 lc_idx
 
-# QPM [0=off, 1=on]
-bool qpm
-
-# Liquid level detection [0=off, 1=on]
-bool lld
+# Container height
+float64 container_height
 
 # LLD search height [0,180]
 float64 lld_search_height

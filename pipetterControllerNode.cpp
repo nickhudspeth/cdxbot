@@ -37,6 +37,8 @@ LICENSE:
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterHome.h"
+#include "cdxbot/pipetterMakeContainerGeometry.h"
 #include "cdxbot/pipetterMakeDeckGeometry.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
@@ -153,30 +155,7 @@ void loadParams(ros::NodeHandle &nh) {
     }
 }
 
-void gcPubCallback(const cdxbot::gc_cmd &msg) {
-    ROS_DEBUG_STREAM("PipetterControllerNode:: Received gc_cmd - " << msg.cmd);
-    if(msg.cmd == "movez") {
-        // pc->moveZ((1800 - 219.075 - msg.z), 1);
-        pc->moveZ(msg.z, 1);
-    }
-    /* Move Pipetter head to feed plane height at startup */
-    else if(msg.cmd == "home") {
-        // pc->moveZ((1800 - 219.75 - pc->getFeedPlaneHeight()), 1);
-        pc->moveZ(pc->getFeedPlane(), 1);
-    }
-}
 
-void pcPubCallback(const cdxbot::pc_cmd &msg) {
-    // if(msg.cmd == "aspirate") {
-    // pc->aspirate(msg.vol);
-    // } else if(msg.cmd == "dispense") {
-    // pc->dispense(msg.vol);
-    // } else if(msg.cmd == "eject") {
-    // pc->ejectTip();
-    // } else if(msg.cmd == "pickup") {
-    // pc->pickUpTip(msg.type);
-    // }
-}
 
 void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
     ROS_WARN_STREAM("PipetterControllerNode: Received shutdown directive.");
@@ -204,6 +183,16 @@ bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
     return pc->ejectTip();
 }
 
+bool homeCallback(cdxbot::pipetterHome::Request &req,
+                  cdxbot::pipetterHome::Response &resp) {
+    bool success = pc->home();
+    ROS_INFO_STREAM("PipetterControllerNode: homing pipetter.");
+    if(!success) {
+        ROS_ERROR_STREAM("PipetterControllerNode: Could not home pipetter z-axis.");
+    }
+    return success;
+}
+
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
     return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface);
@@ -216,9 +205,17 @@ bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
 
 bool makeDeckGeometryCallback(cdxbot::pipetterMakeDeckGeometry::Request &req,
                               cdxbot::pipetterMakeDeckGeometry::Response &resp) {
-    ROS_INFO_STREAM("PipetterControllerNode: MakeDeckGeometry callback entered.");
+    ROS_DEBUG_STREAM("PipetterControllerNode: MakeDeckGeometry callback entered.");
     pc->makeDeckGeometry(req.index, req.traverse_height, req.container_offset_z, req.engagement_length, req.tip_deposit_height);
     return true;
+}
+
+bool makeContainerGeometryCallback(cdxbot::pipetterMakeContainerGeometry::Request &req,
+                                   cdxbot::pipetterMakeContainerGeometry::Response &resp) {
+    ROS_DEBUG_STREAM("PipetterControllerNode: MakeContainerGeometry callback entered.");
+    return pc->makeContainerGeometry(req.index, req.geometry, req.diameter, req.len_x,
+                                     req.len_y, req.second_section_height, req.second_section,
+                                     req.max_depth, req.bottom_search_offset, req.dispense_offset);
 }
 
 
@@ -232,9 +229,7 @@ int main(int argc, char **argv) {
     /* Instantiate publishers and subscribers*/
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);
-    ros::Subscriber sub_pc = nh.subscribe("/pc_pub", 100, &pcPubCallback);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
-    ros::Subscriber sub_gc = nh.subscribe("/gc_pub", 100, &gcPubCallback);
     ROS_DEBUG_STREAM("Initialized pc with addr: " << &pc);
     /* Instantiate service servers */
     ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
@@ -249,6 +244,8 @@ int main(int argc, char **argv) {
                                         &dispenseCallback);
     ros::ServiceServer makeDeckGeometryServer = nh.advertiseService("pipetter_make_deck_geometry",
             &makeDeckGeometryCallback);
+    ros::ServiceServer makeContainerGeometrySever = nh.advertiseService("pipetter_make_container_geometry",
+            &makeContainerGeometryCallback);
 
     ros::Rate rate(100);
     while(ros::ok()) {

@@ -1,0 +1,12 @@
+int16 index
+bool geometry
+float64 diameter
+float64 len_x
+float64 len_y
+float64 second_section_height
+float64 second_section
+float64 max_depth
+float64 bottom_search_offset
+float64 dispense_offset
+---
+bool ok

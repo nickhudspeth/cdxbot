@@ -370,46 +370,35 @@ int SmoothieModule::motorsEnable(void) {
     return 0;
 }
 
-int SmoothieModule::moveAbsolute(float x, float y, float z) {
-
-    /* TODO: nam - Modify function such that x,y,z destinations less than zero are
-     * supported. Tue 28 Mar 2017 11:08:51 AM MDT */
-    std::string ret;
+int SmoothieModule::moveAbsolute(float x, float y, float z, bool movex, bool movey, bool movez) {
+    std::string ret = "";
+    double diff = 0.0f;
     int move_times[] = {0, 0, 0};
     double tvel = _traverse_velocity / 60.0f;
     if (_move_mode != MOVE_MODE_ABSOLUTE) {
         ret = "G90"; // Set absolute mode (modal)
-        sendCommand(ret);
+        sendCommand(ret, 1);
         _move_mode = MOVE_MODE_ABSOLUTE;
     }
     ret = std::string("G0");
-    if(x > 0) {
+    if(movex) {
         ret += std::string(" X") + std::to_string(x);
-        double diff = std::abs(x - _pos[0]);
-        move_times[0] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
         _pos[0] = x;
     }
-    if(y > 0) {
+    if(movey) {
         ret += std::string(" Y") + std::to_string(y);
-        double diff = std::abs(y - _pos[1]);
-        move_times[1] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
         _pos[1] = y;
     }
-    if(z > 0) {
+    if(movez) {
         ret += std::string(" Z") + std::to_string(z);
-        double diff = std::abs(z - _pos[2]);
-        move_times[2] = static_cast<int>((diff*1000000 / tvel) + 0.5f);
         _pos[2] = z;
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);
-    // int stime = *std::max_element(move_times, move_times+3);
-    // printf("SLEEPING %d MICROSECONDS...\n", stime);
-    // usleep(stime);
     return 0;
 }
 
-int SmoothieModule::moveRelative(float x, float y, float z) {
+int SmoothieModule::moveRelative(float x, float y, float z, bool movex, bool movey, bool movez) {
     std::string ret;
     if (_move_mode != MOVE_MODE_RELATIVE) {
         ret = "G91"; // Set absolute mode (modal)
@@ -417,14 +406,17 @@ int SmoothieModule::moveRelative(float x, float y, float z) {
         _move_mode = MOVE_MODE_RELATIVE;
     }
     ret = std::string("G0");
-    if(x > 0) {
+    if(movex) {
         ret += std::string(" X") + std::to_string(x);
+        _pos[0] += x;
     }
-    if(y > 0) {
+    if(movey) {
         ret += std::string(" Y") + std::to_string(y);
+        _pos[1] += y;
     }
-    if(z > 0) {
+    if(movez) {
         ret += std::string(" Z") + std::to_string(z);
+        _pos[2] += z;
     }
     ret += std::string(" F") + std::to_string(_traverse_velocity);
     sendCommand(ret);

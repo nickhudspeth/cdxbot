@@ -1,0 +1,31 @@
+liquids:
+    l0:                             # Liquid Class ID Number
+        name:                       # User-readable name for liquid class
+        #ASPIRATION PARAMETERS
+        adc:                        # ADC (0 = off, 1 = on)
+        aspirate_blowout_volume:    # Blow-out air volume in ul/s
+        aspirate_settling_time:     # Liquid settling time (after aspiration) in seconds
+        aspirate_speed:             # Aspiration speed in ul/s
+        aspirate_swap_speed:        # Swap speed (on leaving liquid) in ul/s
+        aspirate_type:              # Type of aspiration (0 = simple, 1 = cup emptied, 2 = following aspiration)
+        clld_sensitivity:           # cLLD sensitivite (1 = high, 4 = low)
+        immersion_depth:            # Immersion depth in mm
+        immersion_direction:        # Direction of immersion depth (0 = off; 1 = on)
+        lld_height_difference:      # Difference in detection height for dual LLD in mm
+        lld_mode:                   # LLD move (0=cLLD, 1 = pLLD, 2 = dual)
+        plld_sensitivity:           # pLLD sensitivite (1 = high, 4 = low)
+        prewet_volume:              # Pre-wetting volume in ul/s
+        transport_volume:           # Transport air volume in ul/s
+        #DISPENSE PARAMETERS
+        dispense_blowout_volume:    # Blowout air volume in ul
+        cutoff_speed:               # Cutoff speed in ul/s
+        dispense_height:            # Height above liquid on jet dispense in mm
+        dispense_settling_time:     # Liquid settling time (after dispense) in seconds
+        dispense_speed:             # Dispense speed in ul/s
+        dispense_swap_speed:        # Swap speed (on leaving liquid) in ul/s
+        dispense_type:              # Type of dispense (0 = empty tip in jet mode, 1 = partial volume in jet mode, 2 = empty tip in surface mode, 3 = partial volume in surface mode)
+        leaving_height:             # Height above liquid on leaving liquid in mm
+        stop_back_volume:           # Stop back volume in ul/s
+        transport_air_volume:       # Transport air volume in ul
+        transport_speed:            # Speed of aspirate transportv volume in ul/s
+

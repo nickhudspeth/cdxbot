@@ -1,0 +1,32 @@
+# Parameters for liquid class type
+string name                        # User-readable name for liquid class
+#ASPIRATION PARAMETERS
+bool adc                           # ADC (0 = off, 1 = on)
+float64 aspirate_blowout_volume    # Blow-out air volume in ul/s
+float64 aspirate_settling_time     # Liquid settling time (after aspiration) in seconds
+float64 aspirate_speed             # Aspiration speed in ul/s
+float64 aspirate_swap_speed        # Swap speed (on leaving liquid) in ul/s
+uint16 aspirate_type               # Type of aspiration (0 = simple, 1 = cup emptied, 2 = following aspiration)
+uint16 clld_sensitivity            # cLLD sensitivite (1 = high, 4 = low)
+float64 immersion_depth            # Immersion depth in mm
+bool immersion_direction           # Direction of immersion depth (0 = off; 1 = on)
+float64 lld_height_difference      # Difference in detection height for dual LLD in mm
+uint16 lld_mode                    # LLD move (0=cLLD, 1 = pLLD, 2 = dual)
+uint16 plld_sensitivity            # pLLD sensitivite (1 = high, 4 = low)
+float64 prewet_volume              # Pre-wetting volume in ul/s
+float64 transport_volume           # Transport air volume in ul/s
+
+#DISPENSE PARAMETERS
+float64 dispense_blowout_volume    # Blowout air volume in ul
+float64 cutoff_speed               # Cutoff speed in ul/s
+float64 dispense_height            # Height above liquid on jet dispense in mm
+float64 dispense_settling_time     # Liquid settling time (after dispense) in seconds
+float64 dispense_speed             # Dispense speed in ul/s
+float64 dispense_swap_speed        # Swap speed (on leaving liquid) in ul/s
+uint16 dispense_type               # Type of dispense (0 = empty tip in jet mode, 1 = partial volume in jet mode, 2 = empty tip in surface mode, 3 = partial volume in surface mode)
+float64 leaving_height             # Height above liquid on leaving liquid in mm
+float64 stop_back_volume           # Stop back volume in ul/s
+float64 transport_air_volume       # Transport air volume in ul
+float64 transport_speed            # Speed of aspirate transportv volume in ul/s
+---
+bool ok

@@ -75,7 +75,10 @@ add_service_files(
     pipetterAspirate.srv
     pipetterDispense.srv
     pipetterEjectTip.srv
+    pipetterHome.srv
+    pipetterMakeContainerGeometry.srv
     pipetterMakeDeckGeometry.srv
+    pipetterMakeLiquidClass.srv
     pipetterMoveZ.srv
     pipetterPickUpTip.srv
     shakerReset.srv
