@@ -1,31 +1,31 @@
 liquids:
-    l0:                             # Liquid Class ID Number
-        name:                       # User-readable name for liquid class
+    l0:                                         # Liquid Class ID Number
+        name: "default"                         # User-readable name for liquid class
         #ASPIRATION PARAMETERS
-        adc:                        # ADC (0 = off, 1 = on)
-        aspirate_blowout_volume:    # Blow-out air volume in ul/s
-        aspirate_settling_time:     # Liquid settling time (after aspiration) in seconds
-        aspirate_speed:             # Aspiration speed in ul/s
-        aspirate_swap_speed:        # Swap speed (on leaving liquid) in ul/s
-        aspirate_type:              # Type of aspiration (0 = simple, 1 = cup emptied, 2 = following aspiration)
-        clld_sensitivity:           # cLLD sensitivite (1 = high, 4 = low)
-        immersion_depth:            # Immersion depth in mm
-        immersion_direction:        # Direction of immersion depth (0 = off; 1 = on)
-        lld_height_difference:      # Difference in detection height for dual LLD in mm
-        lld_mode:                   # LLD move (0=cLLD, 1 = pLLD, 2 = dual)
-        plld_sensitivity:           # pLLD sensitivite (1 = high, 4 = low)
-        prewet_volume:              # Pre-wetting volume in ul/s
-        transport_volume:           # Transport air volume in ul/s
+        adc: 0                                  # ADC [0 = off, 1 = on]
+        aspirate_blowout_volume: 500            # Blow-out air volume in ul/s [0, 1300.0]
+        aspirate_settling_time: 0.5             # Liquid settling time (after aspiration) in seconds [0, 99.9]
+        aspirate_speed: 1250.0                  # Aspiration speed in ul/s [0, 2500.0]
+        aspirate_swap_speed: 400.0              # Swap speed (on leaving liquid) in ul/s [0, 825.8]
+        aspirate_type: 2                        # Type of aspiration (0 = simple, 1 = cup emptied, 2 = following aspiration)
+        clld_sensitivity: 1                     # cLLD sensitivite (1 = high, 4 = low)
+        immersion_depth: 2                      # Immersion depth in mm [0, 180.0]
+        immersion_direction: 0                  # Direction of immersion depth (0 = down; 1 = up)
+        lld_height_difference: 0                # Difference in detection height for dual LLD in mm [0, 9.9]
+        lld_mode: 0                             # LLD move (0=cLLD, 1 = pLLD, 2 = dual)
+        plld_sensitivity: 1                     # pLLD sensitivite (1 = high, 4 = low)
+        prewet_volume: 10.0                     # Pre-wetting volume in ul/s [0, 999.9]
+        aspirate_transport_air_volume: 10.0     # Aspirate transport air volume in ul [0, 1300.0]
         #DISPENSE PARAMETERS
-        dispense_blowout_volume:    # Blowout air volume in ul
-        cutoff_speed:               # Cutoff speed in ul/s
-        dispense_height:            # Height above liquid on jet dispense in mm
-        dispense_settling_time:     # Liquid settling time (after dispense) in seconds
-        dispense_speed:             # Dispense speed in ul/s
-        dispense_swap_speed:        # Swap speed (on leaving liquid) in ul/s
-        dispense_type:              # Type of dispense (0 = empty tip in jet mode, 1 = partial volume in jet mode, 2 = empty tip in surface mode, 3 = partial volume in surface mode)
-        leaving_height:             # Height above liquid on leaving liquid in mm
-        stop_back_volume:           # Stop back volume in ul/s
-        transport_air_volume:       # Transport air volume in ul
-        transport_speed:            # Speed of aspirate transportv volume in ul/s
+        dispense_blowout_volume: 10             # Blowout air volume in ul [0, 1300.0]
+        cutoff_speed: 1250.0                    # Cutoff speed in ul/s [0, 2500.0]
+        dispense_height: 5                      # Height above liquid on jet dispense in mm [0, 99.9]
+        dispense_settling_time: 0.5             # Liquid settling time (after dispense) in seconds [0, 99.9]
+        dispense_speed: 1250.0                  # Dispense speed in ul/s [0, 2500.0]
+        dispense_swap_speed: 400.0              # Swap speed (on leaving liquid) in ul/s [0, 825.8]
+        dispense_type: 2                        # Type of dispense (0 = empty tip in jet mode, 1 = partial volume in jet mode, 2 = empty tip in surface mode, 3 = partial volume in surface mode)
+        leaving_height: 0                       # Height above liquid on leaving liquid in mm [0, 99.9]
+        stop_back_volume: 10                    # Stop back volume in ul [0, 32.5]
+        dispense_transport_air_volume: 10.0     # Dispense  transport air volume in ul [0, 1300.0]
+        transport_speed: 1250.0                 # Speed of aspirate transport volume in ul/s [0, 2500.0]
 

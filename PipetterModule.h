@@ -53,34 +53,34 @@ LICENSE:
 class LiquidClass {
   public:
     LiquidClass(std::string name) {
-        _name = name;
         _adc = 0;
         _aspirate_blowout_volume = 0.0f;
         _aspirate_settling_time = 0.0f;
         _aspirate_speed = 0.0f;
         _aspirate_swap_speed = 0.0f;
+        _aspirate_transport_air_volume = 0.0f;
         _aspirate_type = 0;
         _clld_sensitivity = 0;
-        _immersion_depth = 0.0f;
-        _immersion_direction = 0;
-        _lld_height_difference = 0.0f;
-        _lld_mode = 0;
-        _plld_sensitivity = 0;
-        _prewet_volume = 0.0f;
-        _transport_volume = 0.0f;
-        _dispense_blowout_volume = 0.0f;
         _cutoff_speed = 0.0f;
+        _dispense_blowout_volume = 0.0f;
         _dispense_height = 0.0f;
         _dispense_settling_time = 0.0f;
         _dispense_speed = 0.0f;
         _dispense_swap_speed = 0.0f;
+        _dispense_transport_air_volume = 0.0f;
         _dispense_type = 0;
+        _immersion_depth = 0.0f;
+        _immersion_direction = 0;
         _leaving_height = 0.0f;
+        _lld_height_difference = 0.0f;
+        _lld_mode = 0;
+        _name = name;
+        _plld_sensitivity = 0;
+        _prewet_volume = 0.0f;
         _stop_back_volume = 0.0f;
-        _transport_air_volume = 0.0f;
         _transport_speed = 0.0f;
     };
-    ~LiquidClass();
+    ~LiquidClass(){};
     std::string &getNameRef(void) {
         return _name;
     }
@@ -101,6 +101,9 @@ class LiquidClass {
     }
     unsigned int &getAspirateTypeRef(void) {
         return _aspirate_type;
+    }
+    double &getAspirateTransportAirVolumeRef(void) {
+        return _aspirate_transport_air_volume;
     }
     unsigned int &getCLLDSensitivityRef(void) {
         return _clld_sensitivity;
@@ -123,8 +126,8 @@ class LiquidClass {
     double &getPrewetVolumeRef(void) {
         return _prewet_volume;
     }
-    double &transport_volumeRef(void) {
-        return _transport_volume;
+    double &getDispenseTransportAirVolumeRef(void) {
+        return _dispense_transport_air_volume;
     }
     double &getDispenseBlowoutVolumeRef(void) {
         return _dispense_blowout_volume;
@@ -147,14 +150,11 @@ class LiquidClass {
     unsigned int &getDispenseTypeRef(void) {
         return _dispense_type;
     }
-    double getLeavingHeightRef(void) {
+    double &getLeavingHeightRef(void) {
         return _leaving_height;
     }
-    double getStopBackVolumeRef(void) {
+    double &getStopBackVolumeRef(void) {
         return _stop_back_volume;
-    }
-    double getTransportAirVolumeRef(void) {
-        return _transport_air_volume;
     }
     double &getTransportSpeedRef(void) {
         return _transport_speed;
@@ -174,7 +174,7 @@ class LiquidClass {
     unsigned int _lld_mode;
     unsigned int _plld_sensitivity;
     double _prewet_volume;
-    double _transport_volume;
+    double _dispense_transport_air_volume;
     double _dispense_blowout_volume;
     double _cutoff_speed;
     double _dispense_height;
@@ -184,7 +184,7 @@ class LiquidClass {
     unsigned int _dispense_type;
     double _leaving_height;
     double _stop_back_volume;
-    double _transport_air_volume;
+    double _aspirate_transport_air_volume;
     double _transport_speed;
 };
 
@@ -213,7 +213,7 @@ class PipetterModule : public CDXModule {
         _liquid_classes.insert(_liquid_classes.begin() + index, p);
         return p;
     }
-    virtual bool setLiquidClass(unsigned int index, std::unique_ptr<LiquidClass>) {};
+    virtual bool setLiquidClass(unsigned int index) {};
     virtual bool moveZ(double pos, double vel) {};
     virtual bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed) {};
     double getZPos(void) {

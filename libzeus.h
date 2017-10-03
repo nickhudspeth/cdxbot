@@ -191,6 +191,7 @@ extern "C" {
                                    double second_section, double max_depth,
                                    double bottom_search_offset,
                                    double dispense_offset);
+        bool setLiquidClass(unsigned int index);
         bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed);
         // bool setContainerGeometryParams(struct container_geometry_t c);
         // bool setDeckGeometryParams(struct deck_geometry_t d);

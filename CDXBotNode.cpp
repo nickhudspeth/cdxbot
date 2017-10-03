@@ -477,191 +477,194 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
     cdxbot::pipetterMakeLiquidClass::Request pmlcreq;
     cdxbot::pipetterMakeLiquidClass::Response pmlcresp;
     memset(buf, ' ', 64);
-    sprintf(buf,"/cdxbot/liquids/l%d", num_liquids);
+    sprintf(buf,"/liquids/l%d/name", num_liquids);
     int tmpint = 0;
     double tmpf64 = 0.0f;
     std::string tmpstr = "";
     bool tmpbool = false;
+    if(!nh.hasParam(buf)) {
+        ROS_ERROR_STREAM("Liquid configuration file parsing is not working.");
+    }
     while(nh.hasParam(buf)) {
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/name", num_liquids);
+        sprintf(buf,"/liquids/l%d/name", num_liquids);
         if(!nh.getParam(buf, tmpstr)) {
-            ROS_WARN("No parameter liquids:%d:name found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:name found in configuration file.", num_liquids);
         }
         pmlcreq.name = tmpstr;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/adc", num_liquids);
-        if(!nh.getParam(buf, tmpbool)) {
-            ROS_WARN("No parameter liquids:%d:adc found in configuration file.", num_liquids);
+        sprintf(buf,"/liquids/l%d/adc", num_liquids);
+        if(!nh.getParam(buf, tmpint)) {
+            ROS_WARN("No parameter liquids:l%d:adc found in configuration file.", num_liquids);
         }
-        pmlcreq.adc = tmpbool;
+        pmlcreq.adc = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/aspirate_blowout_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_blowout_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:aspirate_blowout_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_blowout_volume found in configuration file.", num_liquids);
         }
         pmlcreq.aspirate_blowout_volume  = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/aspirate_settling_time", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_settling_time", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:aspirate_settling_time found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_settling_time found in configuration file.", num_liquids);
         }
         pmlcreq.aspirate_settling_time = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/aspirate_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:aspirate_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_speed found in configuration file.", num_liquids);
         }
         pmlcreq.aspirate_speed = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/aspirate_swap_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_swap_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:aspirate_swap_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_swap_speed found in configuration file.", num_liquids);
         }
         pmlcreq.aspirate_swap_speed = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/aspirate_type", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_type", num_liquids);
         if(!nh.getParam(buf, tmpint)) {
-            ROS_WARN("No parameter liquids:%d:aspirate_type found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_type found in configuration file.", num_liquids);
         }
         pmlcreq.aspirate_type = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/clld_sensitivity", num_liquids);
+        sprintf(buf,"/liquids/l%d/clld_sensitivity", num_liquids);
         if(!nh.getParam(buf, tmpint)) {
-            ROS_WARN("No parameter liquids:%d:clld_sensitivity found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:clld_sensitivity found in configuration file.", num_liquids);
         }
         pmlcreq.clld_sensitivity = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/immersion_depth", num_liquids);
+        sprintf(buf,"/liquids/l%d/immersion_depth", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:immersion_depth found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:immersion_depth found in configuration file.", num_liquids);
         }
         pmlcreq.immersion_depth = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/immersion_direction", num_liquids);
-        if(!nh.getParam(buf, tmpbool)) {
-            ROS_WARN("No parameter liquids:%d:immersion_direction found in configuration file.", num_liquids);
+        sprintf(buf,"/liquids/l%d/immersion_direction", num_liquids);
+        if(!nh.getParam(buf, tmpint)) {
+            ROS_WARN("No parameter liquids:l%d:immersion_direction found in configuration file.", num_liquids);
         }
-        pmlcreq.immersion_direction = tmpbool;
+        pmlcreq.immersion_direction = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/lld_height_difference", num_liquids);
+        sprintf(buf,"/liquids/l%d/lld_height_difference", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:lld_height_difference found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:lld_height_difference found in configuration file.", num_liquids);
         }
         pmlcreq.lld_height_difference = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/lld_mode", num_liquids);
+        sprintf(buf,"/liquids/l%d/lld_mode", num_liquids);
         if(!nh.getParam(buf, tmpint)) {
-            ROS_WARN("No parameter liquids:%d:lld_mode found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:lld_mode found in configuration file.", num_liquids);
         }
         pmlcreq.lld_mode = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/plld_sensitivity", num_liquids);
+        sprintf(buf,"/liquids/l%d/plld_sensitivity", num_liquids);
         if(!nh.getParam(buf, tmpint)) {
-            ROS_WARN("No parameter liquids:%d:plld_sensitivity found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:plld_sensitivity found in configuration file.", num_liquids);
         }
         pmlcreq.plld_sensitivity = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/prewet_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/prewet_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:prewet_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:prewet_volume found in configuration file.", num_liquids);
         }
         pmlcreq.prewet_volume = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/transport_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/aspirate_transport_air_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:transport_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:aspirate_transport_air_volume found in configuration file.", num_liquids);
         }
-        pmlcreq.transport_volume = tmpf64;
+        pmlcreq.aspirate_transport_air_volume = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_blowout_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_blowout_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:dispense_blowout_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_blowout_volume found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_blowout_volume = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/cutoff_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/cutoff_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:cutoff_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:cutoff_speed found in configuration file.", num_liquids);
         }
         pmlcreq.cutoff_speed = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_height", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_height", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:dispense_height found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_height found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_height = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_settling_time", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_settling_time", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:dispense_settling_time found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_settling_time found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_settling_time = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:dispense_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_speed found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_speed = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_swap_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_swap_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:dispense_swap_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_swap_speed found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_swap_speed = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/dispense_type", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_type", num_liquids);
         if(!nh.getParam(buf, tmpint)) {
-            ROS_WARN("No parameter liquids:%d:dispense_type found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_type found in configuration file.", num_liquids);
         }
         pmlcreq.dispense_type = tmpint;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/leaving_height", num_liquids);
+        sprintf(buf,"/liquids/l%d/leaving_height", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:leaving_height found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:leaving_height found in configuration file.", num_liquids);
         }
         pmlcreq.leaving_height = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/stop_back_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/stop_back_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:stop_back_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:stop_back_volume found in configuration file.", num_liquids);
         }
         pmlcreq.stop_back_volume = tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/transport_air_volume", num_liquids);
+        sprintf(buf,"/liquids/l%d/dispense_transport_air_volume", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:transport_air_volume found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:dispense_transport_air_volume found in configuration file.", num_liquids);
         }
-        pmlcreq.transport_air_volume =  tmpf64;
+        pmlcreq.dispense_transport_air_volume =  tmpf64;
 
         memset(buf, ' ', 64);
-        sprintf(buf,"/cdxbot/liquids/l%d/transport_speed", num_liquids);
+        sprintf(buf,"/liquids/l%d/transport_speed", num_liquids);
         if(!nh.getParam(buf, tmpf64)) {
-            ROS_WARN("No parameter liquids:%d:transport_speed found in configuration file.", num_liquids);
+            ROS_WARN("No parameter liquids:l%d:transport_speed found in configuration file.", num_liquids);
         }
         pmlcreq.transport_speed = tmpf64;
 
@@ -669,6 +672,9 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to create liquid class table entry for liquid class " << num_liquids << ".");
         }
         num_liquids++;
+        memset(buf, ' ', 64);
+        sprintf(buf,"/liquids/l%d/name", num_liquids);
+
     }
 
     ROS_INFO_STREAM(ros::this_node::getName() << "Loaded configuration parameters.");

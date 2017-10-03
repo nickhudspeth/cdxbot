@@ -40,6 +40,7 @@ LICENSE:
 #include "cdxbot/pipetterHome.h"
 #include "cdxbot/pipetterMakeContainerGeometry.h"
 #include "cdxbot/pipetterMakeDeckGeometry.h"
+#include "cdxbot/pipetterMakeLiquidClass.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
 #include "std_msgs/String.h"
@@ -115,7 +116,7 @@ void loadParams(ros::NodeHandle &nh) {
         nh.getParam("/pc_defaults/type", type);
         ROS_WARN("No parameter 'type' found in configuration file.\
                         Initializing pipetter with default value %s",\
-                 type);
+                 type.c_str());
     }
     if(!nh.getParam("/pc_conf/driver_name", driver_name)) {
         nh.getParam("/pc_defaults/driver_name", driver_name);
@@ -218,6 +219,44 @@ bool makeContainerGeometryCallback(cdxbot::pipetterMakeContainerGeometry::Reques
                                      req.max_depth, req.bottom_search_offset, req.dispense_offset);
 }
 
+bool makeLiquidClassCallback(cdxbot::pipetterMakeLiquidClass::Request &req,
+                             cdxbot::pipetterMakeLiquidClass::Response &resp) {
+    ROS_DEBUG_STREAM("PipetterControllerNode: MakeLiquidClass callback entered.");
+    ROS_INFO_STREAM("Creating liquid class at index" << req.index << ".");
+    LiquidClass *l = pc->makeLiquidClass(req.name, req.index);
+    l->getADCRef() = req.adc;
+    l->getAspirateBlowoutVolumeRef() = req.aspirate_blowout_volume;
+    l->getAspirateSettlingTimeRef() = req.aspirate_settling_time;
+    l->getAspirateSpeedRef() = req.aspirate_speed;
+    l->getAspirateSwapSpeedRef() = req.aspirate_swap_speed;
+    l->getAspirateTransportAirVolumeRef() = req.aspirate_transport_air_volume;
+    l->getAspirateTypeRef() = req.aspirate_type;
+    l->getCLLDSensitivityRef() = req.clld_sensitivity;
+    l->getCutoffSpeedRef() = req.cutoff_speed;
+    l->getDispenseBlowoutVolumeRef() = req.dispense_blowout_volume;
+    l->getDispenseHeightRef() = req.dispense_height;
+    l->getDispenseSettlingTimeRef() = req.dispense_settling_time;
+    l->getDispenseSpeedRef() = req.dispense_speed;
+    l->getDispenseSwapSpeedRef() = req.dispense_swap_speed;
+    l->getDispenseTransportAirVolumeRef() = req.dispense_transport_air_volume;
+    l->getDispenseTypeRef() = req.dispense_type;
+    l->getImmersionDepthRef() = req.immersion_depth;
+    l->getImmersionDirectionRef() = req.immersion_direction;
+    l->getLLDHeightDifferenceRef() = req.lld_height_difference;
+    l->getLLDModeRef() = req.lld_mode;
+    l->getLeavingHeightRef() = req.leaving_height;
+    l->getPLLDSensitivityRef() = req.plld_sensitivity;
+    l->getPrewetVolumeRef() = req.prewet_volume;
+    l->getStopBackVolumeRef() = req.stop_back_volume;
+    l->getTransportSpeedRef() = req.transport_speed;
+    bool res =  pc->setLiquidClass(req.index);
+    if(!res) {
+        ROS_ERROR_STREAM("PipetterControllerNode: Could not create liquid class\
+                         at index" << req.index);
+    }
+    return res;
+}
+
 
 int main(int argc, char **argv) {
     // const char *pcfile = "..pipetterConfig.conf";
@@ -246,7 +285,8 @@ int main(int argc, char **argv) {
             &makeDeckGeometryCallback);
     ros::ServiceServer makeContainerGeometrySever = nh.advertiseService("pipetter_make_container_geometry",
             &makeContainerGeometryCallback);
-
+    ros::ServiceServer makeLiquidClassServer = nh.advertiseService("pipetter_make_liquid_class",
+            &makeLiquidClassCallback);
     ros::Rate rate(100);
     while(ros::ok()) {
         ros::spinOnce();

@@ -306,45 +306,36 @@ bool ZeusModule::getContainerGeometryParams(unsigned int index) {
 
 }
 
-bool ZeusModule::setLiquidClassParams(struct liquid_class_t l) {
-    /* Validate bounds on struct members*/
-    if((l.index > 99) || (l.lcfft > 1) || (l.aspiration_mode > 2) ||
-            (l.aspiration_flow_rate > 25000) || (l.over_aspirated_vol > 9999) ||
-            (l.aspiration_transport_vol > 10000) || (l.blowout_air_vol > 10000) ||
-            (l.aspiration_swap_speed > 3000) || (l.aspiration_settling_time > 999)
-            || (l.lld > 1) || (l.clld_sens > 4) || (l.plld_sens > 4) || (l.adc > 0)
-            || (l.dispensing_mode > 3) || (l.dispensing_flow_rate > 25000) ||
-            (l.stop_flow_rate > 25000) || (l.stop_back_vol > 325) ||
-            (l.dispensing_transport_vol > 10000) || (l.acceleration > 200) ||
-            (l.dispensing_swap_speed > 3000) || (l.dispensing_settling_time > 999)
-            || (l.flow_rate_transport_vol > 25000)) {
-        printf("ERROR: Liquid class definition contains out of range\
-               parameter.\n");
-    }
+bool ZeusModule::setLiquidClass(unsigned int index) {
+    LiquidClass l = *(_liquid_classes[index]);
     std::string cmd = cmdHeader("GL") + \
-                      "iq" + zfill(std::to_string(l.index), 2) + \
-                      "uu" + std::to_string(l.lcfft) + \
-                      std::to_string(l.aspiration_mode) + \
-                      zfill(std::to_string(l.aspiration_flow_rate), 5) + \
-                      zfill(std::to_string(l.over_aspirated_vol), 4) + \
-                      zfill(std::to_string(l.aspiration_transport_vol), 5) + \
-                      zfill(std::to_string(l.blowout_air_vol), 5) + \
-                      zfill(std::to_string(l.aspiration_swap_speed), 4) + \
-                      zfill(std::to_string(l.aspiration_settling_time), 3) + \
-                      std::to_string(l.lld) + \
-                      zfill(std::to_string(l.clld_sens), 4) + \
-                      zfill(std::to_string(l.plld_sens), 4) + \
-                      std::to_string(l.adc) + \
-                      std::to_string(l.dispensing_mode) + \
-                      zfill(std::to_string(l.dispensing_flow_rate), 5) + \
-                      zfill(std::to_string(l.stop_flow_rate), 5) + \
-                      zfill(std::to_string(l.stop_back_vol), 3) + \
-                      zfill(std::to_string(l.dispensing_transport_vol), 5) + \
-                      zfill(std::to_string(l.acceleration), 3) + \
-                      zfill(std::to_string(l.dispensing_swap_speed), 4) + \
-                      zfill(std::to_string(l.dispensing_settling_time), 3) + \
-                      zfill(std::to_string(l.flow_rate_transport_vol), 5);
-    sendCommand(cmd);
+                      "lq" + zfill(std::to_string(index), 2) + \
+                      "uu" + zfill(std::to_string(l.getAspirateTypeRef()), 1) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSpeedRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getPrewetVolumeRef() * 10)), 4) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateTransportAirVolumeRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateBlowoutVolumeRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSwapSpeedRef() * 10)), 4) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSettlingTimeRef() * 10)), 3) + \
+                      zfill(std::to_string(l.getLLDModeRef()), 1) + \
+                      zfill(std::to_string(l.getCLLDSensitivityRef()), 1) + \
+                      zfill(std::to_string(l.getPLLDSensitivityRef()), 1) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getLLDHeightDifferenceRef() * 10)), 2) + \
+                      zfill(std::to_string(l.getADCRef()), 1) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getImmersionDepthRef() * 10)), 4) + \
+                      zfill(std::to_string(l.getImmersionDirectionRef()), 1) + \
+                      zfill(std::to_string(l.getDispenseTypeRef()), 1) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSpeedRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getCutoffSpeedRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getStopBackVolumeRef() * 10)), 3) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseTransportAirVolumeRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseBlowoutVolumeRef() * 10)), 5) + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSwapSpeedRef() * 10)), 4) +\
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSettlingTimeRef() * 10)), 3) +\
+                      zfill(std::to_string(static_cast<unsigned int>(l.getTransportSpeedRef() * 10)), 5) +\
+                      zfill(std::to_string(static_cast<unsigned int>(l.getLeavingHeightRef() * 10)), 3) +\
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseHeightRef() * 10)), 3);
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::getLiquidClassParams(unsigned int index) {
