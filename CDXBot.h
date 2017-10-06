@@ -37,7 +37,7 @@ LICENSE:
     THE SOFTWARE.
 
 *************************************************************************/
-
+#pragma once
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "Container.h"
 #include "common.h"

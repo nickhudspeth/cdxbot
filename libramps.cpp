@@ -147,7 +147,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
     std::string zdec = std::to_string(z);
     idx = zdec.find(".");
     std::string zpos = "Z:" + zdec.substr(0, idx+3);
-    PRINT_INFO("Waiting for gantry to arrive at position " + \
+    PRINT_DEBUG("Waiting for gantry to arrive at position " + \
                xdec + ", " + ydec + ", " + \
                zdec + "}");
     time_t start = time(NULL);
@@ -173,10 +173,10 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                 /* If this line contains coordinate information, parse it.
                  * Else, throw it away. */
                 if (s2.find(std::string("X:")) != std::string::npos) {
-                    // PRINT_INFO("LIBRAMPS::FOUND STRING: " + s2);
+                    // PRINT_DEBUG("LIBRAMPS::FOUND STRING: " + s2);
                     if(axes & AXIS_X) {
                         if(s2.find(xpos) != std::string::npos) {
-                            PRINT_INFO("LIBRAMPS: Gantry reached target in x-coordinate");
+                            PRINT_DEBUG("LIBRAMPS: Gantry reached target in x-coordinate");
                             ax = true;
                         }
                     } else {
@@ -184,7 +184,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Y) {
                         if(s2.find(ypos) != std::string::npos) {
-                            PRINT_INFO("LIBRAMPS: Gantry reached target in y-coordinate");
+                            PRINT_DEBUG("LIBRAMPS: Gantry reached target in y-coordinate");
                             ay = true;
                         }
                     } else {
@@ -192,14 +192,14 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                     }
                     if(axes & AXIS_Z) {
                         if(s2.find(zpos) != std::string::npos) {
-                            PRINT_INFO("LIBRAAMPS: Gantry reached target in z-coordinate");
+                            PRINT_DEBUG("LIBRAAMPS: Gantry reached target in z-coordinate");
                             az = true;
                         }
                     } else {
                         az = true;
                     }
                     if((ax == true) && (ay == true) && (az ==true)) {
-                        PRINT_INFO("LIBRAMPS:: Gantry move complete.");
+                        PRINT_DEBUG("LIBRAMPS:: Gantry move complete.");
                         s2.clear();
                         return true;
                     } else {
@@ -340,7 +340,7 @@ int RampsModule::sendCommand(std::string s, bool wfr) {
     s += "\n";
     int n = 0;
     n = write(_usbfd, s.c_str(), s.length());
-    PRINT_INFO("LIBRAMPS: Sent " + std::to_string(n) + " characters in command: " + s);
+    PRINT_DEBUG("LIBRAMPS: Sent " + std::to_string(n) + " characters in command: " + s);
     usleep((n+25) * 100);
     usleep(100000);
     return n;

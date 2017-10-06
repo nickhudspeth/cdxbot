@@ -17,6 +17,7 @@ from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.textinput import TextInput
 
 def buttonPressCallback(instance):
     print('The button <%s> has been pressed' % instance.text)
@@ -32,6 +33,26 @@ def shutdownCallback(instance):
 class MyScreen(GridLayout):
     def __init__(self, **kwargs):
         super(MyScreen, self).__init__(**kwargs)
+        #  self.cols = 1
+        #  self.rows = 2
+        #  self.inner_grid = GridLayout(cols = 1, rows = 2)
+        #  self.inner_grid.run_button = Button(text='RUN')
+        #  self.inner_grid.run_button.bind(on_press=buttonPressCallback)
+        #  self.inner_grid.add_widget(self.inner_grid.run_button)
+        #  self.inner_grid.stop_button = Button(text='STOP')
+        #  self.inner_grid.stop_button.bind(on_press=buttonPressCallback)
+        #  self.inner_grid.add_widget(self.inner_grid.stop_button)
+        #  self.inner_grid.shutdown_button = Button(text='SHUTDOWN')
+        #  self.inner_grid.shutdown_button.bind(on_press=shutdownCallback)
+        #  self.inner_grid.add_widget(self.inner_grid.shutdown_button)
+        #  self.inner_grid.reset_button = Button(text='RESET')
+        #  self.inner_grid.reset_button.bind(on_press=buttonPressCallback)
+        #  self.inner_grid.add_widget(self.inner_grid.reset_button)
+        #  self.inner_grid.pause_button = Button(text='PAUSE')
+        #  self.inner_grid.pause_button.bind(on_press=buttonPressCallback)
+        #  self.inner_grid.add_widget(self.inner_grid.pause_button)
+        #  self.text_input = TextInput(text='run.hlmd')
+        #  self.add_widget(self.text_input)
         self.cols = 3
         self.rows = 2
         self.run_button = Button(text='RUN')

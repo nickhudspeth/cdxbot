@@ -222,8 +222,9 @@ bool makeContainerGeometryCallback(cdxbot::pipetterMakeContainerGeometry::Reques
 bool makeLiquidClassCallback(cdxbot::pipetterMakeLiquidClass::Request &req,
                              cdxbot::pipetterMakeLiquidClass::Response &resp) {
     ROS_DEBUG_STREAM("PipetterControllerNode: MakeLiquidClass callback entered.");
-    ROS_INFO_STREAM("Creating liquid class at index" << req.index << ".");
+    ROS_DEBUG_STREAM("PipetterControllerNode: Creating liquid class at index " << req.index << ".");
     LiquidClass *l = pc->makeLiquidClass(req.name, req.index);
+    ROS_DEBUG_STREAM("PipetterControllerNode: Call to pc->makeLiquidClass complete.");
     l->getADCRef() = req.adc;
     l->getAspirateBlowoutVolumeRef() = req.aspirate_blowout_volume;
     l->getAspirateSettlingTimeRef() = req.aspirate_settling_time;
@@ -252,7 +253,7 @@ bool makeLiquidClassCallback(cdxbot::pipetterMakeLiquidClass::Request &req,
     bool res =  pc->setLiquidClass(req.index);
     if(!res) {
         ROS_ERROR_STREAM("PipetterControllerNode: Could not create liquid class\
-                         at index" << req.index);
+                         at index " << req.index);
     }
     return res;
 }
@@ -293,6 +294,7 @@ int main(int argc, char **argv) {
         msg.vector.x = 0;
         msg.vector.y = 0;
         msg.vector.z = pc->getZPos();
+    // pub.publish(msg);
         rate.sleep();
     }
     return 0;

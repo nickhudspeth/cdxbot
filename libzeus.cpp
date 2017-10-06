@@ -147,6 +147,9 @@ extern "C" std::string zfill(std::string s, int len) {
 
 
 ZeusModule::ZeusModule(int id) {
+    for(unsigned int i = 0; i < 100; i++){
+        _liquid_classes.emplace_back(new LiquidClass(""));
+    }
 }
 ZeusModule::~ZeusModule() {
 }
@@ -309,31 +312,31 @@ bool ZeusModule::getContainerGeometryParams(unsigned int index) {
 bool ZeusModule::setLiquidClass(unsigned int index) {
     LiquidClass l = *(_liquid_classes[index]);
     std::string cmd = cmdHeader("GL") + \
-                      "lq" + zfill(std::to_string(index), 2) + \
-                      "uu" + zfill(std::to_string(l.getAspirateTypeRef()), 1) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSpeedRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getPrewetVolumeRef() * 10)), 4) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateTransportAirVolumeRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateBlowoutVolumeRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSwapSpeedRef() * 10)), 4) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSettlingTimeRef() * 10)), 3) + \
-                      zfill(std::to_string(l.getLLDModeRef()), 1) + \
-                      zfill(std::to_string(l.getCLLDSensitivityRef()), 1) + \
-                      zfill(std::to_string(l.getPLLDSensitivityRef()), 1) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getLLDHeightDifferenceRef() * 10)), 2) + \
-                      zfill(std::to_string(l.getADCRef()), 1) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getImmersionDepthRef() * 10)), 4) + \
-                      zfill(std::to_string(l.getImmersionDirectionRef()), 1) + \
-                      zfill(std::to_string(l.getDispenseTypeRef()), 1) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSpeedRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getCutoffSpeedRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getStopBackVolumeRef() * 10)), 3) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseTransportAirVolumeRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseBlowoutVolumeRef() * 10)), 5) + \
-                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSwapSpeedRef() * 10)), 4) +\
-                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSettlingTimeRef() * 10)), 3) +\
-                      zfill(std::to_string(static_cast<unsigned int>(l.getTransportSpeedRef() * 10)), 5) +\
-                      zfill(std::to_string(static_cast<unsigned int>(l.getLeavingHeightRef() * 10)), 3) +\
+                      "lq" + zfill(std::to_string(index + 21), 2) + \
+                      "uu" + zfill(std::to_string(l.getAspirateTypeRef()), 1) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSpeedRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getPrewetVolumeRef() * 10)), 4) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateTransportAirVolumeRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateBlowoutVolumeRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSwapSpeedRef() * 10)), 4) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSettlingTimeRef() * 10)), 3) + " " + \
+                      zfill(std::to_string(l.getLLDModeRef()), 1) + " " + \
+                      zfill(std::to_string(l.getCLLDSensitivityRef()), 1) + " " + \
+                      zfill(std::to_string(l.getPLLDSensitivityRef()), 1) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getLLDHeightDifferenceRef() * 10)), 2) + " " + \
+                      zfill(std::to_string(l.getADCRef()), 1) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getImmersionDepthRef() * 10)), 4) + " " + \
+                      zfill(std::to_string(l.getImmersionDirectionRef()), 1) + " " + \
+                      zfill(std::to_string(l.getDispenseTypeRef()), 1) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSpeedRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getCutoffSpeedRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getStopBackVolumeRef() * 10)), 3) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseTransportAirVolumeRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseBlowoutVolumeRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSwapSpeedRef() * 10)), 4) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getDispenseSettlingTimeRef() * 10)), 3) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getTransportSpeedRef() * 10)), 5) + " " + \
+                      zfill(std::to_string(static_cast<unsigned int>(l.getLeavingHeightRef() * 10)), 3) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getDispenseHeightRef() * 10)), 3);
     return sendCommand(cmd);
 }
@@ -395,7 +398,7 @@ bool ZeusModule::aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
     cmd += "ai" + zfill(std::to_string(static_cast<unsigned int>(vol*10)), 5) +\
            "ge" + zfill(std::to_string(gc_idx), 2) +\
            "go" + zfill(std::to_string(dg_idx), 2) +\
-           "lq" + zfill(std::to_string(lc_idx), 2) +\
+           "lq" + zfill(std::to_string(lc_idx + 21), 2) +\
            "gq" + std::to_string(_qpm) +\
            "lb" + std::to_string(_lld) +\
            "zp" + zfill(std::to_string(static_cast<unsigned int>(_lld_search_height)), 4) +\
@@ -411,7 +414,7 @@ bool ZeusModule::dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
     cmd += "di" + zfill(std::to_string(static_cast<unsigned int>(vol)), 4) +\
            "ge" + zfill(std::to_string(gc_idx), 2) +\
            "go" + zfill(std::to_string(dg_idx), 2) +\
-           "lq" + zfill(std::to_string(lc_idx), 2) +\
+           "lq" + zfill(std::to_string(lc_idx + 21), 2) +\
            "gq" + std::to_string(_qpm) +\
            "lb" + std::to_string(_lld) +\
            "zp" + zfill(std::to_string(_lld_search_height), 4) +\
@@ -578,6 +581,10 @@ std::string ZeusModule::waitForResponse(void) {
             std::string ret = parseErrors(_received_msg);
             PRINT_DEBUG("LIBZEUS: Returned string " + ret);
             setReceivedMsg(std::string(""));
+            // if(ret.find("GL") != std::string::npos){
+                // std::string cmd = cmdHeader("VP");
+                // sendCommand(cmd);
+            // }
             return ret;
         }
     }

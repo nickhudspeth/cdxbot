@@ -41,6 +41,7 @@ LICENSE:
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "CDXModule.h"
+#include "common.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <memory>
@@ -210,7 +211,10 @@ class PipetterModule : public CDXModule {
                                        double dispense_offset) {};
     LiquidClass *makeLiquidClass(std::string name, unsigned int index) {
         LiquidClass *p = new LiquidClass(name);
-        _liquid_classes.insert(_liquid_classes.begin() + index, p);
+        std::cout <<"PipetterModule:: MakeLiquidClass constructor call complete." << std::endl;
+        _liquid_classes[index] = p;
+        // _liquid_classes.insert(_liquid_classes.begin() + index, p);
+        std::cout <<"PipetterModule:: Inserted pointer into vector." << std::endl;
         return p;
     }
     virtual bool setLiquidClass(unsigned int index) {};

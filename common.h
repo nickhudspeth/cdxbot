@@ -40,6 +40,8 @@ LICENSE:
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include <cstdlib>
+#include <string>
+#include <iostream>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 
 #define UNITS_MM 0
