@@ -88,7 +88,7 @@ int TeleshakeModule::init(void) {
         PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " opening " + _usb_addr + " : " + strerror(errno));
         return -1;
     }
-    PRINT_ERROR("LIBTELESHAKE: Opened serial connection to USB device at " + _usb_addr + " with file descriptor " + std::to_string(_usbfd));
+    PRINT_DEBUG("LIBTELESHAKE: Opened serial connection to USB device at " + _usb_addr + " with file descriptor " + std::to_string(_usbfd));
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
@@ -137,8 +137,8 @@ int TeleshakeModule::deinit(void) {
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
     close(_usbfd);
-    PRINT_INFO("Closed socket connection to hardware.");
-    PRINT_INFO("Successfully shut down driver.");
+    PRINT_DEBUG("LIBTELESHAKE: Closed socket connection to hardware.");
+    PRINT_DEBUG("LIBTELESHAKE: Successfully shut down driver.");
     return 0;
 }
 
@@ -154,11 +154,11 @@ unsigned int TeleshakeModule::queryAll(void) {
     sendCommand(t);
     t = readResponse();
     if(t.data_0 > 0) {
-        PRINT_INFO("Located " + std::to_string(t.data_0) + " shaker module(s)");
+        PRINT_DEBUG("LIBTELESHAKE: Located " + std::to_string(t.data_0) + " shaker module(s)");
         _device_addr = t.data_0;
         return true;
     } else {
-        PRINT_INFO("Unable to locate shaker module(s)");
+        PRINT_DEBUG("LIBTELESHAKE: Unable to locate shaker module(s)");
         return false;
     }
 }
@@ -203,18 +203,18 @@ bool TeleshakeModule::stop(void) {
 
 bool TeleshakeModule::setFrequency(unsigned int f) {
     command_telegram_t t;
-    std::string s = "Commanded frequency " + \
+    std::string s = "LIBTELESHAKE: Commanded frequency " + \
                     std::to_string(f) + " is out of range. Setting frequency \
                     to ";
     t.control = CB_ADDRESS_MASK | _device_addr;
     t.command = CMD_SET_CYCLE_TIME;
     if(f < SHAKE_FREQUENCY_MIN ) {
         s += " " + std::to_string(SHAKE_FREQUENCY_MIN);
-        PRINT_WARNING( s);
+        PRINT_WARNING(s);
         f = SHAKE_FREQUENCY_MIN;
     } else if(f >  SHAKE_FREQUENCY_MAX) {
         s += " " + std::to_string(SHAKE_FREQUENCY_MAX);
-        PRINT_INFO(s);
+        PRINT_WARNING(s);
         f = SHAKE_FREQUENCY_MAX;
     }
     /* Convert frequency to cycle time. Round to nearest integer */
@@ -224,7 +224,7 @@ bool TeleshakeModule::setFrequency(unsigned int f) {
     t.data_2 = (uint8_t)(c_time >> 16);
     t.data_1 = (uint8_t)(c_time >> 8);
     t.data_0 = (uint8_t)(c_time);
-    PRINT_INFO("Setting Teleshake vibratory frequency to: " + f);
+    PRINT_DEBUG("LIBTELESHAKE: Setting Teleshake vibratory frequency to: " + f);
     sendCommand(t);
     t = readResponse();
     return true;
@@ -233,7 +233,7 @@ bool TeleshakeModule::setFrequency(unsigned int f) {
 bool TeleshakeModule::setPower(float percent) {
     command_telegram_t t;
     float pwr = 255.0f;
-    std::string s = "Commanded power level percentage " + \
+    std::string s = "LIBTELESHAKE: Commanded power level percentage " + \
                     std::to_string(percent) + " is out of range. Setting power level \
                     to ";
     t.control = CB_ADDRESS_MASK | _device_addr;
@@ -284,7 +284,7 @@ unsigned int TeleshakeModule::getLastError(void) {
 }
 
 void TeleshakeModule::parseErrors(unsigned int e) {
-    std::string s = "Teleshake returned error - ";
+    std::string s = "LIBTELESHAKE: Returned error - ";
     switch (e) {
     case ERR_BUFFER_OVERFLOW:
         s += "Buffer overflow.";
@@ -397,7 +397,7 @@ command_telegram_t TeleshakeModule::readResponse(void) {
             parseErrors(getLastError());
         }
     } else {
-        PRINT_ERROR("Error - Timeout waiting for response from Teleshake module.");
+        PRINT_ERROR("LIBTELESHAKE: Error - Timeout waiting for response from Teleshake module.");
     }
     return t;
 }

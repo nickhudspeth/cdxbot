@@ -87,11 +87,11 @@ CDXBot cd;
 ros::Subscriber guiSub;
 
 /* Create publishers for the various controller */
-ros::Publisher gc_pub; //= nh.advertise<cdx
-ros::Publisher pc_pub;
-ros::Publisher sc_pub;
-ros::Publisher vc_pub;
-ros::Publisher shutdown_pub;
+// ros::Publisher gc_pub; //= nh.advertise<cdx
+// ros::Publisher pc_pub;
+// ros::Publisher sc_pub;
+// ros::Publisher vc_pub;
+// ros::Publisher shutdown_pub;
 
 /* Create service clients */
 ros::ServiceClient gcClient;
@@ -267,138 +267,144 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         }
 
         /* PARAMETERS SPECIFIC TO TIP-HOLDING CONTAINERS */
-        if(cd.getContainer(i).getType() == "tip") {
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/tip_type_index", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getTipTypeRef())) {
-                nh.getParam("/cdxbot_defaults/tip_type_index", cd.getContainer(i).getTipTypeRef());
-                ROS_WARN("No parameter containers:%d:tip_type_index found in configuration file.\
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tip_type_index", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTipTypeRef())) {
+            nh.getParam("/cdxbot_defaults/tip_type_index", cd.getContainer(i).getTipTypeRef());
+            ROS_WARN("No parameter containers:%d:tip_type_index found in configuration file.\
                         Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getTipType()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/tip_engagement_len", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getTipEngagementLenRef())) {
-                nh.getParam("/cdxbot_defaults/tip_engagement_len", cd.getContainer(i).getTipEngagementLenRef());
-                ROS_WARN("No parameter containers:%d:tip_engagement_len found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getTipEngagementLen()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/tip_deposit_height", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getTipDepositHeightRef())) {
-                nh.getParam("/cdxbot_defaults/tip_deposit_height", cd.getContainer(i).getTipDepositHeightRef());
-                ROS_WARN("No parameter containers:%d:tip_deposit_height found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getTipDepositHeight()));
-            }
-
-
-            /* PARAMETERS SPECIFIC TO WELL-TYPE CONTAINERS */
-        } else if(cd.getContainer(i).getType() == "well") {
-            /* Only well-type containers require container geometry parameter
-             * specification. */
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/well_geometry", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getWellGeometryRef())) {
-                nh.getParam("/cdxbot_defaults/well_geometry", cd.getContainer(i).getWellGeometryRef());
-                ROS_WARN("No parameter containers:%d:well_geometry found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, cd.getContainer(i).getWellGeometry());
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/well_diameter", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getWellDiameterRef())) {
-                nh.getParam("/cdxbot_defaults/well_diameter", cd.getContainer(i).getWellDiameterRef());
-                ROS_WARN("No parameter containers:%d:well_diameter found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getWellDiameter()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/well_len_x", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getWellLengthRef('x'))) {
-                nh.getParam("/cdxbot_defaults/well_len_x", cd.getContainer(i).getWellLengthRef('x'));
-                ROS_WARN("No parameter containers:%d:well_len_x found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getWellLength('x')));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/well_len_y", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getWellLengthRef('y'))) {
-                nh.getParam("/cdxbot_defaults/well_len_y", cd.getContainer(i).getWellLengthRef('y'));
-                ROS_WARN("No parameter containers:%d:well_len_y found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getWellLength('y')));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/second_section_height", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionHeightRef())) {
-                nh.getParam("/cdxbot_defaults/second_section_height", cd.getContainer(i).getSecondSectionHeightRef());
-                ROS_WARN("No parameter containers:%d:second_section_height found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getSecondSectionHeight()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/second_section", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionRef())) {
-                nh.getParam("/cdxbot_defaults/second_section", cd.getContainer(i).getSecondSectionRef());
-                ROS_WARN("No parameter containers:%d:second_section found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getSecondSection()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/bottom_search_offset", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getBottomSearchOffsetRef())) {
-                nh.getParam("/cdxbot_defaults/bottom_search_offset", cd.getContainer(i).getBottomSearchOffsetRef());
-                ROS_WARN("No parameter containers:%d:bottom_search_offset found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getBottomSearchOffset()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/dispense_offset", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getDispensePositionOffsetRef())) {
-                nh.getParam("/cdxbot_defaults/dispense_offset", cd.getContainer(i).getDispensePositionOffsetRef());
-                ROS_WARN("No parameter containers:%d:dispense_offset found in configuration file.\
-                        Initializing cdxbot with default value %s",\
-                         i, std::to_string(cd.getContainer(i).getDispensePositionOffset()));
-            }
-            memset(buf, ' ',64);
-            sprintf(buf,"/cdxbot/containers/c%d/volume", i);
-            if(!nh.getParam(buf, cd.getContainer(i).getVolumeRef())) {
-                nh.getParam("/cdxbot_defaults/volume", cd.getContainer(i).getVolumeRef());
-                ROS_WARN("No parameter containers:%d:volume found in configuration file.\
-            Initializing cdxbot with default value %f",\
-                         i, std::to_string(cd.getContainer(i).getVolumeRef()));
-            }
-            cdxbot::pipetterMakeContainerGeometry::Request pmcgreq;
-            cdxbot::pipetterMakeContainerGeometry::Response  pmcgresp;
-            pmcgreq.index = i;
-            pmcgreq.geometry = (cd.getContainer(i).getWellGeometry() == "square") ? 1 : 0;
-            pmcgreq.diameter = cd.getContainer(i).getWellDiameter();
-            pmcgreq.len_x = cd.getContainer(i).getWellLength('x');
-            pmcgreq.len_y = cd.getContainer(i).getWellLength('y');
-            pmcgreq.second_section_height = cd.getContainer(i).getSecondSectionHeight();
-            pmcgreq.second_section =  cd.getContainer(i).getSecondSection();
-            pmcgreq.max_depth = cd.getContainer(i).getWellLength('z');
-            pmcgreq.bottom_search_offset = cd.getContainer(i).getBottomSearchOffset();
-            pmcgreq.dispense_offset = cd.getContainer(i).getDispensePositionOffset();
-            if(!pipetterMakeContainerGeometryClient.call(pmcgreq, pmcgresp)) {
-                ROS_ERROR_STREAM("CDXBotNode: Unable to create container geometry table entry for container " << i << ".");
-            }
-            /*else {
-                 ROS_INFO_STREAM("CDXBotNode: Created container geometry table entry for container " << i << "\n" \
-                                << "\tIndex =\t" << pmcgreq.index <<"\n" \
-                                << "\tGeometry =\t" << pmcgreq.geometry << "\n" \
-                                << "\tDiameter =\t" << pmcgreq.diameter << "\n" \
-                                << "\tLen_X =\t" << pmcgreq.len_x << "\n" \
-                                << "\tLen_Y =\t" << pmcgreq.len_y << "\n" \
-                                << "\tSecond Section Height =\t" << pmcgreq.second_section_height << "\n" \
-                                << "\tSecond Section =\t" << pmcgreq.second_section << "\n" \
-                                << "\tMax Depth =\t" << pmcgreq.max_depth << "\n" \
-                                << "\tBottom Search Offset =\t" << pmcgreq.bottom_search_offset << "\n" \
-                                << "\tDispense Offset =\t" << pmcgreq.dispense_offset);
-            }*/
+                     i, std::to_string(cd.getContainer(i).getTipType()));
         }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tip_engagement_len", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTipEngagementLenRef())) {
+            nh.getParam("/cdxbot_defaults/tip_engagement_len", cd.getContainer(i).getTipEngagementLenRef());
+            ROS_WARN("No parameter containers:%d:tip_engagement_len found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getTipEngagementLen()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/tip_deposit_height", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getTipDepositHeightRef())) {
+            nh.getParam("/cdxbot_defaults/tip_deposit_height", cd.getContainer(i).getTipDepositHeightRef());
+            ROS_WARN("No parameter containers:%d:tip_deposit_height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getTipDepositHeight()));
+        }
+
+
+        /* PARAMETERS SPECIFIC TO WELL-TYPE CONTAINERS */
+        /* Only well-type containers require container geometry parameter
+         * specification. */
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/volume", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getVolumeRef())) {
+            nh.getParam("/cdxbot_defaults/volume", cd.getContainer(i).getVolumeRef());
+            ROS_WARN("No parameter containers:%d:volume found in configuration file.\
+            Initializing cdxbot with default value %f",\
+                     i, std::to_string(cd.getContainer(i).getVolumeRef()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/well_geometry", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWellGeometryRef())) {
+            nh.getParam("/cdxbot_defaults/well_geometry", cd.getContainer(i).getWellGeometryRef());
+            ROS_WARN("No parameter containers:%d:well_geometry found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, cd.getContainer(i).getWellGeometry());
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/well_diameter", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWellDiameterRef())) {
+            nh.getParam("/cdxbot_defaults/well_diameter", cd.getContainer(i).getWellDiameterRef());
+            ROS_WARN("No parameter containers:%d:well_diameter found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getWellDiameter()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/well_len_x", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWellLengthRef('x'))) {
+            nh.getParam("/cdxbot_defaults/well_len_x", cd.getContainer(i).getWellLengthRef('x'));
+            ROS_WARN("No parameter containers:%d:well_len_x found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getWellLength('x')));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/well_len_y", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWellLengthRef('y'))) {
+            nh.getParam("/cdxbot_defaults/well_len_y", cd.getContainer(i).getWellLengthRef('y'));
+            ROS_WARN("No parameter containers:%d:well_len_y found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getWellLength('y')));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/well_len_z", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getWellLengthRef('z'))) {
+            nh.getParam("/cdxbot_defaults/well_len_y", cd.getContainer(i).getWellLengthRef('z'));
+            ROS_WARN("No parameter containers:%d:well_len_z found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getWellLength('z')));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/second_section", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionRef())) {
+            nh.getParam("/cdxbot_defaults/second_section", cd.getContainer(i).getSecondSectionRef());
+            ROS_WARN("No parameter containers:%d:second_section found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getSecondSection()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/second_section_height", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getSecondSectionHeightRef())) {
+            nh.getParam("/cdxbot_defaults/second_section_height", cd.getContainer(i).getSecondSectionHeightRef());
+            ROS_WARN("No parameter containers:%d:second_section_height found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getSecondSectionHeight()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/bottom_search_offset", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getBottomSearchOffsetRef())) {
+            nh.getParam("/cdxbot_defaults/bottom_search_offset", cd.getContainer(i).getBottomSearchOffsetRef());
+            ROS_WARN("No parameter containers:%d:bottom_search_offset found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getBottomSearchOffset()));
+        }
+        memset(buf, ' ',64);
+        sprintf(buf,"/cdxbot/containers/c%d/dispense_offset", i);
+        if(!nh.getParam(buf, cd.getContainer(i).getDispensePositionOffsetRef())) {
+            nh.getParam("/cdxbot_defaults/dispense_offset", cd.getContainer(i).getDispensePositionOffsetRef());
+            ROS_WARN("No parameter containers:%d:dispense_offset found in configuration file.\
+                        Initializing cdxbot with default value %s",\
+                     i, std::to_string(cd.getContainer(i).getDispensePositionOffset()));
+        }
+        cdxbot::pipetterMakeContainerGeometry::Request pmcgreq;
+        cdxbot::pipetterMakeContainerGeometry::Response  pmcgresp;
+        pmcgreq.index = i;
+        pmcgreq.geometry = (cd.getContainer(i).getWellGeometry() == "square") ? 1 : 0;
+        pmcgreq.diameter = cd.getContainer(i).getWellDiameter();
+        pmcgreq.len_x = cd.getContainer(i).getWellLength('x');
+        pmcgreq.len_y = cd.getContainer(i).getWellLength('y');
+        pmcgreq.len_z = cd.getContainer(i).getWellLength('z');
+        pmcgreq.second_section_height = cd.getContainer(i).getSecondSectionHeight();
+        pmcgreq.second_section =  cd.getContainer(i).getSecondSection();
+        pmcgreq.max_depth = cd.getContainer(i).getLength('z') - cd.getContainer(i).getWellLength('z');
+        pmcgreq.bottom_search_offset = cd.getContainer(i).getBottomSearchOffset();
+        pmcgreq.dispense_offset = cd.getContainer(i).getDispensePositionOffset();
+        if(!pipetterMakeContainerGeometryClient.call(pmcgreq, pmcgresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to create container geometry table entry for container " << i << ".");
+        } else {
+            ROS_DEBUG_STREAM("CDXBotNode: Created container geometry table entry for container " << i << "\n" \
+                             << "\tIndex =\t" << pmcgreq.index <<"\n" \
+                             << "\tGeometry =\t" << static_cast<unsigned int >(pmcgreq.geometry) << "\n" \
+                             << "\tDiameter =\t" << pmcgreq.diameter << "\n" \
+                             << "\tLen_X =\t" << pmcgreq.len_x << "\n" \
+                             << "\tLen_Y =\t" << pmcgreq.len_y << "\n" \
+                             << "\tSecond Section Height =\t" << pmcgreq.second_section_height << "\n" \
+                             << "\tSecond Section =\t" << pmcgreq.second_section << "\n" \
+                             << "\tMax Depth =\t" << pmcgreq.max_depth << "\n" \
+                             << "\tBottom Search Offset =\t" << pmcgreq.bottom_search_offset << "\n" \
+                             << "\tDispense Offset =\t" << pmcgreq.dispense_offset);
+        }
+        cd.getContainer(i).setContainerGeometryTableIndex(i);
         /* Make deck geometry entry for containers of all types */
         cdxbot::pipetterMakeDeckGeometry::Request pmdgreq;
         cdxbot::pipetterMakeDeckGeometry::Response pmdgresp;
@@ -409,15 +415,15 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         pmdgreq.tip_deposit_height = cd.getContainer(i).getTipDepositHeight();
         if(!pipetterMakeDeckGeometryClient.call(pmdgreq, pmdgresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to create deck geometry table entry for container " << i << ".");
+        } else {
+            ROS_DEBUG_STREAM("CDXBotNode: Created deck geometry table entry for container " << i << "\n" \
+                             << "\tIndex =\t" << pmdgreq.index <<"\n" \
+                             << "\tTraverse height =\t" << pmdgreq.traverse_height << "\n" \
+                             << "\tContainer offset Z =\t" << pmdgreq.container_offset_z << "\n" \
+                             << "\tEngagement length =\t" << pmdgreq.engagement_length << "\n" \
+                             << "\tTip deposit height =\t" << pmdgreq.tip_deposit_height);
         }
-        /*else {
-            ROS_INFO_STREAM("CDXBotNode: Created deck geometry table entry for container " << i << "\n" \
-                            << "\tIndex =\t" << pmdgreq.index <<"\n" \
-                            << "\tTraverse height =\t" << pmdgreq.traverse_height << "\n" \
-                            << "\tContainer offset Z =\t" << pmdgreq.container_offset_z << "\n" \
-                            << "\tEngagement length =\t" << pmdgreq.engagement_length << "\n" \
-                            << "\tTip deposit height =\t" << pmdgreq.tip_deposit_height);
-        }*/
+        cd.getContainer(i).setDeckGeometryTableIndex(i);
         /* INITIALIZE CONTAINER CELL MATRIX */
         for(unsigned int j =0; j < cd.getContainer(i).getRows(); j++) {
             std::vector<struct container_cell> newRow;
@@ -690,14 +696,6 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
         cd.setRunStatus(1);
     } else if (s->data == "STOP") {
         cd.setRunStatus(0);
-    } else if(s->data == "SHUTDOWN") {
-        cd.setRunStatus(0);
-        std_msgs::String msg;
-        std::stringstream ss;
-        ss << "SHUT THE HELL DOWN";
-        msg.data = ss.str();
-        shutdown_pub.publish(msg);
-        ros::shutdown();
     } else if(s->data == "RESET") {
         cd.setRunStatus(0);
         cd.setActionIndex(0);
@@ -707,6 +705,9 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
 
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("CDXBotNode: Received shutdown directive.");
+    cd.setRunStatus(0);
+    struct action a;
+    homeCallback(cd, a);
     ros::shutdown();
 }
 
@@ -725,121 +726,122 @@ void pipetterUpdateZPosCallback(const std_msgs::Float64 &msg) {
 
 void aspirateCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("Entered aspirateCallback().");
-    cdxbot::gantryMove::Request gmreq;
-    cdxbot::gantryMove::Response gmresp;
-    unsigned int container = static_cast<unsigned int>(a.args[0]);
-    unsigned int row = static_cast<unsigned int>(a.args[1]);
-    unsigned int col = static_cast<unsigned int>(a.args[2]);
-    double vol = static_cast<double>(a.args[3]);
-    bool orientation = static_cast<bool>(a.args[4]);
-    double speed = static_cast<double>(a.args[5]);
-    bool prewet = static_cast<bool>(a.args[6]);
-    double curr_vol = cd.getContainer(a.args[0]).getCell(row, col).vol_filled;
-    double max_vol  = cd.getContainer(a.args[0]).getCell(row, col).vol_max;
+    if(cd.getRunStatus() != 0) {
+        cdxbot::gantryMove::Request gmreq;
+        cdxbot::gantryMove::Response gmresp;
+        unsigned int container = static_cast<unsigned int>(a.args[0]);
+        unsigned int row = static_cast<unsigned int>(a.args[1]);
+        unsigned int col = static_cast<unsigned int>(a.args[2]);
+        double vol = static_cast<double>(a.args[3]);
+        unsigned int lc_idx = static_cast<unsigned int>(a.args[4]);
+        double curr_vol = cd.getContainer(a.args[0]).getCell(row, col).vol_filled;
+        double max_vol  = cd.getContainer(a.args[0]).getCell(row, col).vol_max;
 
-    /* Check to see if current well volume < commanded fill volume */
-    if((curr_vol + a.args[3]) > max_vol) {
-        //Throw some error
-        //return;
-    }
-    /* Move z-axis to traverse height for container*/
-    // if(cd.getPipetterHasZ()) {
-    // cdxbot::pipetterMoveZ::Request pmzreq;
-    // cdxbot::pipetterMoveZ::Response pmzresp;
-    // pmzreq.pos = cd.getContainer(container).getTraverseHeight();
-    // pmzreq.vel = 1;
-    // if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
-    // cd.setRunStatus(0);
-    // }
-    // } else {
-    // gmreq.z = cd.getContainer(container).getTraverseHeight();
-    // gmreq.movex = false;
-    // gmreq.movey = false;
-    // gmreq.movez = true;
-    // if(!gantryMoveClient.call(gmreq, gmresp)) {
-    // ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
-    // }
-    // }
+        /* Check to see if current well volume < commanded fill volume */
+        // if((curr_vol + a.args[3]) > max_vol) {
+        // ROS_ERROR_STREAM("CDXBotNode: Requested aspiration volume exceeds pipette tip capacity.");
+        // }
+        /* Move z-axis to traverse height for container*/
+        // if(cd.getPipetterHasZ()) {
+        // cdxbot::pipetterMoveZ::Request pmzreq;
+        // cdxbot::pipetterMoveZ::Response pmzresp;
+        // pmzreq.pos = cd.getContainer(container).getTraverseHeight();
+        // pmzreq.vel = 1;
+        // if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // cd.setRunStatus(0);
+        // }
+        // } else {
+        // gmreq.z = cd.getContainer(container).getTraverseHeight();
+        // gmreq.movex = false;
+        // gmreq.movey = false;
+        // gmreq.movez = true;
+        // if(!gantryMoveClient.call(gmreq, gmresp)) {
+        // ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
+        // }
+        // }
 
-    /* Move gantry to the well location */
-    gmreq.move_mode = 0;
-    gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
-    gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
-    gmreq.movex = true;
-    gmreq.movey = true;
-    gmreq.movez = false;
-    if(!gantryMoveClient.call(gmreq, gmresp)) {
-        ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x = " << gmreq.x << ", y = " << gmreq.y << ").");
-    }
-    /* Aspirate fluid from well */
-    cdxbot::pipetterAspirate::Request pareq;
-    cdxbot::pipetterAspirate::Response paresp;
-    pareq.vol = vol;
-    pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-    pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
-    pareq.lc_idx = cd.getContainer(container).getCell(row, col).lc_index;
-    pareq.container_height = cd.getContainer(container).getLength('z');
-    pareq.check_height = cd.getContainer(container).getCheckHeight();
-    pareq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
-    pareq.orientation = orientation;
-    pareq.speed = speed;
-    pareq.prewet = prewet;
-
-    if(!pipetterAspirateClient.call(pareq, paresp)) {
-        ROS_ERROR_STREAM("CDXBotNode: Unable to aspirate");
+        /* Move gantry to the well location */
+        gmreq.move_mode = 0;
+        gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
+        gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+        gmreq.movex = true;
+        gmreq.movey = true;
+        gmreq.movez = false;
+        if(!gantryMoveClient.call(gmreq, gmresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x = " << gmreq.x << ", y = " << gmreq.y << ").");
+        }
+        /* Aspirate fluid from well */
+        cdxbot::pipetterAspirate::Request pareq;
+        cdxbot::pipetterAspirate::Response paresp;
+        pareq.vol = vol;
+        pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
+        pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pareq.lc_idx = lc_idx;
+        pareq.container_height = cd.getContainer(container).getLength('z');
+        // pareq.check_height = cd.getContainer(container).getCheckHeight();
+        pareq.check_height = 5;
+        double max_depth = cd.getContainer(container).getWellLength('z');
+        double liquid_height = cd.getContainer(container).getCell(row, col).liquid_height;
+        // pareq.liquid_surface = pareq.container_height - max_depth + liquid_height;
+        pareq.liquid_surface = cd.getContainer(container).getLength('z');
+        if(!pipetterAspirateClient.call(pareq, paresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to aspirate");
+            cd.setRunStatus(0);
+        }
     }
     ROS_DEBUG_STREAM("Leaving aspirateCallback().");
 }
 
 void dispenseCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("Entered dispenseCallback().");
-    cdxbot::gantryMove::Request gmreq;
-    cdxbot::gantryMove::Response gmresp;
-    /* Move pipette tip to bottom of well */
-    unsigned int container = static_cast<unsigned int>(a.args[0]);
-    unsigned int row = static_cast<unsigned int>(a.args[1]);
-    unsigned int col = static_cast<unsigned int>(a.args[2]);
-    double vol = static_cast<double>(a.args[3]);
-    bool orientation = static_cast<bool>(a.args[4]);
-    double speed = static_cast<double>(a.args[5]);
-    bool prewet = static_cast<bool>(a.args[6]);
-    double curr_vol = cd.getContainer(a.args[0]).getCell(row, col).vol_filled;
-    double max_vol  = cd.getContainer(a.args[0]).getCell(row, col).vol_max;
+    if(cd.getRunStatus() != 0) {
+        cdxbot::gantryMove::Request gmreq;
+        cdxbot::gantryMove::Response gmresp;
+        /* Move pipette tip to bottom of well */
+        unsigned int container = static_cast<unsigned int>(a.args[0]);
+        unsigned int row = static_cast<unsigned int>(a.args[1]);
+        unsigned int col = static_cast<unsigned int>(a.args[2]);
+        double vol = static_cast<double>(a.args[3]);
+        unsigned int lc_idx = static_cast<unsigned int>(a.args[4]);
+        double curr_vol = cd.getContainer(a.args[0]).getCell(row, col).vol_filled;
+        double max_vol  = cd.getContainer(a.args[0]).getCell(row, col).vol_max;
 
-    /* Check to see if current well volume + commanded dispensing
-     * volume is greater than maximum well volume */
-    if((curr_vol + a.args[3]) > max_vol) {
-        ROS_ERROR_STREAM("Dispensing requested amount into cell (" << row \
-                         << ", " << col << ") in container " << container \
-                         << " would cause liquid to overflow.");
-        cd.setRunStatus(0);
+        /* Check to see if current well volume + commanded dispensing
+         * volume is greater than maximum well volume */
+        if((curr_vol + a.args[3]) > max_vol) {
+            ROS_ERROR_STREAM("Dispensing requested amount into cell (" << row \
+                             << ", " << col << ") in container " << container \
+                             << " would cause liquid to overflow.");
+            cd.setRunStatus(0);
+        }
+
+        /* Move gantry to cell location */
+        gmreq.move_mode = 0;
+        gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
+        gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+        gmreq.z = cd.getFeedPlaneHeight();
+        gmreq.movex = true;
+        gmreq.movey = true;
+        gmreq.movez = false;
+        if(!gantryMoveClient.call(gmreq, gmresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
+        }
+
+        /* Dispense commanded volume */
+        cdxbot::pipetterDispense::Request pdreq;
+        cdxbot::pipetterDispense::Response pdresp;
+        pdreq.vol = vol;
+        pdreq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
+        pdreq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pdreq.lc_idx = lc_idx;
+        pdreq.container_height = cd.getContainer(container).getLength('z');
+        // pdreq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
+        pdreq.liquid_surface = cd.getContainer(container).getLength('z') - cd.getContainer(container).getWellLength('z');
+        if(!pipetterDispenseClient.call(pdreq, pdresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to dispense");
+            cd.setRunStatus(0);
+        }
     }
-
-    /* Move gantry to cell location */
-    gmreq.move_mode = 0;
-    gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
-    gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
-    gmreq.z = cd.getFeedPlaneHeight();
-    if(!gantryMoveClient.call(gmreq, gmresp)) {
-        ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
-    }
-
-    /* Dispense commanded volume */
-    cdxbot::pipetterAspirate::Request pareq;
-    cdxbot::pipetterAspirate::Response paresp;
-    pareq.vol = vol;
-    pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-    pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
-    pareq.lc_idx = cd.getContainer(container).getCell(row, col).lc_index;
-    pareq.container_height = cd.getContainer(container).getLength('z');
-    pareq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
-    pareq.orientation = orientation;
-    pareq.speed = speed;
-
-    if(!pipetterAspirateClient.call(pareq, paresp)) {
-        ROS_ERROR_STREAM("CDXBotNode: Unable to dispense");
-    }
-
     ROS_DEBUG_STREAM("CDXBotNode: Leaving dispenseCallback().");
 }
 
@@ -862,10 +864,10 @@ void ejectCallback(CDXBot &cd, const struct action a) {
     gmzreq.move_mode = 0;
     gmzreq.x = cd.getEjectPos(AXIS_X);
     gmzreq.y = cd.getEjectPos(AXIS_Y);
+    gmzreq.movex = true;
+    gmzreq.movey = true;
+    gmzreq.movez = false;
     ROS_WARN_STREAM("Moving gantry to eject position (" << gmzreq.x << ", " << gmzreq.y << ")");
-    // gmzreq.x = cd.getContainer(a.args[0]).getGlobalCoords('x', a.args[1], a.args[2]);
-    // gmzreq.y = cd.getContainer(a.args[0]).getGlobalCoords('y', a.args[1], a.args[2]);
-    // gmzreq.z = cd.getContainer(a.args[0]).getGlobalCoords('z', a.args[1], a.args[2]);
     if(!gantryMoveClient.call(gmzreq, gmzresp)) {
         // Unable to move gantry. HALT!
         ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
@@ -890,23 +892,101 @@ void homeCallback(CDXBot &cd, const struct action a) {
     cdxbot::pipetterHome::Response phomeresp;
     // ghomereq.x = ghomereq.y = ghomereq.z = 1;
     ghomereq.all = 1;
-    phomereq.home = 1;
-    if(!gantryHomeClient.call(ghomereq, ghomeresp)) {
-        cd.setRunStatus(0);
-    }
+    phomereq.init_z = true;
+    phomereq.init_dosing = true;
+    /* Pipetter must be homed before gantry is moved. */
     if(!pipetterHomeClient.call(phomereq, phomeresp)) {
         ROS_ERROR_STREAM("CDXBotNode: Error homing pipetter.");
-        // cd.setRunStatus(0);
+        cd.setRunStatus(0);
+    }
+    if(!gantryHomeClient.call(ghomereq, ghomeresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Error homing gantry.");
+        cd.setRunStatus(0);
     }
     ROS_DEBUG_STREAM("CDXBotNode: Leaving homeCallback().");
 }
 
+
 void mixCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("Entered mixCallback().");
+    unsigned int container = static_cast<unsigned int>(a.args[0]);
+    unsigned int row = static_cast<unsigned int>(a.args[1]);
+    unsigned int col = static_cast<unsigned int>(a.args[2]);
+    unsigned int cycles = static_cast<unsigned int>(a.args[3]);
+    double volume = static_cast<double>(a.args[4]);
+    // double depth = static_cast<double>(a.args[5]);
+    unsigned int lc_index = static_cast<unsigned int>(a.args[5]);
+
+    // struct action asp_action;
+    // struct action disp_action;
+
+    // asp_action.cmd = "aspirate";
+    // asp_action.args.push_back(container);
+    // asp_action.args.push_back(row);
+    // asp_action.args.push_back(col);
+    // asp_action.args.push_back(volume);
+    // asp_action.args.push_back(lc_index);
+
+    // disp_action.cmd = "dispense";
+    // disp_action.args.push_back(container);
+    // disp_action.args.push_back(row);
+    // disp_action.args.push_back(col);
+    // disp_action.args.push_back(volume);
+    // disp_action.args.push_back(lc_index);
+
     /* Volume of solution in well should not exceed 75% of the capacity
      * of the pipetter. Check for this. */
+    /* Move gantry to cell location */
+    cdxbot::gantryMove::Request gmreq;
+    cdxbot::gantryMove::Response gmresp;
+    gmreq.move_mode = 0;
+    gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
+    gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+    gmreq.z = cd.getFeedPlaneHeight();
+    gmreq.movex = true;
+    gmreq.movey = true;
+    gmreq.movez = false;
+    if(!gantryMoveClient.call(gmreq, gmresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
+    }
     /* Move pipette tip to halfway up from the bottom of the well */
     /* Draw up and dispense equal volumes of fluid N times */
+    cdxbot::pipetterAspirate::Request pareq;
+    cdxbot::pipetterAspirate::Response paresp;
+    cdxbot::pipetterDispense::Request pdreq;
+    cdxbot::pipetterDispense::Response pdresp;
+    for(unsigned int i = 0; i < cycles; i++) {
+        // aspirateCallback(cd, asp_action);
+        /* Aspirate fluid from well */
+        pareq.vol = volume;
+        pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
+        pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pareq.lc_idx = lc_index;
+        pareq.container_height = cd.getContainer(container).getLength('z');
+        // pareq.check_height = cd.getContainer(container).getCheckHeight();
+        pareq.check_height = 5;
+        double max_depth = cd.getContainer(container).getWellLength('z');
+        double liquid_height = cd.getContainer(container).getCell(row, col).liquid_height;
+        // pareq.liquid_surface = pareq.container_height - max_depth + liquid_height;
+        pareq.liquid_surface = cd.getContainer(container).getLength('z');
+        if(!pipetterAspirateClient.call(pareq, paresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to aspirate");
+            cd.setRunStatus(0);
+        }
+        // dispenseCallback(cd, disp_action);
+        /* Dispense commanded volume */
+        pdreq.vol = volume;
+        pdreq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
+        pdreq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pdreq.lc_idx = lc_index;
+        pdreq.container_height = cd.getContainer(container).getLength('z');
+        // pdreq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
+        pdreq.liquid_surface = cd.getContainer(container).getLength('z') - cd.getContainer(container).getWellLength('z');
+        if(!pipetterDispenseClient.call(pdreq, pdresp)) {
+            ROS_ERROR_STREAM("CDXBotNode: Unable to dispense");
+            cd.setRunStatus(0);
+        }
+    }
     /* Dispense drawn amount of fluid + 1 unit to flush pipette tip */
     ROS_DEBUG_STREAM("Leaving mixCallback().");
 }
@@ -1056,8 +1136,48 @@ void pickupCallback(CDXBot &cd, const struct action a) {
 
 void pierceCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("CDXBotNode: Entered pierceCallback().");
+    /* Check to make sure pipette tip is present on pipetter */
+    /* Move end effector to location */
+    cdxbot::gantryMove::Request gmreq;
+    cdxbot::gantryMove::Response gmresp;
+    double cont = a.args[0];
+    double row = a.args[1];
+    double col = a.args[2];
+    double depth = a.args[2];
+    gmreq.move_mode = 0;
+    gmreq.x = cd.getContainer(cont).getGlobalCoords('x', row, col);
+    gmreq.y = cd.getContainer(cont).getGlobalCoords('y', row, col);
+    gmreq.z = cd.getContainer(cont).getGlobalCoords('z', row, col);
+    gmreq.movex = true;
+    gmreq.movey = true;
+    gmreq.movez = false;
+    if(!gantryMoveClient.call(gmreq, gmresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
+        cd.setRunStatus(0);
+    }
+    cdxbot::pipetterMoveZ::Request pmzreq;
+    cdxbot::pipetterMoveZ::Response pmzresp;
+    /* Fast move end effector to top of container */
+    pmzreq.pos = cd.getContainer(cont).getGlobalCoords('z', row, col);
+    pmzreq.vel = 1.0; /* Slow move using Zeus pipetter.*/
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
+    }
+    /* Cap penetration depth so that end effector does not crash into container
+     * floor. */
+    double max_depth = cd.getContainer(cont).getWellLength('z');
+    pmzreq.pos = (depth > max_depth) ? max_depth : depth;
+    /* Slow move end effector to desired penetration depth.*/
+    pmzreq.vel = 0.0;
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
+    }
     ROS_DEBUG_STREAM("CDXBotNode: Leaving pierceCallback().");
-
 }
 
 void shakerResetCallback(CDXBot &cd, const struct action a) {
@@ -1128,27 +1248,62 @@ void waitCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("CDXBotNode: Leaving waitCallback().");
 }
 
+void disposeTip(void) {
+    struct action b;
+    cdxbot::gantryHome::Request ghomereq;
+    cdxbot::gantryHome::Response ghomeresp;
+    cdxbot::pipetterHome::Request phomereq;
+    cdxbot::pipetterHome::Response phomeresp;
+    cdxbot::gantryMove::Request gmreq;
+    cdxbot::gantryMove::Response gmresp;
+    // ghomereq.x = ghomereq.y = ghomereq.z = 1;
+    ghomereq.all = 1;
+    phomereq.init_z = true;
+    phomereq.init_dosing = false;
+    gmreq.move_mode = 0;
+    gmreq.x = 0;
+    gmreq.y = 406;
+    gmreq.movex = true;
+    gmreq.movey = true;
+    gmreq.movez = false;
+    /* Pipetter must be homed before gantry is moved. */
+    if(!pipetterHomeClient.call(phomereq, phomeresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Error homing pipetter.");
+        cd.setRunStatus(0);
+    }
+    if(!gantryHomeClient.call(ghomereq, ghomeresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Error homing gantry.");
+        cd.setRunStatus(0);
+    }
+    ejectCallback(cd, b);
+    if(!gantryMoveClient.call(gmreq, gmresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Error moving gantry.");
+        cd.setRunStatus(0);
+    }
+}
+
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
     ros::NodeHandle nh;
     ros::Rate rate(100);
-    // loadConfig(nh, cd);
 
+    /* Subscribe to the shutdown topic */
     ros::Subscriber sd = nh.subscribe("/sd_pub", 100, &shutdownCallback);
-    /* Subscribe to GUI topic */
+    /* Subscribe to GUI command topic */
     guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
+    /* Subscribe to the status topics published by other nodes */
     ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
     ros::Subscriber pipetter_zpos = nh.subscribe("/pipetter_zpos", 1000, &pipetterUpdateZPosCallback);
     /* Create publishers for the various controller */
-    gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
-    pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
-    vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
-    sc_pub = nh.advertise<cdxbot::sc_cmd>("sc_pub", 100);
-    //shutdown_pub = nh.advertise<std_msgs::String>("sd_pub", 100);
+    // gc_pub = nh.advertise<cdxbot::gc_cmd>("gc_pub", 100);
+    // pc_pub = nh.advertise<cdxbot::pc_cmd>("pc_pub", 100);
+    // vc_pub = nh.advertise<cdxbot::vc_cmd>("vc_pub", 100);
+    // sc_pub = nh.advertise<cdxbot::sc_cmd>("sc_pub", 100);
     /* Create service clients */
-    gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
-    pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
-    vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
+    // gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
+    // pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
+    // vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
     gantryEStopToggleClient = nh.serviceClient<cdxbot::gantryEStopToggle>("gantry_estop_toggle");
     gantryGetCurrentPositionClient = nh.serviceClient<cdxbot::gantryGetCurrentPosition>("gantry_get_current_position");
     gantryHomeClient = nh.serviceClient<cdxbot::gantryHome>("gantry_home");
@@ -1192,6 +1347,8 @@ int main(int argc, char **argv) {
     } else {
         ROS_INFO_STREAM(ros::this_node::getName() << "Error reading HLMD file.");
     }
+    /* Dispose of existing tip */
+    disposeTip();
     /* Process commands in HLMD file. */
     while(ros::ok()) {
         if(cd.getRunStatus() == 1) {
@@ -1200,7 +1357,11 @@ int main(int argc, char **argv) {
                 ROS_INFO_STREAM("DONE!");
                 cd.setRunStatus(0);
             } else {
-                command_table[a.cmd](cd, a);
+                if(command_table.count(a.cmd)) {
+                    command_table[a.cmd](cd, a);
+                } else {
+                    ROS_ERROR_STREAM("CDXBotNode: No command \"" << a.cmd << "\" is implemented.");
+                }
             }
         } else {
             ros::spinOnce();

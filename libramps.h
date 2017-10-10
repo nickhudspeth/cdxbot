@@ -53,7 +53,6 @@ LICENSE:
 #include <fcntl.h>
 #include <iostream>
 #include <iomanip>
-#include <mutex>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <pthread.h>
@@ -78,7 +77,6 @@ typedef struct {
 
 
 bool ready_flag = 1;
-// std::mutex ready_flag_mutex;
 /* The 'extern "C"' keyword must be used here to force the compiler to use
  * C rather than C++ linkage. Otherwise, the compiler mangles the symbol
  * name and causes dlsym to not be able to locate any symbols in the library.*/

@@ -186,7 +186,7 @@ bool ejectTipCallback(cdxbot::pipetterEjectTip::Request & req,
 
 bool homeCallback(cdxbot::pipetterHome::Request &req,
                   cdxbot::pipetterHome::Response &resp) {
-    bool success = pc->home();
+    bool success = pc->home(req.init_z, req.init_dosing);
     ROS_INFO_STREAM("PipetterControllerNode: homing pipetter.");
     if(!success) {
         ROS_ERROR_STREAM("PipetterControllerNode: Could not home pipetter z-axis.");
@@ -196,11 +196,15 @@ bool homeCallback(cdxbot::pipetterHome::Request &req,
 
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
+    // pc->getCheckHeightRef() = req.check_height;
+    pc->setLLDActive(true);
+    //
     return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface);
 }
 
 bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
                       cdxbot::pipetterDispense::Response &resp) {
+    pc->setLLDActive(false);
     return pc->dispense(req.vol, req.gc_idx, req.dg_idx, req.lc_idx,  req.liquid_surface);
 }
 
@@ -288,6 +292,7 @@ int main(int argc, char **argv) {
             &makeContainerGeometryCallback);
     ros::ServiceServer makeLiquidClassServer = nh.advertiseService("pipetter_make_liquid_class",
             &makeLiquidClassCallback);
+    ros::ServiceServer homeServer = nh.advertiseService("pipetter_home", &homeCallback);
     ros::Rate rate(100);
     while(ros::ok()) {
         ros::spinOnce();

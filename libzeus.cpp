@@ -33,7 +33,7 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "libzeus.h"
 /*********************    CONSTANTS AND MACROS    **********************/
-#define TO_ZEUS_COORDS(pos, offset) (1800 - (10*(pos)) + offset)
+#define TO_ZEUS_COORDS(pos, offset) (1800 - (10*(pos + offset)))
 
 /***********************    GLOBAL VARIABLES    ************************/
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
@@ -89,7 +89,7 @@ extern "C" void *thread_func(void *arg) {
                             /* Received kick frame. */
                             //zm->setKickFlag(1);
                             zm->sendRemoteFrame(1);
-                            // PRINT_DEBUG("Received kick frame with byte %04X.\n", ret.data[7]);
+                            // PRINT_DEBUG("LIBZEUS: Received kick frame with byte %04X.\n", ret.data[7]);
                             // } else if(!strcmp((const char*)ret.data,"")) {
                         } else if(ret.can_id & CAN_RTR_FLAG) {
                             /* Data field is empty, but this is not a kick frame.
@@ -101,34 +101,33 @@ extern "C" void *thread_func(void *arg) {
                             memset(&retbuf, 0, sizeof(retbuf));
                             snprintf(retbuf, 7,"%s", ret.data);
                             msg.append(retbuf);
-                            zm->PRINT_DEBUG("Received message: " + msg);
+                            // zm->PRINT_DEBUG("LIBZEUS: Received message: " + msg);
 
                             /*If frame data contains EOM flag, process the returned string. */
                             if(ret.data[7] & EOM_MASK) {
                                 zm->setReceivedMsg(msg);
                                 zm->setMsgReadyFlag(1);
-                                zm->PRINT_DEBUG("Set msgreadyflag to 1.");
+                                // zm->PRINT_DEBUG("LIBZEUS: Set msgreadyflag to 1.");
                                 zm->setWaitingForMsgFlag(0);
-                                std::string err_msg = zm->parseErrors(msg);
-                                zm->PRINT_DEBUG("Received message: " + msg);
-                                zm->PRINT_DEBUG(err_msg);
+                                // std::string err_msg = zm->parseErrors(msg);
+                                // zm->PRINT_DEBUG("LIBZEUS: Received message: " + msg);
                                 msg.clear();
                             } else {
                                 zm->sendRemoteFrame(8);
                             }
-                            // zm->PRINT_DEBUG("Read a frame from da socket with DLC " + std::to_string(ret.can_dlc) + " and data " + std::to_string(ret.data));
+                            // zm->PRINT_DEBUG("LIBZEUS: Read a frame from da socket with DLC " + std::to_string(ret.can_dlc) + " and data " + std::to_string(ret.data));
                         }
                     }
                 }
             }
         }
         if(zm->_error_flag) {
-            printf("Error flag set. Getting last faulty parameter.\n");
+            zm->PRINT_ERROR("LIBZEUS: Error flag set. Getting last faulty parameter.\n");
             zm->getLastFaultyParameter();
             zm->_error_flag = 0;
         }
     }
-    printf("Exiting thread loop.\n");
+    zm->PRINT_DEBUG("LIBZEUS: Exiting thread loop.\n");
     return 0;
 }
 
@@ -137,7 +136,7 @@ extern "C" std::string zfill(std::string s, int len) {
     if(s.length() == len) {
         return s;
     }
-    if(s.length() > len){
+    if(s.length() > len) {
         return s.substr(0, len); // Trim trailing characters from string that exceeds specified length.
     }
     s.insert(s.begin(), len - s.length(), '0');
@@ -147,7 +146,7 @@ extern "C" std::string zfill(std::string s, int len) {
 
 
 ZeusModule::ZeusModule(int id) {
-    for(unsigned int i = 0; i < 100; i++){
+    for(unsigned int i = 0; i < 100; i++) {
         _liquid_classes.emplace_back(new LiquidClass(""));
     }
 }
@@ -166,11 +165,44 @@ int ZeusModule::init(void) {
     memset(&f, 0, sizeof(struct can_frame));
     setLastFrame(f);
     initCANBus();
-    // usleep(100000);
     pthread_create(&_thread_id, NULL, &thread_func, this);
-    PRINT_INFO("Thread function created.");
-    initZDrive();
-    initDosingDrive();
+    PRINT_DEBUG("LIBZEUS: Thread function created.");
+    // initZDrive();
+    // initDosingDrive();
+
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 5");
+    // std::string cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(5), 2);
+    // sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 7");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(7), 2);
+    // sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 8");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(8), 2);
+    // sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 9");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(9), 2);
+    // sendCommand(cmd);
+    PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 17");
+    std::string cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(17), 2);
+    sendCommand(cmd);
+    cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(17), 2);
+    sendCommand(cmd);
+    cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(17), 2);
+    sendCommand(cmd);
+    cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(17), 2);
+    sendCommand(cmd);
+    cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(17), 2);
+    sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 19");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(19), 2);
+    // sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 20");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(20), 2);
+    // sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 21");
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(21), 2);
+    // sendCommand(cmd);
+
     // getInitializationStatus();
     // getFirmwareVersion();
     // struct deck_geometry_t d;
@@ -189,10 +221,10 @@ int ZeusModule::deinit(void) {
     std::string cmd = cmdHeader("AV");
     sendCommand(cmd);
     close(_sockfd);
-    PRINT_INFO("Closed socket.");
+    PRINT_DEBUG("LIBZEUS: Closed socket.");
     pthread_cancel(_thread_id);
     pthread_join(_thread_id, NULL);
-    PRINT_INFO("Killed thread function.");
+    PRINT_DEBUG("LIBZEUS: Terminated worker thread.");
     return 0;
 }
 
@@ -249,20 +281,19 @@ bool ZeusModule::makeDeckGeometry(unsigned int index, double traverse_height,\
     }
     // pos = (1800 - 10*traverse_height) + 370;
 
-    PRINT_DEBUG("Making deck geometry at index " + std::to_string(index) + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
+    PRINT_DEBUG("LIBZEUS: Making deck geometry at index " + std::to_string(index) + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
     std::string cmd = cmdHeader("GO");
     cmd +=  "go" + zfill(std::to_string(index), 2) + \
             /*"th" + zfill(std::to_string(static_cast<unsigned int>(traverse_height * 10)), 4) + \ */
-            "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, 0))), 4) + \
+            "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, TIP_INSTALLED_OFFSET))), 4) + \
             /*"te" + zfill(std::to_string(static_cast<unsigned int>((1800 - 10*(container_offset_z - tip_engagement_len)))), 4) + \*/
-            "te" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height + 50, 0))), 4) + \
+            "te" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, TIP_INSTALLED_OFFSET))), 4) + \
             /*"tm" + zfill(std::to_string(static_cast<unsigned int>(10*container_offset_z)), 4 )+ \ */
             "tm" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, 0))), 4 )+ \
             "tn" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z - tip_engagement_len, 0))), 4) + \
             "tr" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(tip_deposit_height, 0))), 4);
     _current_dg_index = index;
-    sendCommand(cmd);
-    return true;
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::getDeckGeometryParams(unsigned int index) {
@@ -285,16 +316,15 @@ bool ZeusModule::makeContainerGeometry(unsigned int index, bool geometry,
     std::string cmd = cmdHeader("GC") + \
                       "ge" + zfill(std::to_string(index), 2) + \
                       "ca" + zfill(std::to_string(geometry), 1) + \
-                      "cb" + zfill(std::to_string(static_cast<unsigned int>(diameter*10)), 3) + \
+                      "cb" + zfill(std::to_string(static_cast<unsigned int>(diameter * 10)), 3) + \
                       "cc" + zfill(std::to_string(static_cast<unsigned int>(len_x * 10)), 3) + \
                       "cd" + zfill(std::to_string(static_cast<unsigned int>(len_y * 10)), 3) + \
                       "bg" + zfill(std::to_string(static_cast<unsigned int>(second_section_height * 10)), 4) + \
                       "gx" + zfill(std::to_string(static_cast<unsigned int>(second_section)), 5) + \
-                      "ce" + zfill(std::to_string(static_cast<unsigned int>(max_depth * 10)), 4) + \
-                      "ch" + zfill(std::to_string(static_cast<unsigned int>(bottom_search_offset * 10)), 4) + \
+                      "ce" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(max_depth, TIP_INSTALLED_OFFSET))), 4) + \
+                      "ch" + zfill(std::to_string(static_cast<unsigned int>(bottom_search_offset, 0)), 4) + \
                       "ci" + zfill(std::to_string(static_cast<unsigned int>(dispense_offset * 10)), 4);
-    sendCommand(cmd);
-    return true;
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::getContainerGeometryParams(unsigned int index) {
@@ -312,7 +342,7 @@ bool ZeusModule::getContainerGeometryParams(unsigned int index) {
 bool ZeusModule::setLiquidClass(unsigned int index) {
     LiquidClass l = *(_liquid_classes[index]);
     std::string cmd = cmdHeader("GL") + \
-                      "lq" + zfill(std::to_string(index + 21), 2) + \
+                      "lq" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + \
                       "uu" + zfill(std::to_string(l.getAspirateTypeRef()), 1) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getAspirateSpeedRef() * 10)), 5) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getPrewetVolumeRef() * 10)), 4) + " " + \
@@ -338,8 +368,33 @@ bool ZeusModule::setLiquidClass(unsigned int index) {
                       zfill(std::to_string(static_cast<unsigned int>(l.getTransportSpeedRef() * 10)), 5) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getLeavingHeightRef() * 10)), 3) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getDispenseHeightRef() * 10)), 3);
+    sendCommand(cmd);
+    cmd = cmdHeader("GQ") + "gv" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "vv0310 0005 0010 0 0770 0005 0015 1 0713 0005 0015 1 0615 0005 0015 1 0081 0000 0015 0 0531 0005 0005 1 0570 0005 0015 1 0485 0005 0010 1 0010 0000 0000";
+    sendCommand(cmd);
+    // cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    // sendCommand(cmd);
+    cmd = cmdHeader("GV") + "gp" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ww0300 0015 1 0046 0010 1 0420 0015 1 0500 0015 1 0550 0005 1 0640 0015 1 0644 0015 1 0662 0015 1 0000 0000";
+    sendCommand(cmd);
+    // cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 0065 0100 0022 0020 0028 00500 00551 0750 0816 0100 0102 0150 0161 2000 2151 0";
+    // cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111";
+    cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 00065 00100 00220 00200 00280 00500 00551 00750 08160 00100 01020 01500 01614 02000 02151";
+    sendCommand(cmd);
+    // cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GH") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "cl00050 0065 0100 0022 0020 0028 00500 00551 0750 0816 0100 0102 0150 0161 2000 2151 0";
+    cmd = cmdHeader("GH") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 00065 00100 00220 00200 00280 00500 00551 00750 08160 00100 01020 01500 01614 02000 02151";
     return sendCommand(cmd);
+    // cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    // sendCommand(cmd);
 }
+
+// LiquidClass *ZeusModule::getLiquidClass(unsigned int index){
+// return _liquid_classes.at(index + LIQUID_CLASS_OFFSET);
+// }
 
 bool ZeusModule::getLiquidClassParams(unsigned int index) {
     if(index > 99) {
@@ -352,13 +407,15 @@ bool ZeusModule::getLiquidClassParams(unsigned int index) {
     return false;
 }
 
+// bool ZeusModule::getLiquidLevel(unsigned int cg_idx, unsigned int dg_idx,
+// unsigned int lc_idx, )
 
 bool ZeusModule::pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed) {
     if((tt_idx > 9) || (dg_idx > 99)) {
         // ROS_ERROR_STREAM("Tip type index (" << tt_idx << ") or deck geometry index (" << dg_idx << ") out of range.")
         return false;
     }
-    // PRINT_INFO("PipetterControllerNode: Picking up tip with tt_idx " + std::to_string(tt_idx)+ " and dg_idx " + std::to_string(dg_idx));
+    // PRINT_DEBUG("LIBZEUS: PipetterControllerNode: Picking up tip with tt_idx " + std::to_string(tt_idx)+ " and dg_idx " + std::to_string(dg_idx));
     std::string cmd = cmdHeader("GT");
     cmd += "tt" + zfill(std::to_string(tt_idx), 1) + \
            "go" + zfill(std::to_string(dg_idx), 2) + \
@@ -381,8 +438,14 @@ bool ZeusModule::ejectTip(void) {
     return sendCommand(cmd);
 }
 
-bool ZeusModule::home(void) {
-    moveZ(TO_ZEUS_COORDS(0, 0),1);
+bool ZeusModule::home(bool init_z, bool init_dosing) {
+    // moveZ(TO_ZEUS_COORDS(0, 0,),1);
+    if(init_z == true) {
+        initZDrive();
+    }
+    if(init_dosing == true) {
+        initDosingDrive();
+    }
     return true;
 }
 
@@ -398,29 +461,31 @@ bool ZeusModule::aspirate(double vol, unsigned int gc_idx, unsigned int dg_idx,
     cmd += "ai" + zfill(std::to_string(static_cast<unsigned int>(vol*10)), 5) +\
            "ge" + zfill(std::to_string(gc_idx), 2) +\
            "go" + zfill(std::to_string(dg_idx), 2) +\
-           "lq" + zfill(std::to_string(lc_idx + 21), 2) +\
+           /*"lq" + zfill(std::to_string(lc_idx), 2) +\ */
+           "lq" + zfill(std::to_string(lc_idx + LIQUID_CLASS_OFFSET), 2) +\
            "gq" + std::to_string(_qpm) +\
-           "lb" + std::to_string(_lld) +\
-           "zp" + zfill(std::to_string(static_cast<unsigned int>(_lld_search_height)), 4) +\
-           "cg" + zfill(std::to_string(static_cast<unsigned int>(_check_height)), 4) + \
-           "cf" + zfill(std::to_string(static_cast<unsigned int>(liquid_surface*10)), 4);
-    sendCommand(cmd);
-    return false;
+           "lb" + std::to_string(_lld_active) +\
+           "zp" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(66, TIP_INSTALLED_OFFSET))), 4) +\
+           "cg" + zfill(std::to_string(static_cast<unsigned int>(_check_height* 10)), 4) + \
+           "cf" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(liquid_surface, TIP_INSTALLED_OFFSET))), 4);
+
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                           unsigned int lc_idx, double liquid_surface) {
     std::string cmd = cmdHeader("GD");
-    cmd += "di" + zfill(std::to_string(static_cast<unsigned int>(vol)), 4) +\
+    cmd += "di" + zfill(std::to_string(static_cast<unsigned int>(vol*10)), 5) +\
            "ge" + zfill(std::to_string(gc_idx), 2) +\
            "go" + zfill(std::to_string(dg_idx), 2) +\
-           "lq" + zfill(std::to_string(lc_idx + 21), 2) +\
+           "lq" + zfill(std::to_string(lc_idx + LIQUID_CLASS_OFFSET), 2) +\
+           /*"lq" + zfill(std::to_string(lc_idx), 2) +\*/
            "gq" + std::to_string(_qpm) +\
-           "lb" + std::to_string(_lld) +\
-           "zp" + zfill(std::to_string(_lld_search_height), 4) +\
-           "cf" + zfill(std::to_string(liquid_surface), 4) +\
+           "lb" + std::to_string(_lld_active) +\
+           "zp" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(66, TIP_INSTALLED_OFFSET))), 4) +\
+           "cf" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(liquid_surface, TIP_INSTALLED_OFFSET))), 4) +\
            "zm" + std::to_string(_search_bottom_mode);
-    sendCommand(cmd);
+    return sendCommand(cmd);
 }
 
 void ZeusModule::getLastFaultyParameter(void) {
@@ -461,7 +526,7 @@ int ZeusModule::initCANBus(void) {
 
     /* Open and bind to a socket for CAN bus communications */
     if((_sockfd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-        perror("ERROR:LIBZEUS - Error while opening socket.\n");
+        perror("LIBZEUS: Error while opening socket.\n");
         exit(1);
     }
     printf("Opened CAN socket with file descriptor %d\n", _sockfd);
@@ -477,7 +542,7 @@ int ZeusModule::initCANBus(void) {
     sprintf(cwd, "sockfd = %d\n", _sockfd);
     perror(cwd);
     if(bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("ERROR:LIBZEUS - Error while attempting to bind to socket.\n");
+        perror("LIBZEUS: - Error while attempting to bind to socket.\n");
         close(_sockfd);
         exit(2);
     }
@@ -490,17 +555,15 @@ std::string ZeusModule::cmdHeader(std::string cmd) {
     return ret;
 }
 
-int ZeusModule::initDosingDrive(void) {
+bool ZeusModule::initDosingDrive(void) {
     std::string cmd = cmdHeader("DI");
-    sendCommand(cmd);
-    return 0;
+    return sendCommand(cmd);
 }
 
-int ZeusModule::initZDrive(void) {
+bool ZeusModule::initZDrive(void) {
     std::string cmd = cmdHeader("ZI");
     _zpos = ZPOS_MIN;
-    sendCommand(cmd);
-    return 1;
+    return sendCommand(cmd);
 }
 
 unsigned int ZeusModule::getInitializationStatus(void) {
@@ -575,15 +638,15 @@ bool ZeusModule::waitForRemoteFrame(void) {
 
 std::string ZeusModule::waitForResponse(void) {
     time_t start = time(NULL);
-    while((time(NULL) - start) < 5) {
+    while((time(NULL) - start) < 10) {
         if(_msg_ready_flag == 1) {
             setMsgReadyFlag(0);
             std::string ret = parseErrors(_received_msg);
-            PRINT_DEBUG("LIBZEUS: Returned string " + ret);
+            PRINT_DEBUG("LIBZEUS: Received message: " + _received_msg);
             setReceivedMsg(std::string(""));
             // if(ret.find("GL") != std::string::npos){
-                // std::string cmd = cmdHeader("VP");
-                // sendCommand(cmd);
+            // std::string cmd = cmdHeader("VP");
+            // sendCommand(cmd);
             // }
             return ret;
         }
@@ -647,7 +710,7 @@ bool ZeusModule::sendCommand(std::string cmd) {
      * from the pipetter to avoid sending simultaneous commands. */
     _ready_for_new_command = 0;
     setMsgReadyFlag(0);
-    PRINT_INFO("LIBZEUS: Sending command: " + cmd);
+    PRINT_DEBUG("LIBZEUS: Sending command: " + cmd);
     std::vector<std::string> substrings;
     size_t sbegin = 0;
 
@@ -691,14 +754,14 @@ bool ZeusModule::sendCommand(std::string cmd) {
         if(byte & (1 << 7)) {
             std::string res = waitForResponse();
             if(res.find("NONE") != std::string::npos) {
-                usleep(200000);
+                usleep(100000);
                 _ready_for_new_command = 1;
-
                 return true;
+                // } else if(res.find("er") != std::string::npos) {
             } else {
-                usleep(200000);
+                usleep(100000);
                 _ready_for_new_command = 1;
-                std::cout << "LIBZEUS:: WaitfForResponse: Returned error \"" << res << "\"" << std::endl;
+                std::cout << "LIBZEUS:: WaitForResponse: Returned error \"" << res << "\"" << std::endl;
                 return false;
             }
         }
@@ -746,21 +809,21 @@ bool ZeusModule::emergencyStopReset(void) {
 }
 
 // bool ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {
-    // if((d.index > 9999) || (d.min_traverse_height > 1800) || (d.min_z_pos > 1800)
-            // || (d.botpp > 1800) || (d.eotpp > 1800) || (d.potdp > 1800)) {
-        // printf("ERROR: Deck geometry definition contains out of range\
-               // parameter.\n");
-        // return false;
-    // }
-    // std::string cmd = cmdHeader("GO") +
-                      // "go" + zfill(std::to_string(d.index), 2) + \
-                      // "th" + zfill(std::to_string(d.min_traverse_height), 4) + \
-                      // "te" + zfill(std::to_string(d.min_z_pos), 4) + \
-                      // "tm" + zfill(std::to_string(d.botpp), 4) + \
-                      // "tn" + zfill(std::to_string(d.eotpp), 4) + \
-                      // "tr" + zfill(std::to_string(d.potdp), 4);
-    // sendCommand(cmd);
-    // return true;
+// if((d.index > 9999) || (d.min_traverse_height > 1800) || (d.min_z_pos > 1800)
+// || (d.botpp > 1800) || (d.eotpp > 1800) || (d.potdp > 1800)) {
+// printf("ERROR: Deck geometry definition contains out of range\
+// parameter.\n");
+// return false;
+// }
+// std::string cmd = cmdHeader("GO") +
+// "go" + zfill(std::to_string(d.index), 2) + \
+// "th" + zfill(std::to_string(d.min_traverse_height), 4) + \
+// "te" + zfill(std::to_string(d.min_z_pos), 4) + \
+// "tm" + zfill(std::to_string(d.botpp), 4) + \
+// "tn" + zfill(std::to_string(d.eotpp), 4) + \
+// "tr" + zfill(std::to_string(d.potdp), 4);
+// sendCommand(cmd);
+// return true;
 // }
 
 
@@ -783,7 +846,8 @@ std::string ZeusModule::parseErrors(std::string error) {
 
     eidx = error.find("er");
     if(eidx == std::string::npos) {
-        return cmd + ": " + error;
+        // return cmd + ": " + error;
+        return cmd + ": " + "NONE";
     }
     ec = error.substr((eidx + 2), 2);
 

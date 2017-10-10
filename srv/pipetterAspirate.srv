@@ -31,5 +31,7 @@ float64 speed
 # Tip pre-wetting (true/false)
 bool prewet
 
+# Liquid level detection on/off
+bool lld
 ---
 bool ok

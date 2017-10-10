@@ -70,7 +70,7 @@ class CDXBot {
     unsigned int getRunStatus(void) {
         return _runStatus;
     }
-    const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/run.hlmd";
+    const char *HLMDFileLocation = "/home/cdx/catkin_ws/src/cdxbot/runfiles/commands.bin";
     std::vector<struct action> actionMap;
     int getNextAction(struct action &a);
     int getNumContainers(void) {

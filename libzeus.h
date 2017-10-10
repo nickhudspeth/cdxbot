@@ -90,6 +90,9 @@ LICENSE:
 
 #define MAX_Z_ERROR 0.1
 
+#define LIQUID_CLASS_OFFSET 30
+#define TIP_INSTALLED_OFFSET 45
+
 typedef struct {
     int sockfd;
     char *buffer;
@@ -174,7 +177,7 @@ extern "C" {
         bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                       unsigned int lc_idx, double liquid_surface);
         bool ejectTip(void);
-        bool home(void);
+        bool home(bool init_z, bool init_dosing);
         bool emergencyStop(void);
         bool emergencyStopReset(void);
         bool getContainerGeometryParams(unsigned int index);
@@ -244,8 +247,8 @@ extern "C" {
         std::string parseErrors(std::string error);
 
         unsigned int _error_flag = 0;
-        int initDosingDrive(void );
-        int initZDrive(void);
+        bool initDosingDrive(void );
+        bool initZDrive(void);
 
       private:
         int initCANBus(void);
@@ -323,11 +326,11 @@ extern "C" {
         unsigned int _cgt_index = 1;
         unsigned int _lct_index = 1;
         unsigned int _current_dg_index = 0;
-        bool _qpm = 1;
+        bool _qpm = 0;
         bool _lld = 1;
         unsigned int _lld_search_height = 0;
-        unsigned int _check_height = 0;
-        int _search_bottom_mode = 1;
+        unsigned int _check_height = 5;
+        int _search_bottom_mode = 0;
         // Mixing parameters
         unsigned int _mix_vol = 0;
         unsigned int _mix_flow_rate = 0;

@@ -135,7 +135,7 @@ void loadParams(ros::NodeHandle &nh) {
 
     if(!nh.getParam("/gc_conf/type", gc->getTypeRef())) {
         nh.getParam("/gcdefaults/type", gc->getTypeRef());
-        ROS_WARN("No parameter 'type' found in configuration file. Initializing gantry controller with default value %s", gc->getType());
+        ROS_WARN_STREAM("No parameter 'type' found in configuration file. Initializing gantry controller with default value " << gc->getType());
     }
 
     if(!nh.getParam("/gc_conf/ip_address", gc->getIPAddressRef())) {

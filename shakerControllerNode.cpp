@@ -24,16 +24,16 @@ bool timeout_flag = false;
 float timeout_dur = 0.0;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 void handleDebugMessages(const std::string &msg) {
-    ROS_DEBUG("GantryControllerNode: %s", msg.c_str());
+    ROS_DEBUG("ShakerControllerNode: %s", msg.c_str());
 }
 void handleInfoMessages(const std::string &msg) {
-    ROS_INFO("GantryControllerNode: %s", msg.c_str());
+    ROS_INFO("ShakerControllerNode: %s", msg.c_str());
 }
 void handleWarningMessages(const std::string &msg) {
-    ROS_WARN("GantryControllerNode: %s", msg.c_str());
+    ROS_WARN("ShakerControllerNode: %s", msg.c_str());
 }
 void handleErrorMessages(const std::string &msg) {
-    ROS_ERROR("GantryControllerNode: %s", msg.c_str());
+    ROS_ERROR("ShakerControllerNode: %s", msg.c_str());
 }
 
 ShakerModule * loadDriver(std::string file) {
@@ -62,10 +62,10 @@ ShakerModule * loadDriver(std::string file) {
         ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
         dlerror();
     }
-    sm->setDebugMsgCallback(handleDebugMessages);
-    sm->setInfoMsgCallback(handleInfoMessages);
-    sm->setWarningMsgCallback(handleWarningMessages);
-    sm->setErrorMsgCallback(handleErrorMessages);
+    s->setDebugMsgCallback(handleDebugMessages);
+    s->setInfoMsgCallback(handleInfoMessages);
+    s->setWarningMsgCallback(handleWarningMessages);
+    s->setErrorMsgCallback(handleErrorMessages);
 
     return s;
 }
@@ -96,34 +96,25 @@ void loadParams(ros::NodeHandle &nh) {
                         driver_path);
     }
     sm = loadDriver(driver_path + driver_name);
-
-    // if(!nh.getParam("/sc_conf/z_axis_enabled", sm->getZAxisEnabledRef())) {
-
-    // nh.getParam("/sc_defaults/z_axis_enabled", sm->getZAxisEnabledRef());
-    // ROS_WARN_STREAM("No parameter \"_z_axis_enabled\" found in configuration file.\
-    // Initializing pipetter with default value " <<\
-    // sm->getZAxisEnabledRef());
-    // }
 }
 
 
-void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
+void shutdownMessageCallback(const std_msgs::String::ConstPtr &msg) {
     ROS_WARN_STREAM("ShakerControllerNode: Received shutdown directive.");
     sm->deinit();
     ros::shutdown();
 }
 
-void scPubCallback(const std_msgs::String::ConstPtr &msg) {
-
-}
-
 void stopFromTimerCallback(const ros::TimerEvent &e) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered stopFromTimerCallback().");
     ROS_INFO_STREAM("Stopping shaker.");
     sm->stop();
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting stopFromTimerCallback().");
 }
 
-bool stopCallback(cdxbot::shakerStop::Request &req,
+bool stopServiceCallback(cdxbot::shakerStop::Request &req,
                   cdxbot::shakerStop::Response &resp) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered stopServiceCallback().");
     if(sm->stop() == 1) {
         resp.ok = true;
         return 1;
@@ -131,10 +122,12 @@ bool stopCallback(cdxbot::shakerStop::Request &req,
         resp.ok = false;
         return 0;
     }
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting stopServiceCallback().");
 }
 
-bool startCallback(cdxbot::shakerStart::Request &req,
+bool startServiceCallback(cdxbot::shakerStart::Request &req,
                    cdxbot::shakerStart::Response &resp) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered startServiceCallback().");
     /*Start the shaker and run for the amount of time specified in req->time.*/
     if(sm->start() == 1) {
         if(req.time > 0.0){
@@ -147,10 +140,12 @@ bool startCallback(cdxbot::shakerStart::Request &req,
         resp.ok = false;
         return 0;
     }
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting startServiceCallback().");
 }
 
-bool setFreqCallback(cdxbot::shakerSetFreq::Request &req,
+bool setFreqServiceCallback(cdxbot::shakerSetFreq::Request &req,
                      cdxbot::shakerSetFreq::Response &resp) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered setFreqServiceCallback().");
     if(sm->setFrequency(req.freq) == 1) {
         resp.ok = true;
         return 1;
@@ -158,10 +153,12 @@ bool setFreqCallback(cdxbot::shakerSetFreq::Request &req,
         resp.ok = false;
         return 0;
     }
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting setFreqServiceCallback().");
 }
 
-bool setPowerCallback(cdxbot::shakerSetPower::Request &req,
+bool setPowerServiceCallback(cdxbot::shakerSetPower::Request &req,
                       cdxbot::shakerSetPower::Response &resp) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered setPowerServiceCallback().");
     if(sm->setFrequency(req.pwr) == 1) {
         resp.ok = true;
         return 1;
@@ -169,10 +166,12 @@ bool setPowerCallback(cdxbot::shakerSetPower::Request &req,
         resp.ok = false;
         return 0;
     }
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting setPowerServiceCallback().");
 }
 
-bool resetCallback(cdxbot::shakerReset::Request &req,
+bool resetServiceCallback(cdxbot::shakerReset::Request &req,
                    cdxbot::shakerReset::Response &resp) {
+    ROS_DEBUG_STREAM("ShakerControllerNode: Entered resetServiceCallback().");
     if(sm->reset() == 1) {
         resp.ok = true;
         return 1;
@@ -180,6 +179,7 @@ bool resetCallback(cdxbot::shakerReset::Request &req,
         resp.ok = false;
         return 0;
     }
+    ROS_DEBUG_STREAM("ShakerControllerNode: Exiting resetServiceCallback().");
 }
 
 int main(int argc, char **argv) {
@@ -189,15 +189,14 @@ int main(int argc, char **argv) {
     loadParams(nh);
     sm->init();
     /* Instantiate publishers and subscribers*/
-    // ros::Subscriber sub_sc = nh.subscribe("/pc_pub", 100, &scPubCallback);
-    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownMessageCallback);
     ROS_DEBUG_STREAM("Initialized pc with addr: " << &sm);
     /* Instantiate service servers */
-    ros::ServiceServer startServer = nh.advertiseService("shaker_start", &startCallback);
-    ros::ServiceServer stopServer = nh.advertiseService("shaker_stop", &stopCallback);
-    ros::ServiceServer setFreqServer = nh.advertiseService("shaker_set_freq", &setFreqCallback);
-    ros::ServiceServer setPowerServer = nh.advertiseService("shaker_set_power", &setPowerCallback);
-    ros::ServiceServer resetServer = nh.advertiseService("shaker_reset", &resetCallback);
+    ros::ServiceServer startServer = nh.advertiseService("shaker_start", &startServiceCallback);
+    ros::ServiceServer stopServer = nh.advertiseService("shaker_stop", &stopServiceCallback);
+    ros::ServiceServer setFreqServer = nh.advertiseService("shaker_set_freq", &setFreqServiceCallback);
+    ros::ServiceServer setPowerServer = nh.advertiseService("shaker_set_power", &setPowerServiceCallback);
+    ros::ServiceServer resetServer = nh.advertiseService("shaker_reset", &resetServiceCallback);
 
     ros::Rate rate(100);
     while(ros::ok()) {

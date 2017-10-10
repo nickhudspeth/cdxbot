@@ -198,7 +198,7 @@ class PipetterModule : public CDXModule {
     virtual bool dispense(double vol, unsigned int gc_idx, unsigned int dg_idx,
                           unsigned int lc_idx, double liquid_surface) {};
     virtual bool ejectTip(void) {};
-    virtual bool home(void) {};
+    virtual bool home(bool init_z, bool init_dosing) {};
     virtual bool makeDeckGeometry(unsigned int index, double feed_plane,
                                   double container_offset_z,
                                   double tip_engagement_len,
@@ -218,6 +218,9 @@ class PipetterModule : public CDXModule {
         return p;
     }
     virtual bool setLiquidClass(unsigned int index) {};
+    virtual LiquidClass *getLiquidClass(unsigned int index){
+        return _liquid_classes.at(index);
+    }
     virtual bool moveZ(double pos, double vel) {};
     virtual bool pickUpTip(unsigned int tt_idx, unsigned int dg_idx, bool speed) {};
     double getZPos(void) {
@@ -244,6 +247,15 @@ class PipetterModule : public CDXModule {
     double &getTipPickupSpeedRef(void) {
         return _tip_pickup_speed;
     }
+    virtual void setLLDActive(bool val){
+        _lld_active = val;
+    }
+    virtual bool &getLLDActiveRef(void){
+        return _lld_active;
+    }
+    virtual bool getLLDActive(void){
+        return _lld_active;
+    }
 
     std::string type;
     std::string driver_name;
@@ -256,6 +268,7 @@ class PipetterModule : public CDXModule {
     double _zpos_max;
     bool _z_axis_enabled = 1;
     double _feed_plane = 1800;
+    bool _lld_active = true;
     std::vector<LiquidClass*> _liquid_classes;
 };
 

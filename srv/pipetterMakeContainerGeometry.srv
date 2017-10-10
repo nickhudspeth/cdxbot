@@ -3,6 +3,7 @@ bool geometry
 float64 diameter
 float64 len_x
 float64 len_y
+float64 len_z
 float64 second_section_height
 float64 second_section
 float64 max_depth
