@@ -234,7 +234,7 @@ void waitForGantry(const cdxbot::gc_cmd &msg) {
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
-    // ros::shutdown();
+    ros::shutdown();
 }
 
 bool moveCallback(cdxbot::gantryMove::Request &req,
@@ -264,19 +264,20 @@ bool homeCallback(cdxbot::gantryHome::Request &req,
     bool res = true;
     if(req.all) {
         res &= gc->home(AXIS_ALL);
-    }
-    if(req.x) {
-        res &= gc->home(AXIS_X);
-    }
-    if(req.y) {
-        res &= gc->home(AXIS_Y);
-    }
-    if(req.z) {
-        res &= gc->home(AXIS_Z);
+    } else {
+        if(req.x) {
+            res &= gc->home(AXIS_X);
+        }
+        if(req.y) {
+            res &= gc->home(AXIS_Y);
+        }
+        if(req.z) {
+            res &= gc->home(AXIS_Z);
+        }
     }
     resp.ok = res;
     if(!res) {
-        ROS_ERROR_STREAM("PipetterControllerNode: Could not home gantry. HALT!");
+        ROS_ERROR_STREAM("GantryControllerNode: Could not home gantry. HALT!");
     }
     return res;
 }

@@ -891,7 +891,10 @@ void homeCallback(CDXBot &cd, const struct action a) {
     cdxbot::pipetterHome::Request phomereq;
     cdxbot::pipetterHome::Response phomeresp;
     // ghomereq.x = ghomereq.y = ghomereq.z = 1;
-    ghomereq.all = 1;
+    ghomereq.x = false;
+    ghomereq.y = false;
+    ghomereq.z = false;
+    ghomereq.all = true;
     phomereq.init_z = true;
     phomereq.init_dosing = true;
     /* Pipetter must be homed before gantry is moved. */
@@ -957,6 +960,9 @@ void mixCallback(CDXBot &cd, const struct action a) {
     cdxbot::pipetterDispense::Response pdresp;
     for(unsigned int i = 0; i < cycles; i++) {
         // aspirateCallback(cd, asp_action);
+        if(cd.getRunStatus() == 0){
+            break;
+        }
         /* Aspirate fluid from well */
         pareq.vol = volume;
         pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
@@ -1106,6 +1112,7 @@ void pickupCallback(CDXBot &cd, const struct action a) {
         return;
     }
     /* Move to location */
+
     cdxbot::gantryMove::Request gmzreq;
     cdxbot::gantryMove::Response gmzresp;
     gmzreq.move_mode = 0;
@@ -1249,6 +1256,7 @@ void waitCallback(CDXBot &cd, const struct action a) {
 }
 
 void disposeTip(void) {
+    ROS_DEBUG_STREAM("CDXBotNode: Entered disposeTip()");
     struct action b;
     cdxbot::gantryHome::Request ghomereq;
     cdxbot::gantryHome::Response ghomeresp;
@@ -1257,12 +1265,15 @@ void disposeTip(void) {
     cdxbot::gantryMove::Request gmreq;
     cdxbot::gantryMove::Response gmresp;
     // ghomereq.x = ghomereq.y = ghomereq.z = 1;
-    ghomereq.all = 1;
+    ghomereq.all = true;
+    ghomereq.x = false;
+    ghomereq.y = false;
+    ghomereq.z = false;
     phomereq.init_z = true;
     phomereq.init_dosing = false;
     gmreq.move_mode = 0;
-    gmreq.x = 0;
-    gmreq.y = 406;
+    gmreq.x = 10;
+    gmreq.y = 400;
     gmreq.movex = true;
     gmreq.movey = true;
     gmreq.movez = false;
@@ -1276,10 +1287,11 @@ void disposeTip(void) {
         cd.setRunStatus(0);
     }
     ejectCallback(cd, b);
-    if(!gantryMoveClient.call(gmreq, gmresp)) {
-        ROS_ERROR_STREAM("CDXBotNode: Error moving gantry.");
-        cd.setRunStatus(0);
-    }
+    // if(!gantryMoveClient.call(gmreq, gmresp)) {
+    // ROS_ERROR_STREAM("CDXBotNode: Error moving gantry.");
+    // cd.setRunStatus(0);
+    // }
+    ROS_DEBUG_STREAM("CDXBotNode: Leaving disposeTip()");
 }
 
 
@@ -1348,7 +1360,7 @@ int main(int argc, char **argv) {
         ROS_INFO_STREAM(ros::this_node::getName() << "Error reading HLMD file.");
     }
     /* Dispose of existing tip */
-    disposeTip();
+    // disposeTip();
     /* Process commands in HLMD file. */
     while(ros::ok()) {
         if(cd.getRunStatus() == 1) {

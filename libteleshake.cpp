@@ -134,8 +134,8 @@ int TeleshakeModule::init(void) {
 }
 
 int TeleshakeModule::deinit(void) {
-    pthread_cancel(_thread_id);
-    pthread_join(_thread_id, NULL);
+    // pthread_cancel(_thread_id);
+    // pthread_join(_thread_id, NULL);
     close(_usbfd);
     PRINT_DEBUG("LIBTELESHAKE: Closed socket connection to hardware.");
     PRINT_DEBUG("LIBTELESHAKE: Successfully shut down driver.");

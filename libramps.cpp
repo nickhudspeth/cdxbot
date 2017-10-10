@@ -82,7 +82,8 @@ void RampsModule::waitForOK(void) {
     std::string s;
     char buffer[NETBUFSIZE];
     std::memset(buffer, 0, NETBUFSIZE);
-    while(1) {
+    time_t start = time(NULL);
+    while((time(NULL) - start) < 15) {
         n = 0;
         std::memset(buffer, 0, NETBUFSIZE);
         if((n = read(_usbfd, buffer, NETBUFSIZE - 1) > 0)) {
@@ -96,6 +97,7 @@ void RampsModule::waitForOK(void) {
             }
         }
     }
+    return;
 }
 
 void RampsModule::waitForString(std::string s, unsigned int timeout) {
@@ -132,6 +134,15 @@ void RampsModule::waitForString(std::string s, unsigned int timeout) {
 
 bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z, unsigned int timeout) {
     bool ax = false, ay = false, az = false;
+    if(!(axes | AXIS_X)) {
+        ax = true;
+    }
+    if(!(axes | AXIS_Y)) {
+        ay = true;
+    }
+    if(!(axes | AXIS_Z)) {
+        az = true;
+    }
     int n = 0;
     std::string s2 = "";
     int idx;
@@ -147,19 +158,26 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
     std::string zdec = std::to_string(z);
     idx = zdec.find(".");
     std::string zpos = "Z:" + zdec.substr(0, idx+2);
-    PRINT_DEBUG("Waiting for gantry to arrive at position " + \
-               xpos + ", " + ypos + ", " + \
-               zpos + "}");
+    PRINT_DEBUG("LIBRAMPS: Waiting for gantry to arrive at position [" + \
+                xpos + ", " + ypos + ", " + \
+                zpos + "]");
     time_t start = time(NULL);
-    auto t1 = std::chrono::high_resolution_clock::now();
+    time_t start2 = start;
+    // auto t1 = std::chrono::high_resolution_clock::now();
 
     /* Try to find string for [timeout] secomds */
     while((time(NULL) - start) < timeout) {
-        /* Issue M114 command every 500 milliseconds */
-        auto t2 = std::chrono::high_resolution_clock::now();
-        if(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() > 500) {
+        /* Issue M114 command every 1000 milliseconds */
+        // auto t2 = std::chrono::high_resolution_clock::now();
+        // if(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() > 1000) {
+            // write(_usbfd, "M114\n", 5);
+            // t1 = std::chrono::high_resolution_clock::now();
+            // usleep(20000);
+        // }
+        if((time(NULL) - start2) > 0){
+            PRINT_DEBUG("LIBRAMPS: Sending M114");
             write(_usbfd, "M114\n", 5);
-            t1 = std::chrono::high_resolution_clock::now();
+            start2 = time(NULL);
             usleep(20000);
         }
         std::memset(buffer, 0, NETBUFSIZE);
@@ -169,13 +187,13 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
             s2 += std::string(buffer);
             /* Check to see if this marks the end of one line.*/
             if(buffer[0] == '\n') {
-                // std::cout << KBLU << "LIBRAMPS::" << ": Newline found. S2 = \"" << s2 << "\""<< KNRM << std::endl;
+                PRINT_DEBUG("LIBRAMPS::Newline found. S2 = " + s2);
                 /* If this line contains coordinate information, parse it.
                  * Else, throw it away. */
                 if (s2.find(std::string("X:")) != std::string::npos) {
                     // PRINT_DEBUG("LIBRAMPS::FOUND STRING: " + s2);
                     if(axes & AXIS_X) {
-                        if((s2.find(xpos) != std::string::npos) && ax == false){
+                        if((s2.find(xpos) != std::string::npos) && ax == false) {
                             PRINT_DEBUG("LIBRAMPS: Gantry reached target in x-coordinate");
                             ax = true;
                         }
@@ -183,7 +201,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
                         ax = true;
                     }
                     if(axes & AXIS_Y) {
-                        if((s2.find(ypos) != std::string::npos) && ay == false){
+                        if((s2.find(ypos) != std::string::npos) && ay == false) {
                             PRINT_DEBUG("LIBRAMPS: Gantry reached target in y-coordinate");
                             ay = true;
                         }
@@ -280,8 +298,8 @@ int RampsModule::init(void) {
 }
 
 int RampsModule::deinit(void) {
-    pthread_cancel(_thread_id);
-    pthread_join(_thread_id, NULL);
+    // pthread_cancel(_thread_id);
+    // pthread_join(_thread_id, NULL);
     printf("LIBRAMPS: Killed worker thread.\n");
     close(_usbfd);
     printf("LIBRAMPS: Closed socket connection to hardware.\n");
@@ -332,7 +350,7 @@ bool RampsModule::home(unsigned int axis) {
         break;
     }
     sendCommand(ret);
-    return verifyPosition((AXIS_X | AXIS_Y), 0.00f, 406.5f, 0.00f, 20);
+    return verifyPosition((AXIS_X | AXIS_Y), 0, 406.5, 0, 20);
 }
 
 

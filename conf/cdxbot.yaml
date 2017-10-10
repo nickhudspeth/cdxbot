@@ -17,7 +17,7 @@ cdxbot:
             type: "tip"                 # Container type [tip/well]
             len_x:  85.93               # Container Exterior Width
             len_y: 127.91               # Container Exterior Length
-            len_z: 69.22                # Container Exterior Height
+            len_z: 72.24                # Container Exterior Height
             offset_x: 56.275            # X-offset Between Container Origin and Deck Origin
             offset_y: 30.95             # Y-offset Between Container Origin and Deck Origin
             offset_z: 66.5              # Z-offset Between Container Origin and Deck Origin

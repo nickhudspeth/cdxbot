@@ -198,7 +198,6 @@ bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
     // pc->getCheckHeightRef() = req.check_height;
     pc->setLLDActive(true);
-    //
     return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface);
 }
 

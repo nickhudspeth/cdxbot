@@ -404,7 +404,7 @@ class Container {
     * Returns  :   double
     *************************************************************************/
     double getTraverseHeight(void) {
-        return _traverse_height + _offset[2];
+        return _traverse_height + _len[2];
     }
 
     /*************************************************************************
