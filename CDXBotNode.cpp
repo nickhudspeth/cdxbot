@@ -1010,7 +1010,8 @@ void mixCallback(CDXBot &cd, const struct action a) {
     unsigned int cycles = static_cast<unsigned int>(a.args[3]);
     double volume = static_cast<double>(a.args[4]);
     // double depth = static_cast<double>(a.args[5]);
-    unsigned int lc_index = static_cast<unsigned int>(a.args[5]);
+    unsigned int asp_lc_index = static_cast<unsigned int>(a.args[5]);
+    unsigned int disp_lc_index = static_cast<unsigned int>(a.args[6]);
     unsigned int cg_index = c.getContainerGeometryTableIndex();
     unsigned int dg_index = c.getDeckGeometryTableIndex();
     cdxbot::pipetterSetLLDActive::Request pslreq;
@@ -1080,7 +1081,7 @@ void mixCallback(CDXBot &cd, const struct action a) {
         pareq.vol = volume;
         pareq.gc_idx = c.getContainerGeometryTableIndex();
         pareq.dg_idx = c.getDeckGeometryTableIndex();
-        pareq.lc_idx = lc_index;
+        pareq.lc_idx = asp_lc_index;
         pareq.container_height = c.getOffset('z');
         // pareq.check_height = c.getCheckHeight();
         pareq.check_height = 5;
@@ -1093,7 +1094,7 @@ void mixCallback(CDXBot &cd, const struct action a) {
         pdreq.vol = volume;
         pdreq.gc_idx = c.getContainerGeometryTableIndex();
         pdreq.dg_idx = c.getDeckGeometryTableIndex();
-        pdreq.lc_idx = lc_index;
+        pdreq.lc_idx = disp_lc_index;
         pdreq.container_height = c.getOffset('z');
         // pdreq.liquid_surface = c.getCell(row, col).liquid_height;
         pdreq.liquid_surface = c.getOffset('z') - 0.95*c.getWellLength('z');
