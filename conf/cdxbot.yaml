@@ -165,7 +165,7 @@ cdxbot:
             len_z: 69.22                # Container Exterior Height
             offset_x: 295.725           # X-offset Between Container Origin and Deck Origin
             offset_y: 176.725           # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68                # Z-offset Between Container Origin and Deck Origin
+            offset_z: 64                # Z-offset Between Container Origin and Deck Origin
             rows: 8                     # Number of Rows in Container
             cols: 3                     # Number of Columns in Container
             row_spacing: 18.0           # Spacing Between Adjacent Cells in Row
@@ -181,7 +181,7 @@ cdxbot:
             well_diameter: 3.5
             well_len_x: 0.0
             well_len_y: 0.0
-            well_len_z: 5               # Depth of well from container deck to lowest interior point
+            well_len_z: 8.4               # Depth of well from container deck to lowest interior point
             second_section: 0
             second_section_height: 0
             bottom_search_offset: 5     # Height above container floor to start bottom search
