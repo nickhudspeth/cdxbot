@@ -67,7 +67,7 @@ double Container::getGlobalCoords(const char axis, unsigned int row, unsigned in
         break;
 
     case 'z':
-        ret = _len[2];
+        ret = _offset[2];
         break;
 
     default:

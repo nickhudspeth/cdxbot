@@ -33,6 +33,8 @@ LICENSE:
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "PipetterModule.h"
 #include "cdxbot/gc_cmd.h"
+#include "cdxbot/nodeInit.h"
+#include "cdxbot/nodeShutdown.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
@@ -43,6 +45,8 @@ LICENSE:
 #include "cdxbot/pipetterMakeLiquidClass.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
+#include "cdxbot/pipetterSetLLDActive.h"
+#include "cdxbot/pipetterGetContainerVolume.h"
 #include "std_msgs/String.h"
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/ros.h>
@@ -57,6 +61,7 @@ void *driver_handle;
 create_t *create_pm;
 destroy_t *destroy_pm;
 
+bool node_should_idle = true;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 void handleDebugMessages(const std::string &msg) {
     ROS_DEBUG("PipetterControllerNode: %s", msg.c_str());
@@ -75,26 +80,24 @@ PipetterModule * loadDriver(std::string file) {
     char *error;
     void *driver_handle = dlopen(file.c_str(), RTLD_LAZY);
     if(driver_handle == NULL) {
-        ROS_ERROR_STREAM("Error loading pipetter controller driver from " <<\
-                         file);
-        std::cerr << dlerror() << std::endl;
-        //exit(-1);
+        ROS_ERROR_STREAM("PipetterControllerNode: Error loading pipetter controller driver from " <<\
+                         file << dlerror());
         pc->deinit();
-        ros::shutdown();
+        // ros::shutdown();
     }
     dlerror();
-    ROS_INFO_STREAM("Successfully loaded pipetter controller driver from " <<\
+    ROS_INFO_STREAM("PipetterControllerNode: Successfully loaded pipetter controller driver from " <<\
                     file);
     create_pm = (create_t*)dlsym(driver_handle, "create");
     if((error = dlerror()) != NULL) {
-        ROS_ERROR_STREAM("Error loading maker function.\n " << error);
+        ROS_ERROR_STREAM("PipetterControllerNode: Error loading maker function.\n " << error);
         dlerror();
     }
     PipetterModule *pm = create_pm();
 
     destroy_pm = (destroy_t*)dlsym(driver_handle, "destroy");
     if((error = dlerror()) != NULL) {
-        ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
+        ROS_ERROR_STREAM("PipetterControllerNode: Error loading destroy function.\n " << error);
         dlerror();
     }
     pm->setDebugMsgCallback(handleDebugMessages);
@@ -157,11 +160,31 @@ void loadParams(ros::NodeHandle &nh) {
 }
 
 
+bool initServiceCallback(cdxbot::nodeInit::Request & req,
+                         cdxbot::nodeInit::Response &resp) {
+    int init_ret;
+    bool success = false;
+    if((init_ret = pc->init()) < 0) {
+        ROS_ERROR_STREAM("pipetterControllerNode: Could not initialize pipetter. pc->init() return code = " << init_ret);
+    } else {
+        node_should_idle = false;
+        success = true;
+    }
+    return success;
+}
 
 void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
     ROS_WARN_STREAM("PipetterControllerNode: Received shutdown directive.");
     pc->deinit();
     ros::shutdown();
+}
+
+bool shutdownServiceCallback(cdxbot::nodeShutdown::Request & req,
+                             cdxbot::nodeShutdown::Response &resp) {
+    ROS_WARN_STREAM("pipetterControllerNode: Received shutdown directive.");
+    pc->deinit();
+    ros::shutdown();
+    return true;
 }
 
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
@@ -194,23 +217,29 @@ bool homeCallback(cdxbot::pipetterHome::Request &req,
     return success;
 }
 
+bool setLLDActiveCallback(cdxbot::pipetterSetLLDActive::Request & req,
+                          cdxbot::pipetterSetLLDActive::Response &resp) {
+    pc->setLLDActive(req.state);
+    return true;
+}
+
 bool aspirateCallback(cdxbot::pipetterAspirate::Request & req,
                       cdxbot::pipetterAspirate::Response &resp) {
     // pc->getCheckHeightRef() = req.check_height;
-    pc->setLLDActive(true);
+    // pc->setLLDActive(true);
     return pc->aspirate(req.vol, req.gc_idx, req.dg_idx, req.lc_idx, req.liquid_surface);
 }
 
 bool dispenseCallback(cdxbot::pipetterDispense::Request & req,
                       cdxbot::pipetterDispense::Response &resp) {
-    pc->setLLDActive(false);
+    // pc->setLLDActive(false);
     return pc->dispense(req.vol, req.gc_idx, req.dg_idx, req.lc_idx,  req.liquid_surface);
 }
 
 bool makeDeckGeometryCallback(cdxbot::pipetterMakeDeckGeometry::Request &req,
                               cdxbot::pipetterMakeDeckGeometry::Response &resp) {
     ROS_DEBUG_STREAM("PipetterControllerNode: MakeDeckGeometry callback entered.");
-    pc->makeDeckGeometry(req.index, req.traverse_height, req.container_offset_z, req.engagement_length, req.tip_deposit_height);
+    pc->makeDeckGeometry(req.index, req.traverse_height, req.min_end_cmd_height, req.container_offset_z, req.engagement_length, req.tip_deposit_height);
     return true;
 }
 
@@ -261,6 +290,18 @@ bool makeLiquidClassCallback(cdxbot::pipetterMakeLiquidClass::Request &req,
     return res;
 }
 
+bool getContainerVolumeCallback(cdxbot::pipetterGetContainerVolume::Request &req,
+                                cdxbot::pipetterGetContainerVolume::Response &resp) {
+    bool ret;
+    ret = pc->getContainerVolume(req.cg_index, req.dg_index, req.lc_index,
+                                 req.lld_search_pos, req.liquid_surface,
+                                 resp.volume, resp.level);
+    if(ret == false) {
+        ROS_ERROR_STREAM("PipetterControllerNode: Could not measure liquid height.");
+    }
+    return ret;
+}
+
 
 int main(int argc, char **argv) {
     // const char *pcfile = "..pipetterConfig.conf";
@@ -268,13 +309,14 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "pipetterControllerNode");
     ros::NodeHandle nh;
     loadParams(nh);
-    pc->init();
     /* Instantiate publishers and subscribers*/
     ros::Publisher pub = nh.advertise<geometry_msgs::Vector3Stamped>(\
                          "cdxbot/pipetter_zpos", 100);
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ROS_DEBUG_STREAM("Initialized pc with addr: " << &pc);
     /* Instantiate service servers */
+    ros::ServiceServer nodeInitServer = nh.advertiseService("pipetter_init", &initServiceCallback);
+    ros::ServiceServer nodeShutdownServer = nh.advertiseService("pipetter_shutdown", &shutdownServiceCallback);
     ros::ServiceServer moveZServer = nh.advertiseService("pipetter_move_z",
                                      &moveZCallback);
     ros::ServiceServer pickUpTipServer = nh.advertiseService("pipetter_pick_up_tip",
@@ -292,13 +334,22 @@ int main(int argc, char **argv) {
     ros::ServiceServer makeLiquidClassServer = nh.advertiseService("pipetter_make_liquid_class",
             &makeLiquidClassCallback);
     ros::ServiceServer homeServer = nh.advertiseService("pipetter_home", &homeCallback);
+    ros::ServiceServer setLLDActiveserver = nh.advertiseService("pipetter_set_lld_active", &setLLDActiveCallback);
+    ros::ServiceServer getContainerVolume = nh.advertiseService("pipetter_get_container_volume", &getContainerVolumeCallback);
     ros::Rate rate(100);
+    ROS_DEBUG_STREAM("pipetterControllerNode: Node has started.");
+
     while(ros::ok()) {
+        /* Idle until initialized by CDXBotNode */
+        while(node_should_idle == true) {
+            ros::spinOnce();
+            rate.sleep();
+        }
         ros::spinOnce();
         msg.vector.x = 0;
         msg.vector.y = 0;
         msg.vector.z = pc->getZPos();
-    // pub.publish(msg);
+        // pub.publish(msg);
         rate.sleep();
     }
     return 0;

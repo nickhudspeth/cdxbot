@@ -81,7 +81,7 @@ class LiquidClass {
         _stop_back_volume = 0.0f;
         _transport_speed = 0.0f;
     };
-    ~LiquidClass(){};
+    ~LiquidClass() {};
     std::string &getNameRef(void) {
         return _name;
     }
@@ -200,6 +200,7 @@ class PipetterModule : public CDXModule {
     virtual bool ejectTip(void) {};
     virtual bool home(bool init_z, bool init_dosing) {};
     virtual bool makeDeckGeometry(unsigned int index, double feed_plane,
+                                  double min_end_cmd_height,
                                   double container_offset_z,
                                   double tip_engagement_len,
                                   double tip_deposit_height) {};
@@ -218,7 +219,7 @@ class PipetterModule : public CDXModule {
         return p;
     }
     virtual bool setLiquidClass(unsigned int index) {};
-    virtual LiquidClass *getLiquidClass(unsigned int index){
+    virtual LiquidClass *getLiquidClass(unsigned int index) {
         return _liquid_classes.at(index);
     }
     virtual bool moveZ(double pos, double vel) {};
@@ -247,15 +248,19 @@ class PipetterModule : public CDXModule {
     double &getTipPickupSpeedRef(void) {
         return _tip_pickup_speed;
     }
-    virtual void setLLDActive(bool val){
+    virtual void setLLDActive(bool val) {
         _lld_active = val;
     }
-    virtual bool &getLLDActiveRef(void){
+    virtual bool &getLLDActiveRef(void) {
         return _lld_active;
     }
-    virtual bool getLLDActive(void){
+    virtual bool getLLDActive(void) {
         return _lld_active;
     }
+    virtual bool getContainerVolume(unsigned int cg_idx, unsigned int dg_idx,
+                            unsigned int lc_idx, double lld_search_pos,
+                            double liquid_surface, double &vol_result,
+                            double &level_result) {};
 
     std::string type;
     std::string driver_name;
@@ -268,7 +273,7 @@ class PipetterModule : public CDXModule {
     double _zpos_max;
     bool _z_axis_enabled = 1;
     double _feed_plane = 1800;
-    bool _lld_active = true;
+    bool _lld_active = false;
     std::vector<LiquidClass*> _liquid_classes;
 };
 

@@ -1,0 +1,8 @@
+uint16 cg_index
+uint16 dg_index
+uint16 lc_index
+float64 lld_search_pos
+float64 liquid_surface
+---
+float64 level
+float64 volume

@@ -25,7 +25,7 @@ cdxbot:
             cols: 8                     # Number of Columns in Container
             row_spacing: 9              # Spacing Between Adjacent Cells in Row
             col_spacing: 9              # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 1           # Tip type table index
             tip_engagement_len: 15      # Penetration depth ubri wbs id ruo
@@ -54,7 +54,7 @@ cdxbot:
             cols: 8                     # Number of Columns in Container
             row_spacing: 9              # Spacing Between Adjacent Cells in Row
             col_spacing: 9              # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 1           # Tip type table index
             tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
@@ -67,23 +67,23 @@ cdxbot:
             well_len_y: 8.0
             well_len_z: 41.0            # Depth of well from container deck to lowest interior point
             second_section: 0
-            second_section_height: 5.0
-            bottom_search_offset: 2     # Height above container floor to start bottom search
-            dispense_offset: 2          # Height above container floor to start dispense
+            second_section_height: 2.5
+            bottom_search_offset: 1     # Height above container floor to start bottom search
+            dispense_offset: 0.0          # Height above container floor to start dispense
         c2:                             # Container ID Number
             # GENERAL CONTAINER PARAMETERS
             type: "well"                # Container type [tip/well]
             len_x: 85.93                # Container Exterior Width
             len_y: 127.91               # Container Exterior Length
-            len_z: 69.22                # Container Exterior Height
+            len_z: 65.5                # Container Exterior Height
             offset_x: 291.255           # X-offset Between Container Origin and Deck Origin
             offset_y: 30.95             # Y-offset Between Container Origin and Deck Origin
-            offset_z: 68.0              # Z-offset Between Container Origin and Deck Origin
+            offset_z: 64.6              # Z-offset Between Container Origin and Deck Origin
             rows: 12                    # Number of Rows in Container
             cols: 8                     # Number of Columns in Container
             row_spacing: 9              # Spacing Between Adjacent Cells in Row
             col_spacing: 9              # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 0           # Tip type table index
             tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
@@ -92,13 +92,13 @@ cdxbot:
             volume: 2000.00
             well_geometry: "round"
             well_diameter: 9.0
-            well_len_x: 0.0
-            well_len_y: 0.0
-            well_len_z: 10.0            # Depth of well from container deck to lowest interior point
+            well_len_x: 9.0
+            well_len_y: 9.0
+            well_len_z: 11            # Depth of well from container deck to lowest interior point
             second_section: 6180
             second_section_height: 3.0
-            bottom_search_offset: 5     # Height above container floor to start bottom search
-            dispense_offset: 5          # Height above container floor to start dispense
+            bottom_search_offset: 0     # Height above container floor to start bottom search
+            dispense_offset: 0.0          # Height above container floor to start dispense
         c3:                             # Container ID Number
             # GENERAL CONTAINER PARAMETERS
             type: "none"                # Container type [tip/well]
@@ -112,7 +112,7 @@ cdxbot:
             cols: 0                     # Number of Columns in Container
             row_spacing: 0              # Spacing Between Adjacent Cells in Row
             col_spacing: 0              # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 0           # Tip type table index
             tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
@@ -141,7 +141,7 @@ cdxbot:
             cols: 0                     # Number of Columns in Container
             row_spacing: 0              # Spacing Between Adjacent Cells in Row
             col_spacing: 0              # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 0           # Tip type table index
             tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
@@ -170,7 +170,7 @@ cdxbot:
             cols: 3                     # Number of Columns in Container
             row_spacing: 18.0           # Spacing Between Adjacent Cells in Row
             col_spacing: 27.0           # Spacing Between Adjacent Cells in Column
-            traverse_height: 10         # Clearance above container at which to traverse
+            traverse_height: 20         # Clearance above container at which to traverse
             # TIP PARAMETERS
             tip_type_index: 0           # Tip type table index
             tip_engagement_len: 0       # Penetration depth ubri wbs id ruo
@@ -185,5 +185,5 @@ cdxbot:
             second_section: 0
             second_section_height: 0
             bottom_search_offset: 5     # Height above container floor to start bottom search
-            dispense_offset: 3          # Height above container floor to start dispense
+            dispense_offset: 0          # Height above container floor to start dispense
 

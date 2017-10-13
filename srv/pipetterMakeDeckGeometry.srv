@@ -1,5 +1,6 @@
 uint16  index
 float64 traverse_height
+float64 min_end_cmd_height
 float64 container_offset_z
 float64 engagement_length
 float64 tip_deposit_height

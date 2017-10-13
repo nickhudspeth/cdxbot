@@ -187,7 +187,7 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
             s2 += std::string(buffer);
             /* Check to see if this marks the end of one line.*/
             if(buffer[0] == '\n') {
-                PRINT_DEBUG("LIBRAMPS::Newline found. S2 = " + s2);
+                // PRINT_DEBUG("LIBRAMPS::Newline found. S2 = " + s2);
                 /* If this line contains coordinate information, parse it.
                  * Else, throw it away. */
                 if (s2.find(std::string("X:")) != std::string::npos) {
@@ -241,15 +241,14 @@ int RampsModule::init(void) {
     /* Open USB Device */
     _usbfd = open(_usb_addr.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if(_usbfd < 0) {
-        std::cout << __FILE__ << " " <<__PRETTY_FUNCTION__ << " ERROR: Code " << errno << \
-                  " opening " << _usb_addr << " - " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " opening " + _usb_addr + " : " + strerror(errno));
         return -1;
     }
-    std::cout << "LIBRAMPS: Opened serial connection to USB device at " << _usb_addr << " with file descriptor " << _usbfd << std::endl;
+    PRINT_INFO(std::string("LIBRAMPS: Opened serial connection to USB device at " + _usb_addr + " with file descriptor " + std::to_string(_usbfd)));
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if(tcgetattr(_usbfd, &tty) != 0) {
-        std::cout << __FILE__ << " " << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " from tcgetattr: " + strerror(errno));
         return -1;
     }
     /* Set baud rate */
@@ -269,7 +268,7 @@ int RampsModule::init(void) {
     tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CRTSCTS;
     if(tcsetattr(_usbfd, TCSANOW, &tty) != 0) {
-        std::cout << __FILE__ << " " << __PRETTY_FUNCTION__ << " ERROR: " << errno << " from tcsetattr: " << strerror(errno) << std::endl;
+        PRINT_ERROR(std::string(__FILE__) + " " + std::string(__PRETTY_FUNCTION__) + " Error: " + std::to_string(errno) + " from tcsetattr: " + strerror(errno));
         return -1;
     }
     /* Set serial port to non-blocking */
@@ -300,9 +299,9 @@ int RampsModule::init(void) {
 int RampsModule::deinit(void) {
     // pthread_cancel(_thread_id);
     // pthread_join(_thread_id, NULL);
-    printf("LIBRAMPS: Killed worker thread.\n");
+    PRINT_DEBUG("LIBRAMPS: Killed worker thread.");
     close(_usbfd);
-    printf("LIBRAMPS: Closed socket connection to hardware.\n");
+    PRINT_DEBUG("LIBRAMPS: Closed socket connection to hardware.");
     return 0;
     // PRINT_ERROR("LIBRAMPS: Successfully shut down driver.\n");
 }

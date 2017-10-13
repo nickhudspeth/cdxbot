@@ -42,6 +42,8 @@ LICENSE:
 #include "cdxbot/gantrySetFeedrates.h"
 #include "cdxbot/gantrySetUnits.h"
 #include "cdxbot/gc_cmd.h"
+#include "cdxbot/nodeInit.h"
+#include "cdxbot/nodeShutdown.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/String.h"
 #include <atomic>
@@ -60,6 +62,8 @@ std::string driver_path, driver_name;
 void *driver_handle;
 create_t *create_gm;
 destroy_t *destroy_gm;
+
+bool node_should_idle = true;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 void handleDebugMessages(const std::string &msg) {
     ROS_DEBUG("GantryControllerNode: %s", msg.c_str());
@@ -80,10 +84,9 @@ GantryModule * loadDriver(std::string file) {
     if(driver_handle == NULL) {
         ROS_ERROR_STREAM("Error loading gantry controller driver from " <<\
                          file << dlerror());
-        // std::cerr << dlerror() << std::endl;
         //exit(-1);
         gc->deinit(); /* What if deinit() is not present due to improperly written driver? */
-        ros::shutdown();
+        // ros::shutdown();
     }
     dlerror();
     ROS_INFO_STREAM("Successfully loaded gantry controller driver from " <<\
@@ -231,10 +234,32 @@ void waitForGantry(const cdxbot::gc_cmd &msg) {
     return;
 }
 
+bool initServiceCallback(cdxbot::nodeInit::Request & req,
+                         cdxbot::nodeInit::Response &resp) {
+    int init_ret;
+    bool success = false;
+    if((init_ret = gc->init()) < 0) {
+        ROS_ERROR_STREAM("gantryControllerNode: Could not initialize gantry. gc->init() return code = " << init_ret);
+    } else {
+        node_should_idle = false;
+        success = true;
+    }
+    return success;
+}
+
+
 void shutdownCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
     gc->deinit();
     ros::shutdown();
+}
+
+bool shutdownServiceCallback(cdxbot::nodeShutdown::Request & req,
+                             cdxbot::nodeShutdown::Response &resp) {
+    ROS_WARN_STREAM("GantryControllerNode: Received shutdown directive.");
+    gc->deinit();
+    ros::shutdown();
+    return true;
 }
 
 bool moveCallback(cdxbot::gantryMove::Request &req,
@@ -399,10 +424,6 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "gantryControllerNode");
     ros::NodeHandle nh;
     loadParams(nh);
-    if(gc->init() < 0) {
-        ROS_ERROR_STREAM("GC Init return code: " << gc->init());
-        return -1;
-    }
     /* CREATE PUBLISHERS / SUBSCRIBERS */
     ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ros::Publisher pos_pub = nh.advertise<geometry_msgs::Vector3Stamped>("gantry_pos", 1000);
@@ -411,6 +432,8 @@ int main(int argc, char **argv) {
     // ros::Subscriber sub = nh.subscribe("/gc_pub", 100, &gcPubCallback);
 
     /* INSTANTIATE SERVICE SERVERS */
+    ros::ServiceServer nodeInitServer = nh.advertiseService("gantry_init", &initServiceCallback);
+    ros::ServiceServer nodeShutdownServer = nh.advertiseService("gantry_shutdown", &shutdownServiceCallback);
     ros::ServiceServer gantryMoveServer = nh.advertiseService("gantry_move", &moveCallback);
     ros::ServiceServer gantryEStopToggle = nh.advertiseService("gantry_estop_toggle", &eStopToggleCallback);
     ros::ServiceServer gantryHome = nh.advertiseService("gantry_home", &homeCallback);
@@ -421,9 +444,13 @@ int main(int argc, char **argv) {
     ros::ServiceServer gantrySetFeedratesServer = nh.advertiseService("gantry_set_feedrates", &setFeedratesCallback);
     ros::ServiceServer gantrySetAccelerationsServer = nh.advertiseService("gantry_set_accelerations", &setAccelerationsCallback);
     ros::Rate rate(100);
-    ROS_DEBUG_STREAM("Initialized gc with addr: " << &gc);
+    ROS_DEBUG_STREAM("gantryControllerNode: Node has started.");
     //gc.driver_init(gc);
     while(ros::ok()) {
+        while(node_should_idle == true) {
+            ros::spinOnce();
+            rate.sleep();
+        }
         ros::spinOnce();
         msg.vector.x = gc->getPos('x');
         msg.vector.y = gc->getPos('y');

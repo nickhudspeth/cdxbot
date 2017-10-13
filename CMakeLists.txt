@@ -11,7 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
     roslaunch
     std_msgs
     geometry_msgs
-    message_generation)
+    message_generation
+    )
 # roslaunch_add_file_check(launch)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -72,6 +73,8 @@ add_service_files(
     gantrySetAxisStepsPerUnit.srv
     gantrySetFeedrates.srv
     gantrySetUnits.srv
+    nodeInit.srv
+    nodeShutdown.srv
     pipetterAspirate.srv
     pipetterDispense.srv
     pipetterEjectTip.srv
@@ -82,6 +85,7 @@ add_service_files(
     pipetterMoveZ.srv
     pipetterPickUpTip.srv
     shakerReset.srv
+    pipetterSetLLDActive.srv
     shakerSetFreq.srv
     shakerSetPower.srv
     shakerStart.srv
@@ -89,6 +93,7 @@ add_service_files(
     gc_cmd_s.srv
     pc_cmd_s.srv
     vc_cmd_s.srv
+    pipetterGetContainerVolume.srv
     )
 
 ## Generate actions in the 'action' folder
@@ -138,7 +143,7 @@ catkin_package(
     LIBRARIES smoothie zeus eppendorf
     #  CATKIN_DEPENDS other_catkin_pkg
     # DEPENDS system_lib
-    CATKIN_DEPENDS message_runtime)
+    CATKIN_DEPENDS message_runtime qt_startcommand)
 
 ###########
 ## Build ##

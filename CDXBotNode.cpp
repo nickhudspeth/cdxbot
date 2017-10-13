@@ -31,7 +31,6 @@ LICENSE:
 ************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
-
 #include "CDXBot.h"
 #include "cdxbot/gantryEStopToggle.h"
 #include "cdxbot/gantryGetCurrentPosition.h"
@@ -44,9 +43,10 @@ LICENSE:
 #include "cdxbot/gantrySetUnits.h"
 #include "cdxbot/gc_cmd.h"
 #include "cdxbot/gc_cmd_s.h"
+#include "cdxbot/nodeInit.h"
+#include "cdxbot/nodeShutdown.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/pc_cmd_s.h"
-#include "cdxbot/sc_cmd.h"
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
@@ -56,6 +56,9 @@ LICENSE:
 #include "cdxbot/pipetterMakeLiquidClass.h"
 #include "cdxbot/pipetterMoveZ.h"
 #include "cdxbot/pipetterPickUpTip.h"
+#include "cdxbot/pipetterSetLLDActive.h"
+#include "cdxbot/sc_cmd.h"
+#include "cdxbot/pipetterGetContainerVolume.h"
 #include "cdxbot/shakerReset.h"
 #include "cdxbot/shakerSetFreq.h"
 #include "cdxbot/shakerSetPower.h"
@@ -65,9 +68,11 @@ LICENSE:
 #include "cdxbot/vc_cmd_s.h"
 #include "commands.h"
 #include "common.h"
+#include "qt_startcommand/startcommand.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/String.h"
+#include <boost/bind.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -94,33 +99,42 @@ ros::Subscriber guiSub;
 // ros::Publisher shutdown_pub;
 
 /* Create service clients */
-ros::ServiceClient gcClient;
-ros::ServiceClient pcClient;
-ros::ServiceClient vcClient;
 ros::ServiceClient gantryEStopToggleClient;
 ros::ServiceClient gantryGetCurrentPositionClient;
 ros::ServiceClient gantryHomeClient;
+ros::ServiceClient gantryInitClient;
 ros::ServiceClient gantryMotorsToggleClient;
 ros::ServiceClient gantryMoveClient;
 ros::ServiceClient gantrySetAccelerationsClient;
 ros::ServiceClient gantrySetAxisStepsPerUnitClient;
 ros::ServiceClient gantrySetFeedratesClient;
 ros::ServiceClient gantrySetUnitsClient;
+ros::ServiceClient gantryShutdownClient;
+ros::ServiceClient gcClient;
+ros::ServiceClient pcClient;
 ros::ServiceClient pipetterAspirateClient;
 ros::ServiceClient pipetterDispenseClient;
 ros::ServiceClient pipetterEjectTipClient;
 ros::ServiceClient pipetterHomeClient;
+ros::ServiceClient pipetterInitClient;
 ros::ServiceClient pipetterMakeContainerGeometryClient;
 ros::ServiceClient pipetterMakeDeckGeometryClient;
 ros::ServiceClient pipetterMakeLiquidClassClient;
 ros::ServiceClient pipetterMoveZClient;
 ros::ServiceClient pipetterPickUpTipClient;
+ros::ServiceClient pipetterShutdownClient;
+ros::ServiceClient pipetterSetLLDActiveClient;
+ros::ServiceClient shakerInitClient;
 ros::ServiceClient shakerResetClient;
 ros::ServiceClient shakerSetFreqClient;
 ros::ServiceClient shakerSetPowerClient;
 ros::ServiceClient shakerStartClient;
 ros::ServiceClient shakerStopClient;
+ros::ServiceClient shakerShutdownClient;
+ros::ServiceClient vcClient;
+ros::ServiceClient pipetterGetContainerVolumeClient;
 
+bool run_flag = false; /* Has node already been started by UI? If so, ignore incoming start requests. */
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
 int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
@@ -386,7 +400,8 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
         pmcgreq.len_z = cd.getContainer(i).getWellLength('z');
         pmcgreq.second_section_height = cd.getContainer(i).getSecondSectionHeight();
         pmcgreq.second_section =  cd.getContainer(i).getSecondSection();
-        pmcgreq.max_depth = cd.getContainer(i).getLength('z') - cd.getContainer(i).getWellLength('z');
+        pmcgreq.max_depth = cd.getContainer(i).getOffset('z') - cd.getContainer(i).getWellLength('z');
+        // pmcgreq.max_depth = cd.getContainer(i).getWellLength('z');
         pmcgreq.bottom_search_offset = cd.getContainer(i).getBottomSearchOffset();
         pmcgreq.dispense_offset = cd.getContainer(i).getDispensePositionOffset();
         if(!pipetterMakeContainerGeometryClient.call(pmcgreq, pmcgresp)) {
@@ -400,17 +415,22 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
                              << "\tLen_Y =\t" << pmcgreq.len_y << "\n" \
                              << "\tSecond Section Height =\t" << pmcgreq.second_section_height << "\n" \
                              << "\tSecond Section =\t" << pmcgreq.second_section << "\n" \
-                             << "\tMax Depth =\t" << pmcgreq.max_depth << "\n" \
+                             << "\tMax Immerson Depth =\t" << pmcgreq.max_depth << "\n" \
                              << "\tBottom Search Offset =\t" << pmcgreq.bottom_search_offset << "\n" \
-                             << "\tDispense Offset =\t" << pmcgreq.dispense_offset);
+                             << "\tDispense Offset =\t" << pmcgreq.dispense_offset << "\n"\
+                             << "\tZ-Length = \t" << pmcgreq.len_z << "\n" \
+                             << "\tWell length = \t" << cd.getContainer(i).getWellLength('z') << "\n"\
+                             << "\tmin_end_cmd_height = \t" << cd.getContainer(i).getLength('z') - cd.getContainer(i).getWellLength('z'));
         }
         cd.getContainer(i).setContainerGeometryTableIndex(i);
         /* Make deck geometry entry for containers of all types */
         cdxbot::pipetterMakeDeckGeometry::Request pmdgreq;
         cdxbot::pipetterMakeDeckGeometry::Response pmdgresp;
         pmdgreq.index = i;
-        pmdgreq.traverse_height = cd.getContainer(i).getTraverseHeight();
-        pmdgreq.container_offset_z = cd.getContainer(i).getLength('z');
+        // pmdgreq.traverse_height = cd.getContainer(i).getTraverseHeight();
+        pmdgreq.traverse_height = cd.getContainer(i).getOffset('z') - cd.getContainer(i).getWellLength('z');
+        pmdgreq.min_end_cmd_height = cd.getContainer(i).getOffset('z') - cd.getContainer(i).getWellLength('z');
+        pmdgreq.container_offset_z = cd.getContainer(i).getOffset('z');
         pmdgreq.engagement_length = cd.getContainer(i).getTipEngagementLen();
         pmdgreq.tip_deposit_height = cd.getContainer(i).getTipDepositHeight();
         if(!pipetterMakeDeckGeometryClient.call(pmdgreq, pmdgresp)) {
@@ -686,7 +706,7 @@ int loadConfig(ros::NodeHandle nh, CDXBot &cd) {
 
     }
 
-    ROS_INFO_STREAM(ros::this_node::getName() << "Loaded configuration parameters.");
+    ROS_INFO_STREAM("CDXBotNode: " << "Loaded configuration parameters.");
     return 0;
 }
 
@@ -700,6 +720,48 @@ void guiCmdReceived(const std_msgs::String::ConstPtr &s) {
         cd.setRunStatus(0);
         cd.setActionIndex(0);
         cd.setRunStatus(1);
+    }
+}
+
+void qtCmdReceived(const qt_startcommand::startcommand::ConstPtr&msg, ros::NodeHandle &nh) {
+    unsigned int err = 0;
+    /* LOAD FILES IF GANTRY IS NOT ALREADY RUNNING */
+    if(!run_flag) {
+        run_flag = true;
+
+        /* LOAD RUNFILE FROM SPECIFIED LOCATION */
+        ROS_INFO_STREAM("Loading HLMD File...");
+        if(!cd.parseHLMDFile(msg->CommandFile.c_str())) {
+            ROS_INFO_STREAM("CDXBotNode: " << "Found HLMD file at " << msg->CommandFile <<".");
+            ROS_DEBUG_STREAM(ros::this_node::getName() << cd.actionMap.size() << "items pushed into actionmap.");
+            for(size_t i = 0; i < cd.actionMap.size(); i++) {
+                ROS_DEBUG_STREAM(cd.actionMap[i].cmd);
+                for(size_t j = 0; j < cd.actionMap[i].args.size(); j++) {
+                    ROS_DEBUG_STREAM("\t" << cd.actionMap[i].args[j]);
+                }
+            }
+            ROS_INFO_STREAM("CDXBotNode: " << "Parsed HLMD file successfully.");
+
+        } else {
+            ROS_ERROR_STREAM("CDXBotNode: " << "Error reading HLMD file.");
+            err = 1;
+        }
+
+        /* LAUNCH ROSPARAM TO LOAD LIQUID CLASSES */
+        std::string load_str = std::string("rosparam load -v ") + std::string(msg->LiquidClassFile.c_str());
+        int ret = system(load_str.c_str());
+        if(!ret) {
+            loadConfig(nh, cd);
+            ROS_INFO_STREAM("CDXBotNode: Loaded liquid class definitions from file at " << msg->LiquidClassFile << " successfully.");
+        } else {
+            ROS_ERROR_STREAM("CDXBotNode: Error reading liquid class definitions from file at " << msg->LiquidClassFile);
+            err = 1;
+        }
+        if(!err) {
+            cd.setRunStatus(1);
+        }{
+
+        }
     }
 }
 
@@ -729,7 +791,7 @@ void aspirateCallback(CDXBot &cd, const struct action a) {
     if(cd.getRunStatus() != 0) {
         cdxbot::gantryMove::Request gmreq;
         cdxbot::gantryMove::Response gmresp;
-        unsigned int container = static_cast<unsigned int>(a.args[0]);
+        Container c = cd.getContainer(a.args[0]);
         unsigned int row = static_cast<unsigned int>(a.args[1]);
         unsigned int col = static_cast<unsigned int>(a.args[2]);
         double vol = static_cast<double>(a.args[3]);
@@ -745,13 +807,13 @@ void aspirateCallback(CDXBot &cd, const struct action a) {
         // if(cd.getPipetterHasZ()) {
         // cdxbot::pipetterMoveZ::Request pmzreq;
         // cdxbot::pipetterMoveZ::Response pmzresp;
-        // pmzreq.pos = cd.getContainer(container).getTraverseHeight();
+        // pmzreq.pos = c.getTraverseHeight();
         // pmzreq.vel = 1;
         // if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
         // cd.setRunStatus(0);
         // }
         // } else {
-        // gmreq.z = cd.getContainer(container).getTraverseHeight();
+        // gmreq.z = c.getTraverseHeight();
         // gmreq.movex = false;
         // gmreq.movey = false;
         // gmreq.movez = true;
@@ -762,30 +824,46 @@ void aspirateCallback(CDXBot &cd, const struct action a) {
 
         /* Move gantry to the well location */
         gmreq.move_mode = 0;
-        gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
-        gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+        gmreq.x = c.getGlobalCoords('x', row, col);
+        gmreq.y = c.getGlobalCoords('y', row, col);
         gmreq.movex = true;
         gmreq.movey = true;
         gmreq.movez = false;
         if(!gantryMoveClient.call(gmreq, gmresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x = " << gmreq.x << ", y = " << gmreq.y << ").");
         }
+       // Turn off liquid level detection
+        cdxbot::pipetterSetLLDActive::Request pslreq;
+        cdxbot::pipetterSetLLDActive::Response pslresp;
+        pslreq.state = false;
+        pipetterSetLLDActiveClient.call(pslreq, pslresp);
+
+
+
         /* Aspirate fluid from well */
         cdxbot::pipetterAspirate::Request pareq;
         cdxbot::pipetterAspirate::Response paresp;
         pareq.vol = vol;
-        pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-        pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pareq.gc_idx = c.getContainerGeometryTableIndex();
+        pareq.dg_idx = c.getDeckGeometryTableIndex();
         pareq.lc_idx = lc_idx;
-        pareq.container_height = cd.getContainer(container).getLength('z');
-        // pareq.check_height = cd.getContainer(container).getCheckHeight();
+        pareq.container_height = c.getLength('z');
+        // pareq.check_height = c.getCheckHeight();
         pareq.check_height = 5;
-        double max_depth = cd.getContainer(container).getWellLength('z');
-        double liquid_height = cd.getContainer(container).getCell(row, col).liquid_height;
-        // pareq.liquid_surface = pareq.container_height - max_depth + liquid_height;
-        pareq.liquid_surface = cd.getContainer(container).getLength('z');
+        pareq.liquid_surface = c.getLength('z') - 0.95*(c.getWellLength('z'));
         if(!pipetterAspirateClient.call(pareq, paresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to aspirate");
+            cd.setRunStatus(0);
+        }
+        /* Fast move end effector to traverse height */
+        cdxbot::pipetterMoveZ::Request pmzreq;
+        cdxbot::pipetterMoveZ::Response pmzresp;
+        /* Fast move end effector to traverseHeight */
+        pmzreq.pos = c.getTraverseHeight();
+        pmzreq.vel = 1.0;
+        if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+            // Unable to move gantry. HALT!
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
             cd.setRunStatus(0);
         }
     }
@@ -798,7 +876,7 @@ void dispenseCallback(CDXBot &cd, const struct action a) {
         cdxbot::gantryMove::Request gmreq;
         cdxbot::gantryMove::Response gmresp;
         /* Move pipette tip to bottom of well */
-        unsigned int container = static_cast<unsigned int>(a.args[0]);
+        Container c = cd.getContainer(a.args[0]);
         unsigned int row = static_cast<unsigned int>(a.args[1]);
         unsigned int col = static_cast<unsigned int>(a.args[2]);
         double vol = static_cast<double>(a.args[3]);
@@ -810,15 +888,15 @@ void dispenseCallback(CDXBot &cd, const struct action a) {
          * volume is greater than maximum well volume */
         if((curr_vol + a.args[3]) > max_vol) {
             ROS_ERROR_STREAM("Dispensing requested amount into cell (" << row \
-                             << ", " << col << ") in container " << container \
+                             << ", " << col << ") in container " <<  a.args[0]\
                              << " would cause liquid to overflow.");
             cd.setRunStatus(0);
         }
 
         /* Move gantry to cell location */
         gmreq.move_mode = 0;
-        gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
-        gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+        gmreq.x = c.getGlobalCoords('x', row, col);
+        gmreq.y = c.getGlobalCoords('y', row, col);
         gmreq.z = cd.getFeedPlaneHeight();
         gmreq.movex = true;
         gmreq.movey = true;
@@ -831,17 +909,30 @@ void dispenseCallback(CDXBot &cd, const struct action a) {
         cdxbot::pipetterDispense::Request pdreq;
         cdxbot::pipetterDispense::Response pdresp;
         pdreq.vol = vol;
-        pdreq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-        pdreq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pdreq.gc_idx = c.getContainerGeometryTableIndex();
+        pdreq.dg_idx = c.getDeckGeometryTableIndex();
         pdreq.lc_idx = lc_idx;
-        pdreq.container_height = cd.getContainer(container).getLength('z');
-        // pdreq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
-        pdreq.liquid_surface = cd.getContainer(container).getLength('z') - cd.getContainer(container).getWellLength('z');
+        pdreq.container_height = c.getLength('z');
+        // pdreq.liquid_surface = c.getCell(row, col).liquid_height;
+        pdreq.liquid_surface = c.getLength('z') - 0.95*c.getWellLength('z');
         if(!pipetterDispenseClient.call(pdreq, pdresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to dispense");
             cd.setRunStatus(0);
         }
+
+        /* Fast move end effector to traverse height */
+        cdxbot::pipetterMoveZ::Request pmzreq;
+        cdxbot::pipetterMoveZ::Response pmzresp;
+        /* Fast move end effector to traverseHeight */
+        pmzreq.pos = c.getTraverseHeight();
+        pmzreq.vel = 1.0;
+        if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+            // Unable to move gantry. HALT!
+            ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+            cd.setRunStatus(0);
+        }
     }
+
     ROS_DEBUG_STREAM("CDXBotNode: Leaving dispenseCallback().");
 }
 
@@ -913,38 +1004,34 @@ void homeCallback(CDXBot &cd, const struct action a) {
 void mixCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("Entered mixCallback().");
     unsigned int container = static_cast<unsigned int>(a.args[0]);
+    Container c = cd.getContainer(a.args[0]);
     unsigned int row = static_cast<unsigned int>(a.args[1]);
     unsigned int col = static_cast<unsigned int>(a.args[2]);
     unsigned int cycles = static_cast<unsigned int>(a.args[3]);
     double volume = static_cast<double>(a.args[4]);
     // double depth = static_cast<double>(a.args[5]);
     unsigned int lc_index = static_cast<unsigned int>(a.args[5]);
-
-    // struct action asp_action;
-    // struct action disp_action;
-
-    // asp_action.cmd = "aspirate";
-    // asp_action.args.push_back(container);
-    // asp_action.args.push_back(row);
-    // asp_action.args.push_back(col);
-    // asp_action.args.push_back(volume);
-    // asp_action.args.push_back(lc_index);
-
-    // disp_action.cmd = "dispense";
-    // disp_action.args.push_back(container);
-    // disp_action.args.push_back(row);
-    // disp_action.args.push_back(col);
-    // disp_action.args.push_back(volume);
-    // disp_action.args.push_back(lc_index);
-
-    /* Volume of solution in well should not exceed 75% of the capacity
-     * of the pipetter. Check for this. */
-    /* Move gantry to cell location */
+    unsigned int cg_index = c.getContainerGeometryTableIndex();
+    unsigned int dg_index = c.getDeckGeometryTableIndex();
+    cdxbot::pipetterSetLLDActive::Request pslreq;
+    cdxbot::pipetterSetLLDActive::Response pslresp;
     cdxbot::gantryMove::Request gmreq;
     cdxbot::gantryMove::Response gmresp;
+    cdxbot::pipetterGetContainerVolume::Request pgcvreq;
+    cdxbot::pipetterGetContainerVolume::Response pgcvresp;
+    cdxbot::pipetterAspirate::Request pareq;
+    cdxbot::pipetterAspirate::Response paresp;
+    cdxbot::pipetterDispense::Request pdreq;
+    cdxbot::pipetterDispense::Response pdresp;
+    cdxbot::pipetterMoveZ::Request pmzreq;
+    cdxbot::pipetterMoveZ::Response pmzresp;
+    /* Volume of solution in well should not exceed 75% of the capacity
+     * of the pipetter. Check for this. */
+
+    /* MOVE GANTRY TO DESTINATION */
     gmreq.move_mode = 0;
-    gmreq.x = cd.getContainer(container).getGlobalCoords('x', row, col);
-    gmreq.y = cd.getContainer(container).getGlobalCoords('y', row, col);
+    gmreq.x = c.getGlobalCoords('x', row, col);
+    gmreq.y = c.getGlobalCoords('y', row, col);
     gmreq.z = cd.getFeedPlaneHeight();
     gmreq.movex = true;
     gmreq.movey = true;
@@ -952,46 +1039,77 @@ void mixCallback(CDXBot &cd, const struct action a) {
     if(!gantryMoveClient.call(gmreq, gmresp)) {
         ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (z = " << gmreq.z << ").");
     }
+
+    /* MEASURE CONTAINER VOLUME AND LIQUID LEVEL */
+    /* Turn on liquid level detection */
+    // pslreq.state = true;
+    // pipetterSetLLDActiveClient.call(pslreq, pslresp);
+    /* Measure container volume and liquid level*/
+    // pgcvreq.cg_index = cg_index;
+    // pgcvreq.dg_index = dg_index;
+    // pgcvreq.lc_index = lc_index;
+    // pgcvreq.lld_search_pos = c.getOffset('z');
+    // pgcvreq.liquid_surface = c.getOffset('z') - c.getWellLength('z');
+    // if(!pipetterGetContainerVolumeClient.call(pgcvreq, pgcvresp)) {
+    /* Failed to measure liquid level. */
+    // cd.setRunStatus(0);
+    // }
+    // ROS_WARN_STREAM("\t Measured Fluid Volume: " << pgcvresp.volume << " uL.");
+    // ROS_WARN_STREAM("\t Measured Fluid Height: " << pgcvresp.level << " mm.");
+
+    /* MOVE END EFFECTOR TO TOP OF CONTAINER */
+    pmzreq.pos = c.getOffset('z');
+    pmzreq.vel = 1.0;
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
+    }
+
+    /* Turn off liquid level detection */
+    pslreq.state = false;
+    pipetterSetLLDActiveClient.call(pslreq, pslresp);
+
     /* Move pipette tip to halfway up from the bottom of the well */
     /* Draw up and dispense equal volumes of fluid N times */
-    cdxbot::pipetterAspirate::Request pareq;
-    cdxbot::pipetterAspirate::Response paresp;
-    cdxbot::pipetterDispense::Request pdreq;
-    cdxbot::pipetterDispense::Response pdresp;
     for(unsigned int i = 0; i < cycles; i++) {
-        // aspirateCallback(cd, asp_action);
-        if(cd.getRunStatus() == 0){
+        if(cd.getRunStatus() == 0) {
             break;
         }
         /* Aspirate fluid from well */
         pareq.vol = volume;
-        pareq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-        pareq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pareq.gc_idx = c.getContainerGeometryTableIndex();
+        pareq.dg_idx = c.getDeckGeometryTableIndex();
         pareq.lc_idx = lc_index;
-        pareq.container_height = cd.getContainer(container).getLength('z');
-        // pareq.check_height = cd.getContainer(container).getCheckHeight();
+        pareq.container_height = c.getOffset('z');
+        // pareq.check_height = c.getCheckHeight();
         pareq.check_height = 5;
-        double max_depth = cd.getContainer(container).getWellLength('z');
-        double liquid_height = cd.getContainer(container).getCell(row, col).liquid_height;
-        // pareq.liquid_surface = pareq.container_height - max_depth + liquid_height;
-        pareq.liquid_surface = cd.getContainer(container).getLength('z');
+        pareq.liquid_surface = c.getOffset('z') - 0.95*c.getWellLength('z');
         if(!pipetterAspirateClient.call(pareq, paresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to aspirate");
             cd.setRunStatus(0);
         }
-        // dispenseCallback(cd, disp_action);
         /* Dispense commanded volume */
         pdreq.vol = volume;
-        pdreq.gc_idx = cd.getContainer(container).getContainerGeometryTableIndex();
-        pdreq.dg_idx = cd.getContainer(container).getDeckGeometryTableIndex();
+        pdreq.gc_idx = c.getContainerGeometryTableIndex();
+        pdreq.dg_idx = c.getDeckGeometryTableIndex();
         pdreq.lc_idx = lc_index;
-        pdreq.container_height = cd.getContainer(container).getLength('z');
-        // pdreq.liquid_surface = cd.getContainer(container).getCell(row, col).liquid_height;
-        pdreq.liquid_surface = cd.getContainer(container).getLength('z') - cd.getContainer(container).getWellLength('z');
+        pdreq.container_height = c.getOffset('z');
+        // pdreq.liquid_surface = c.getCell(row, col).liquid_height;
+        pdreq.liquid_surface = c.getOffset('z') - 0.95*c.getWellLength('z');
         if(!pipetterDispenseClient.call(pdreq, pdresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to dispense");
             cd.setRunStatus(0);
         }
+    }
+
+    /* MOVE END EFFECTOR TO TRAVERSE HEIGHT */
+    pmzreq.pos = c.getTraverseHeight();
+    pmzreq.vel = 1.0;
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
     }
     /* Dispense drawn amount of fluid + 1 unit to flush pipette tip */
     ROS_DEBUG_STREAM("Leaving mixCallback().");
@@ -1112,7 +1230,7 @@ void pickupCallback(CDXBot &cd, const struct action a) {
         return;
     }
     /* Move to location */
-
+    ROS_DEBUG_STREAM("CDXBotNode: Moving to location.");
     cdxbot::gantryMove::Request gmzreq;
     cdxbot::gantryMove::Response gmzresp;
     gmzreq.move_mode = 0;
@@ -1127,6 +1245,7 @@ void pickupCallback(CDXBot &cd, const struct action a) {
         ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
         cd.setRunStatus(0);
     }
+    ROS_DEBUG_STREAM("CDXBotNode: Picking up tip.");
     /* Pick up Tip */
     cdxbot::pipetterPickUpTip::Request pputreq;
     cdxbot::pipetterPickUpTip::Response pputresp;
@@ -1138,6 +1257,18 @@ void pickupCallback(CDXBot &cd, const struct action a) {
         ROS_ERROR_STREAM("Unable to pick up tip from specified location. HALT!");
         cd.setRunStatus(0);
     }
+
+    cdxbot::pipetterMoveZ::Request pmzreq;
+    cdxbot::pipetterMoveZ::Response pmzresp;
+    /* Fast move end effector to traverseHeight */
+    pmzreq.pos = cd.getContainer(a.args[0]).getTraverseHeight();
+    pmzreq.vel = 1.0;
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
+    }
+
     ROS_DEBUG_STREAM("CDXBotNode: Leaving PickupCallback().");
 }
 
@@ -1150,7 +1281,7 @@ void pierceCallback(CDXBot &cd, const struct action a) {
     double cont = a.args[0];
     double row = a.args[1];
     double col = a.args[2];
-    double depth = a.args[2];
+    double depth = cd.getContainer(cont).getGlobalCoords('z', row, col) - a.args[3];
     gmreq.move_mode = 0;
     gmreq.x = cd.getContainer(cont).getGlobalCoords('x', row, col);
     gmreq.y = cd.getContainer(cont).getGlobalCoords('y', row, col);
@@ -1163,11 +1294,12 @@ void pierceCallback(CDXBot &cd, const struct action a) {
         ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move gantry to specified location. HALT!");
         cd.setRunStatus(0);
     }
+
     cdxbot::pipetterMoveZ::Request pmzreq;
     cdxbot::pipetterMoveZ::Response pmzresp;
     /* Fast move end effector to top of container */
     pmzreq.pos = cd.getContainer(cont).getGlobalCoords('z', row, col);
-    pmzreq.vel = 1.0; /* Slow move using Zeus pipetter.*/
+    pmzreq.vel = 1.0;
     if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
         // Unable to move gantry. HALT!
         ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
@@ -1175,8 +1307,8 @@ void pierceCallback(CDXBot &cd, const struct action a) {
     }
     /* Cap penetration depth so that end effector does not crash into container
      * floor. */
-    double max_depth = cd.getContainer(cont).getWellLength('z');
-    pmzreq.pos = (depth > max_depth) ? max_depth : depth;
+    double max_depth = cd.getContainer(cont).getGlobalCoords('z', row, col) - cd.getContainer(cont).getWellLength('z');
+    pmzreq.pos = (depth < max_depth) ? max_depth : depth;
     /* Slow move end effector to desired penetration depth.*/
     pmzreq.vel = 0.0;
     if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
@@ -1184,6 +1316,17 @@ void pierceCallback(CDXBot &cd, const struct action a) {
         ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
         cd.setRunStatus(0);
     }
+    /* Fast move end effector to traverse height for container */
+    pmzreq.pos = cd.getContainer(cont).getTraverseHeight();
+    pmzreq.vel = 1.0;
+    if(!pipetterMoveZClient.call(pmzreq, pmzresp)) {
+        // Unable to move gantry. HALT!
+        ROS_ERROR_STREAM(__FILE__ << ": " << __PRETTY_FUNCTION__ << ": " << "Could not move pipetter z-axis. HALT!");
+        cd.setRunStatus(0);
+    }
+
+
+
     ROS_DEBUG_STREAM("CDXBotNode: Leaving pierceCallback().");
 }
 
@@ -1294,6 +1437,32 @@ void disposeTip(void) {
     ROS_DEBUG_STREAM("CDXBotNode: Leaving disposeTip()");
 }
 
+bool initManagedNodes(void) {
+    bool ret = true;
+    cdxbot::nodeInit::Request req;
+    cdxbot::nodeInit::Response resp;
+    if(!gantryInitClient.call(req, resp)) {
+        ret = false;
+    }
+    if(!pipetterInitClient.call(req, resp)) {
+        ret = false;
+    }
+    if(!shakerInitClient.call(req, resp)) {
+        ret = false;
+    }
+
+    return ret;
+}
+
+void shutdownManagedNodes(void) {
+    cdxbot::nodeShutdown::Request req;
+    cdxbot::nodeShutdown::Response resp;
+
+    gantryShutdownClient.call(req, resp);
+    pipetterShutdownClient.call(req, resp);
+    shakerShutdownClient.call(req, resp);
+}
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "cdxbot_node");
@@ -1303,7 +1472,9 @@ int main(int argc, char **argv) {
     /* Subscribe to the shutdown topic */
     ros::Subscriber sd = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     /* Subscribe to GUI command topic */
-    guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
+    // guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
+    /* Subscribe to topic published by QT interface */
+    ros::Subscriber qtSub = nh.subscribe<qt_startcommand::startcommand>("/gui_cmd", 1000, boost::bind(&qtCmdReceived, _1, boost::ref(nh)));
     /* Subscribe to the status topics published by other nodes */
     ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
     ros::Subscriber pipetter_zpos = nh.subscribe("/pipetter_zpos", 1000, &pipetterUpdateZPosCallback);
@@ -1319,66 +1490,85 @@ int main(int argc, char **argv) {
     gantryEStopToggleClient = nh.serviceClient<cdxbot::gantryEStopToggle>("gantry_estop_toggle");
     gantryGetCurrentPositionClient = nh.serviceClient<cdxbot::gantryGetCurrentPosition>("gantry_get_current_position");
     gantryHomeClient = nh.serviceClient<cdxbot::gantryHome>("gantry_home");
+    gantryInitClient = nh.serviceClient<cdxbot::nodeInit>("gantry_init");
     gantryMotorsToggleClient = nh.serviceClient<cdxbot::gantryMotorsToggle>("gantry_motors_toggle");
     gantryMoveClient = nh.serviceClient<cdxbot::gantryMove>("gantry_move");
     gantrySetAccelerationsClient = nh.serviceClient<cdxbot::gantrySetAccelerations>("gantry_set_accelerations");
     gantrySetAxisStepsPerUnitClient = nh.serviceClient<cdxbot::gantrySetAxisStepsPerUnit>("gantry_set_axis_steps_per_unit");
     gantrySetFeedratesClient = nh.serviceClient<cdxbot::gantrySetFeedrates>("gantry_set_feedrates");
+    gantryShutdownClient = nh.serviceClient<cdxbot::nodeShutdown>("gantry_shutdown");
     gantrySetUnitsClient = nh.serviceClient<cdxbot::gantrySetUnits>("gantry_set_units");
     pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
     pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
     pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
+    pipetterGetContainerVolumeClient = nh.serviceClient<cdxbot::pipetterGetContainerVolume>("pipetter_get_container_volume");
     pipetterHomeClient = nh.serviceClient<cdxbot::pipetterHome>("pipetter_home");
+    pipetterInitClient = nh.serviceClient<cdxbot::nodeInit>("pipetter_init");
+    pipetterShutdownClient = nh.serviceClient<cdxbot::nodeShutdown>("pipetter_shutdown");
     pipetterMakeContainerGeometryClient = nh.serviceClient<cdxbot::pipetterMakeContainerGeometry>("pipetter_make_container_geometry");
     pipetterMakeDeckGeometryClient = nh.serviceClient<cdxbot::pipetterMakeDeckGeometry>("pipetter_make_deck_geometry");
     pipetterMakeLiquidClassClient = nh.serviceClient<cdxbot::pipetterMakeLiquidClass>("pipetter_make_liquid_class");
     pipetterMoveZClient = nh.serviceClient<cdxbot::pipetterMoveZ>("pipetter_move_z");;
+    pipetterSetLLDActiveClient = nh.serviceClient<cdxbot::pipetterSetLLDActive>("pipetter_set_lld_active");
     pipetterPickUpTipClient = nh.serviceClient<cdxbot::pipetterPickUpTip>("pipetter_pick_up_tip");
+    shakerInitClient = nh.serviceClient<cdxbot::nodeInit>("shaker_init");
+    shakerShutdownClient = nh.serviceClient<cdxbot::nodeShutdown>("shaker_shutdown");
     shakerResetClient = nh.serviceClient<cdxbot::shakerReset>("shaker_reset");
     shakerSetFreqClient = nh.serviceClient<cdxbot::shakerSetFreq>("shaker_set_freq");
     shakerSetPowerClient = nh.serviceClient<cdxbot::shakerSetPower>("shaker_set_power");
     shakerStartClient = nh.serviceClient<cdxbot::shakerStart>("shaker_start");
     shakerStopClient = nh.serviceClient<cdxbot::shakerStop>("shaker_stop");
+
     /* Check for and load/parse HLMD file */
     ros::Duration(3).sleep(); // Wait for services to inittialize
-    loadConfig(nh, cd);
+    // loadConfig(nh, cd);
 
     /* TODO: nam - Load HLMDFileLocation from parameter given in CDXBot.conf Fri 31 Mar 2017 10:08:33 AM MDT */
 
-    if(!cd.parseHLMDFile(cd.HLMDFileLocation)) {
-        ROS_INFO_STREAM(ros::this_node::getName() << "Found HLMD file at " << cd.HLMDFileLocation <<".");
-        ROS_DEBUG_STREAM(ros::this_node::getName() << cd.actionMap.size() << "items pushed into actionmap.");
-        for(size_t i = 0; i < cd.actionMap.size(); i++) {
-            ROS_DEBUG_STREAM(cd.actionMap[i].cmd);
-            for(size_t j = 0; j < cd.actionMap[i].args.size(); j++) {
-                ROS_DEBUG_STREAM("\t" << cd.actionMap[i].args[j]);
-            }
-        }
-        ROS_INFO_STREAM(ros::this_node::getName() << "Parsed HLMD file successfully.");
+    // if(!cd.parseHLMDFile(cd.HLMDFileLocation)) {
+    // ROS_INFO_STREAM("CDXBotNode: " << "Found HLMD file at " << cd.HLMDFileLocation <<".");
+    // ROS_DEBUG_STREAM("CDXBotNode: " << cd.actionMap.size() << "items pushed into actionmap.");
+    // for(size_t i = 0; i < cd.actionMap.size(); i++) {
+    // ROS_DEBUG_STREAM(cd.actionMap[i].cmd);
+    // for(size_t j = 0; j < cd.actionMap[i].args.size(); j++) {
+    // ROS_DEBUG_STREAM("\t" << cd.actionMap[i].args[j]);
+    // }
+    // }
+    // ROS_INFO_STREAM("CDXBotNode: " << "Parsed HLMD file successfully.");
 
-    } else {
-        ROS_INFO_STREAM(ros::this_node::getName() << "Error reading HLMD file.");
-    }
+    // } else {
+    // ROS_INFO_STREAM("CDXBotNode: " << "Error reading HLMD file.");
+    // }
+
     /* Dispose of existing tip */
     // disposeTip();
-    /* Process commands in HLMD file. */
-    while(ros::ok()) {
-        if(cd.getRunStatus() == 1) {
-            struct action a;
-            if(cd.getNextAction(a) < 0) {
-                ROS_INFO_STREAM("DONE!");
-                cd.setRunStatus(0);
-            } else {
-                if(command_table.count(a.cmd)) {
-                    command_table[a.cmd](cd, a);
+    ROS_INFO_STREAM("CDXBotNode: Initializing managed nodes");
+    if(initManagedNodes() == true) {
+        ROS_INFO_STREAM("CDXBotNode: Successfully initialized managed nodes");
+        /* Process commands in HLMD file. */
+        while(ros::ok()) {
+            if(cd.getRunStatus() == 1) {
+                struct action a;
+                if(cd.getNextAction(a) < 0) {
+                    ROS_INFO_STREAM("DONE!");
+                    cd.setRunStatus(0);
                 } else {
-                    ROS_ERROR_STREAM("CDXBotNode: No command \"" << a.cmd << "\" is implemented.");
+                    if(command_table.count(a.cmd)) {
+                        command_table[a.cmd](cd, a);
+                    } else {
+                        ROS_ERROR_STREAM("CDXBotNode: No command \"" << a.cmd << "\" is implemented.");
+                    }
                 }
+            } else {
+                ros::spinOnce();
+                rate.sleep();
             }
-        } else {
-            ros::spinOnce();
-            rate.sleep();
         }
+        return 0;
+    } else {
+        ROS_ERROR_STREAM("CDXBotNode: Failed to initialize managed nodes");
+        shutdownManagedNodes();
+        ros::shutdown();
+        return -1;
     }
-    return 0;
 }

@@ -34,7 +34,7 @@ LICENSE:
 #include "libzeus.h"
 /*********************    CONSTANTS AND MACROS    **********************/
 #define TO_ZEUS_COORDS(pos, offset) (1800 - (10*(pos + offset)))
-
+#define TO_DECK_COORDS(pos, offset) (0.1*(1800 - pos) - offset)
 /***********************    GLOBAL VARIABLES    ************************/
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 
@@ -182,17 +182,17 @@ int ZeusModule::init(void) {
     // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 9");
     // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(9), 2);
     // sendCommand(cmd);
-    PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 17");
-    std::string cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(17), 2);
-    sendCommand(cmd);
-    cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(17), 2);
-    sendCommand(cmd);
-    cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(17), 2);
-    sendCommand(cmd);
-    cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(17), 2);
-    sendCommand(cmd);
-    cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(17), 2);
-    sendCommand(cmd);
+    // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 17");
+    // std::string cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(17), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(17), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(17), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(17), 2);
+    // sendCommand(cmd);
+    // cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(17), 2);
+    // sendCommand(cmd);
     // PRINT_WARNING("LIBZEUS: Liquid Class Parameters for index 19");
     // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(19), 2);
     // sendCommand(cmd);
@@ -233,43 +233,42 @@ int ZeusModule::lconf(void) {
 }
 
 bool ZeusModule::moveZ(double pos, double vel) {
-    printf("Moving pipetter head to: %f mm.\n", pos);
+    // printf("Moving pipetter head to: %f mm.\n", pos);
     std::string cmd = cmdHeader("GZ");
-    // pos = (1800 - 10*pos) + 370;
-    pos = TO_ZEUS_COORDS(pos, 0);
-    if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
-        PRINT_ERROR("LIBZEUS: Requested z-position " + std::to_string(pos) \
-                    + " out of range. Valid range for z-position is [" \
-                    + std::to_string(ZPOS_MIN/10.0) + ", " \
-                    + std::to_string(ZPOS_MAX/10.0) + "]");
-        return 0;
-    }
+    // if((pos > ZPOS_MAX) || (pos < ZPOS_MIN)) {
+    // PRINT_ERROR("LIBZEUS: Requested z-position " + std::to_string(pos) \
+    // + " out of range. Valid range for z-position is [" \
+    // + std::to_string(ZPOS_MIN/10.0) + ", " \
+    // + std::to_string(ZPOS_MAX/10.0) + "]");
+    // return 0;
+    // }
     if(vel < 1.0) {
         vel = 0.0;
     }
     if(vel > 1.0) {
         vel = 1.0;
     }
-    cmd += "gy" + zfill(std::to_string(static_cast<unsigned int>(pos + 0.5)),4) + "gw" + std::to_string(int(vel));
-    sendCommand(cmd);
-    double cur_z_pos = getZPos();
-    double err = 99.0;
-    time_t start = time(NULL);
-    while((err < MAX_Z_ERROR) && ((time(NULL) - start) < 1)) {
-        cur_z_pos = getZPos();
-        err = abs(cur_z_pos - pos);
-    }
-    if(err < MAX_Z_ERROR) {
-        _zpos = pos;
-        return 1;
-    } else {
-        printf("Pipetter z-pos = %f\n", getZPos());
-        return 0;
-    }
+    cmd += "gy" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(pos, TIP_INSTALLED_OFFSET))),4) + "gw" + std::to_string(int(vel));
+    return sendCommand(cmd);
+    // double cur_z_pos = getZPos();
+    // double err = 99.0;
+    // time_t start = time(NULL);
+    // while((err < MAX_Z_ERROR) && ((time(NULL) - start) < 1)) {
+    // cur_z_pos = getZPos();
+    // err = abs(cur_z_pos - pos);
+    // }
+    // if(err < MAX_Z_ERROR) {
+    // _zpos = pos;
+    // return 1;
+    // } else {
+    // printf("Pipetter z-pos = %f\n", getZPos());
+    // return 0;
+    // }
 }
 
 
 bool ZeusModule::makeDeckGeometry(unsigned int index, double traverse_height,\
+                                  double min_end_cmd_height, \
                                   double container_offset_z, \
                                   double tip_engagement_len, \
                                   double tip_deposit_height) {
@@ -281,15 +280,18 @@ bool ZeusModule::makeDeckGeometry(unsigned int index, double traverse_height,\
     }
     // pos = (1800 - 10*traverse_height) + 370;
 
-    PRINT_DEBUG("LIBZEUS: Making deck geometry at index " + std::to_string(index) + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
+    PRINT_DEBUG("LIBZEUS: Making deck geometry at index " + std::to_string(index)\
+            + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
     std::string cmd = cmdHeader("GO");
     cmd +=  "go" + zfill(std::to_string(index), 2) + \
             /*"th" + zfill(std::to_string(static_cast<unsigned int>(traverse_height * 10)), 4) + \ */
-            "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, TIP_INSTALLED_OFFSET))), 4) + \
+            "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(min_end_cmd_height, TIP_INSTALLED_OFFSET))), 4) + \
+            // "th" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, TIP_INSTALLED_OFFSET))), 4) + \
             /*"te" + zfill(std::to_string(static_cast<unsigned int>((1800 - 10*(container_offset_z - tip_engagement_len)))), 4) + \*/
-            "te" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, TIP_INSTALLED_OFFSET))), 4) + \
+            "te" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(min_end_cmd_height, TIP_INSTALLED_OFFSET))), 4) + \
             /*"tm" + zfill(std::to_string(static_cast<unsigned int>(10*container_offset_z)), 4 )+ \ */
-            "tm" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, 0))), 4 )+ \
+            "tm" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z, 0))), 4 )+ \
+            /* "tm" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(traverse_height, 0))), 4 )+ \ */
             "tn" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(container_offset_z - tip_engagement_len, 0))), 4) + \
             "tr" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(tip_deposit_height, 0))), 4);
     _current_dg_index = index;
@@ -322,7 +324,7 @@ bool ZeusModule::makeContainerGeometry(unsigned int index, bool geometry,
                       "bg" + zfill(std::to_string(static_cast<unsigned int>(second_section_height * 10)), 4) + \
                       "gx" + zfill(std::to_string(static_cast<unsigned int>(second_section)), 5) + \
                       "ce" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(max_depth, TIP_INSTALLED_OFFSET))), 4) + \
-                      "ch" + zfill(std::to_string(static_cast<unsigned int>(bottom_search_offset, 0)), 4) + \
+                      "ch" + zfill(std::to_string(static_cast<unsigned int>(bottom_search_offset * 10)), 4) + \
                       "ci" + zfill(std::to_string(static_cast<unsigned int>(dispense_offset * 10)), 4);
     return sendCommand(cmd);
 }
@@ -369,27 +371,34 @@ bool ZeusModule::setLiquidClass(unsigned int index) {
                       zfill(std::to_string(static_cast<unsigned int>(l.getLeavingHeightRef() * 10)), 3) + " " + \
                       zfill(std::to_string(static_cast<unsigned int>(l.getDispenseHeightRef() * 10)), 3);
     sendCommand(cmd);
+
+    // Set and request liquid class parameters
+    cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    sendCommand(cmd);
+
+    // Set and request QPM parameters for aspiration
     cmd = cmdHeader("GQ") + "gv" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "vv0310 0005 0010 0 0770 0005 0015 1 0713 0005 0015 1 0615 0005 0015 1 0081 0000 0015 0 0531 0005 0005 1 0570 0005 0015 1 0485 0005 0010 1 0010 0000 0000";
     sendCommand(cmd);
-    // cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
-    // sendCommand(cmd);
+    cmd = cmdHeader("GS") + "gv" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    sendCommand(cmd);
+
+    // Set and request QPM parameters for dispensing
     cmd = cmdHeader("GV") + "gp" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ww0300 0015 1 0046 0010 1 0420 0015 1 0500 0015 1 0550 0005 1 0640 0015 1 0644 0015 1 0662 0015 1 0000 0000";
     sendCommand(cmd);
-    // cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
-    // sendCommand(cmd);
-    // cmd = cmdHeader("GM") + "lq" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
-    // sendCommand(cmd);
-    // cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 0065 0100 0022 0020 0028 00500 00551 0750 0816 0100 0102 0150 0161 2000 2151 0";
-    // cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111 00010 01111";
+    cmd = cmdHeader("GW") + "gp" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    sendCommand(cmd);
+
+    // Set and request gravimetric calibration parameters for aspiration
     cmd = cmdHeader("GG") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 00065 00100 00220 00200 00280 00500 00551 00750 08160 00100 01020 01500 01614 02000 02151";
     sendCommand(cmd);
-    // cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
-    // sendCommand(cmd);
-    // cmd = cmdHeader("GH") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "cl00050 0065 0100 0022 0020 0028 00500 00551 0750 0816 0100 0102 0150 0161 2000 2151 0";
-    cmd = cmdHeader("GH") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "ck00050 00065 00100 00220 00200 00280 00500 00551 00750 08160 00100 01020 01500 01614 02000 02151";
+    cmd = cmdHeader("GE") + "gg" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
+    sendCommand(cmd);
+
+    // Set and request gravimetric calibration parameters for aspiration
+    cmd = cmdHeader("GH") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2) + "cl00050 00065 00100 00220 00200 00280 00500 00551 00750 08160 00100 01020 01500 01614 02000 02151";
+    sendCommand(cmd);
+    cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
     return sendCommand(cmd);
-    // cmd = cmdHeader("GI") + "gh" + zfill(std::to_string(index + LIQUID_CLASS_OFFSET), 2);
-    // sendCommand(cmd);
 }
 
 // LiquidClass *ZeusModule::getLiquidClass(unsigned int index){
@@ -643,7 +652,7 @@ std::string ZeusModule::waitForResponse(void) {
             setMsgReadyFlag(0);
             std::string ret = parseErrors(_received_msg);
             PRINT_DEBUG("LIBZEUS: Received message: " + _received_msg);
-            setReceivedMsg(std::string(""));
+            // setReceivedMsg(std::string(""));
             // if(ret.find("GL") != std::string::npos){
             // std::string cmd = cmdHeader("VP");
             // sendCommand(cmd);
@@ -793,11 +802,11 @@ double ZeusModule::getZPos(void) {
     while(getWaitingForMsgFlag() == 1) {}
     std::string z_str = getReceivedMsg().substr(getReceivedMsg().find("gy")+2, 3);
     // printf("ZPOS is: %d\n", stoi(z_str));
-    return stod(z_str);
+    return stod(z_str) * 0.1;
 }
 
 bool ZeusModule::emergencyStop(void) {
-    std::string cmd = "AB";
+    std::string cmd = cmdHeader("AB");
     sendCommand(cmd);
     return true;
 }
@@ -806,6 +815,28 @@ bool ZeusModule::emergencyStopReset(void) {
     std::string cmd = "AW";
     sendCommand(cmd);
     return true;
+}
+
+bool ZeusModule::getContainerVolume(unsigned int gc_idx, unsigned int dg_idx,
+                                    unsigned int lc_idx, double lld_search_pos,
+                                    double liquid_surface, double &vol_result,
+                                    double &level_result) {
+    PRINT_DEBUG("LIBZEUS: Entered getContainerVolume()");
+    bool ret = false;
+    std::string cmd = cmdHeader("GJ");
+    cmd += "ge" + zfill(std::to_string(gc_idx), 2) +\
+           "go" + zfill(std::to_string(dg_idx), 2) +\
+           "lq" + zfill(std::to_string(lc_idx + LIQUID_CLASS_OFFSET), 2) +\
+           "lb" + zfill(std::to_string(static_cast<unsigned int>(_lld_active)), 1) +\
+           "zp" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(lld_search_pos, TIP_INSTALLED_OFFSET))), 4) +\
+           "cf" + zfill(std::to_string(static_cast<unsigned int>(TO_ZEUS_COORDS(liquid_surface, TIP_INSTALLED_OFFSET))), 4);
+    ret = sendCommand(cmd);
+    if(ret == true) {
+        vol_result = stod(getReceivedMsg().substr(getReceivedMsg().find("aw") + 2, 5)) * 0.1;
+        level_result = TO_DECK_COORDS(stod(getReceivedMsg().substr(getReceivedMsg().find("yl") + 2, 3)), TIP_INSTALLED_OFFSET);
+    }
+    PRINT_DEBUG("LIBZEUS: Leaving getContainerVolume()");
+    return ret;
 }
 
 // bool ZeusModule::setDeckGeometryParams(struct deck_geometry_t d) {

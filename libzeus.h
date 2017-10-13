@@ -91,7 +91,7 @@ LICENSE:
 #define MAX_Z_ERROR 0.1
 
 #define LIQUID_CLASS_OFFSET 30
-#define TIP_INSTALLED_OFFSET 45
+#define TIP_INSTALLED_OFFSET 53
 
 typedef struct {
     int sockfd;
@@ -185,6 +185,7 @@ extern "C" {
         bool getFirmwareVersion(void);
         bool getLiquidClassParams(unsigned int index);
         bool makeDeckGeometry(unsigned int index, double feed_plane,\
+                              double min_end_cmd_height, \
                               double container_offset_z, \
                               double tip_engagement_len, \
                               double tip_deposit_height);
@@ -199,6 +200,10 @@ extern "C" {
         // bool setContainerGeometryParams(struct container_geometry_t c);
         // bool setDeckGeometryParams(struct deck_geometry_t d);
         bool setLiquidClassParams(struct liquid_class_t l);
+        bool getContainerVolume(unsigned int cg_idx, unsigned int dg_idx,
+                                unsigned int lc_idx, double lld_search_pos,
+                                double liquid_surface, double &vol_result,
+                                double &level_result);
         int getSockFD(void) {
             return _sockfd;
         }
@@ -249,7 +254,6 @@ extern "C" {
         unsigned int _error_flag = 0;
         bool initDosingDrive(void );
         bool initZDrive(void);
-
       private:
         int initCANBus(void);
 

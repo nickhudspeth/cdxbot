@@ -1,5 +1,7 @@
 #include "ShakerModule.h"
 #include "cdxbot/gc_cmd.h"
+#include "cdxbot/nodeInit.h"
+#include "cdxbot/nodeShutdown.h"
 #include "cdxbot/pc_cmd.h"
 #include "cdxbot/shakerReset.h"
 #include "cdxbot/shakerSetFreq.h"
@@ -22,6 +24,8 @@ create_t *create_sm;
 destroy_t *destroy_sm;
 bool timeout_flag = false;
 float timeout_dur = 0.0;
+
+bool node_should_idle = false;
 /*******************    FUNCTION IMPLEMENTATIONS    ********************/
 void handleDebugMessages(const std::string &msg) {
     ROS_DEBUG("ShakerControllerNode: %s", msg.c_str());
@@ -40,26 +44,24 @@ ShakerModule * loadDriver(std::string file) {
     char *error;
     void *driver_handle = dlopen(file.c_str(), RTLD_LAZY);
     if(driver_handle == NULL) {
-        ROS_ERROR_STREAM("Error loading shaker controller driver from " <<\
-                         file);
-        std::cerr << dlerror() << std::endl;
-        //exit(-1);
+        ROS_ERROR_STREAM("ShakerControllerNode: Error loading shaker controller driver from " <<\
+                         file << dlerror());
         sm->deinit();
-        ros::shutdown();
+        // ros::shutdown();
     }
     dlerror();
-    ROS_INFO_STREAM("Successfully loaded shaker controller driver from " <<\
+    ROS_INFO_STREAM("ShakerControllerNode: Successfully loaded shaker controller driver from " <<\
                     file);
     create_sm = (create_t*)dlsym(driver_handle, "create");
     if((error = dlerror()) != NULL) {
-        ROS_ERROR_STREAM("Error loading maker function.\n " << error);
+        ROS_ERROR_STREAM("ShakerControllerNode: Error loading maker function.\n " << error);
         dlerror();
     }
     ShakerModule *s = create_sm();
 
     destroy_sm = (destroy_t*)dlsym(driver_handle, "destroy");
     if((error = dlerror()) != NULL) {
-        ROS_ERROR_STREAM("Error loading destroy function.\n " << error);
+        ROS_ERROR_STREAM("ShakerControllerNode: Error loading destroy function.\n " << error);
         dlerror();
     }
     s->setDebugMsgCallback(handleDebugMessages);
@@ -98,11 +100,32 @@ void loadParams(ros::NodeHandle &nh) {
     sm = loadDriver(driver_path + driver_name);
 }
 
+bool initServiceCallback(cdxbot::nodeInit::Request & req,
+                               cdxbot::nodeInit::Response &resp) {
+    int init_ret;
+    bool success = false;
+    if((init_ret = sm->init()) < 0) {
+        ROS_ERROR_STREAM("shakerControllerNode: Could not initialize pipetter. sm->init() return code = " << init_ret);
+    } else {
+        node_should_idle = false;
+        success = true;
+    }
+    return success;
+}
 
-void shutdownMessageCallback(const std_msgs::String::ConstPtr &msg) {
+
+void shutdownCallback(const std_msgs::String::ConstPtr &msg) {
     ROS_WARN_STREAM("ShakerControllerNode: Received shutdown directive.");
     sm->deinit();
     ros::shutdown();
+}
+
+bool shutdownServiceCallback(cdxbot::nodeShutdown::Request & req,
+                             cdxbot::nodeShutdown::Response &resp) {
+    ROS_WARN_STREAM("shakerControllerNode: Received shutdown directive.");
+    sm->deinit();
+    ros::shutdown();
+    return true;
 }
 
 void stopFromTimerCallback(const ros::TimerEvent &e) {
@@ -130,10 +153,10 @@ bool startServiceCallback(cdxbot::shakerStart::Request &req,
     ROS_DEBUG_STREAM("ShakerControllerNode: Entered startServiceCallback().");
     /*Start the shaker and run for the amount of time specified in req->time.*/
     if(sm->start() == 1) {
-        if(req.time > 0.0){
-            timeout_dur = req.time;
-            timeout_flag = true;
-        }
+        // if(req.time > 0.0){
+            // timeout_dur = req.time;
+            // timeout_flag = true;
+        // }
         resp.ok = true;
         return 1;
     } else {
@@ -187,11 +210,12 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "shakerControllerNode");
     ros::NodeHandle nh;
     loadParams(nh);
-    sm->init();
     /* Instantiate publishers and subscribers*/
-    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownMessageCallback);
+    ros::Subscriber shutdown = nh.subscribe("/sd_pub", 100, &shutdownCallback);
     ROS_DEBUG_STREAM("Initialized pc with addr: " << &sm);
     /* Instantiate service servers */
+    ros::ServiceServer nodeInitServer = nh.advertiseService("shaker_init", &initServiceCallback);
+    ros::ServiceServer nodeShutdownServer = nh.advertiseService("shaker_shutdown", &shutdownServiceCallback);
     ros::ServiceServer startServer = nh.advertiseService("shaker_start", &startServiceCallback);
     ros::ServiceServer stopServer = nh.advertiseService("shaker_stop", &stopServiceCallback);
     ros::ServiceServer setFreqServer = nh.advertiseService("shaker_set_freq", &setFreqServiceCallback);
@@ -199,13 +223,19 @@ int main(int argc, char **argv) {
     ros::ServiceServer resetServer = nh.advertiseService("shaker_reset", &resetServiceCallback);
 
     ros::Rate rate(100);
+    ROS_DEBUG_STREAM("shakerControllerNode: Node has started.");
+
     while(ros::ok()) {
-        if(timeout_flag){
-            ROS_INFO_STREAM("Running shaker with " << timeout_dur << " second timeout.");
-            ros::Timer timer = nh.createTimer(ros::Duration(timeout_dur), stopFromTimerCallback, true);
-            timeout_flag = false;
-            timeout_dur = 0.0;
+        while(node_should_idle == true){
+            ros::spinOnce();
+            rate.sleep();
         }
+        // if(timeout_flag){
+            // ROS_INFO_STREAM("Running shaker with " << timeout_dur << " second timeout.");
+            // ros::Timer timer = nh.createTimer(ros::Duration(timeout_dur), stopFromTimerCallback, true);
+            // timeout_flag = false;
+            // timeout_dur = 0.0;
+        // }
         ros::spinOnce();
         rate.sleep();
     }
