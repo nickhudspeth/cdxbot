@@ -64,10 +64,10 @@ class GantryModule : public CDXModule {
     * Function :   emergencyStop()
     * Purpose  :   Performs an emergency stop, immediately halting the motion
     *              the machine.
-    * Input    :   void
-    * Returns  :   void
+    * Input    :   bool state
+    * Returns  :   bool
     *************************************************************************/
-    virtual void emergencyStop() {};
+    virtual bool emergencyStop(bool state) {};
 
     /*************************************************************************
     * Function :   emergencyStopReset()

@@ -64,7 +64,7 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
     FILES
-    gantryEStopToggle.srv
+    gantryEmergencyStop.srv
     gantryGetCurrentPosition.srv
     gantryHome.srv
     gantryMotorsToggle.srv
@@ -78,6 +78,7 @@ add_service_files(
     pipetterAspirate.srv
     pipetterDispense.srv
     pipetterEjectTip.srv
+    pipetterEmergencyStop.srv
     pipetterHome.srv
     pipetterMakeContainerGeometry.srv
     pipetterMakeDeckGeometry.srv

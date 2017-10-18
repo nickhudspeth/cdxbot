@@ -170,11 +170,11 @@ bool RampsModule::verifyPosition(unsigned int axes, double x, double y, double z
         /* Issue M114 command every 1000 milliseconds */
         // auto t2 = std::chrono::high_resolution_clock::now();
         // if(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() > 1000) {
-            // write(_usbfd, "M114\n", 5);
-            // t1 = std::chrono::high_resolution_clock::now();
-            // usleep(20000);
+        // write(_usbfd, "M114\n", 5);
+        // t1 = std::chrono::high_resolution_clock::now();
+        // usleep(20000);
         // }
-        if((time(NULL) - start2) > 0){
+        if((time(NULL) - start2) > 0) {
             PRINT_DEBUG("LIBRAMPS: Sending M114");
             write(_usbfd, "M114\n", 5);
             start2 = time(NULL);
@@ -320,14 +320,25 @@ void RampsModule::dwell(int t) {
     sendCommand(ret);
 }
 
-void RampsModule::emergencyStop(void) {
-    std::string ret = "M112";
-    sendCommand(ret);
-}
+bool RampsModule::emergencyStop(bool state) {
+/* Toggle DTR to trigger emergency stop */
+    int DTR_flag = TIOCM_DTR;
+    ioctl(_usbfd, TIOCMBIC, &DTR_flag);
+    ioctl(_usbfd, TIOCMBIS, &DTR_flag);
+    // Delay required? */
+    ioctl(_usbfd, TIOCMBIC, &DTR_flag);
 
-void RampsModule::emergencyStopReset(void) {
-    std::string ret = "M999";
+    
+    
+    
+    std::string ret = "";
+    if(state) {
+        ret = "M112";
+    } else {
+        ret = "M999";
+    }
     sendCommand(ret);
+    return true;
 }
 
 bool RampsModule::home(unsigned int axis) {

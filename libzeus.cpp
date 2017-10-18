@@ -281,7 +281,7 @@ bool ZeusModule::makeDeckGeometry(unsigned int index, double traverse_height,\
     // pos = (1800 - 10*traverse_height) + 370;
 
     PRINT_DEBUG("LIBZEUS: Making deck geometry at index " + std::to_string(index)\
-            + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
+                + " with traverse_height " + std::to_string(traverse_height) + " and container z-offset " + std::to_string(container_offset_z) + " and tip engagement length " + std::to_string(tip_engagement_len) + " and tip deposit height " + std::to_string(tip_deposit_height));
     std::string cmd = cmdHeader("GO");
     cmd +=  "go" + zfill(std::to_string(index), 2) + \
             /*"th" + zfill(std::to_string(static_cast<unsigned int>(traverse_height * 10)), 4) + \ */
@@ -805,16 +805,14 @@ double ZeusModule::getZPos(void) {
     return stod(z_str) * 0.1;
 }
 
-bool ZeusModule::emergencyStop(void) {
-    std::string cmd = cmdHeader("AB");
-    sendCommand(cmd);
-    return true;
-}
-
-bool ZeusModule::emergencyStopReset(void) {
-    std::string cmd = "AW";
-    sendCommand(cmd);
-    return true;
+bool ZeusModule::emergencyStop(bool state) {
+    std::string cmd;
+    if(state == true) {
+        cmd = cmdHeader("AB");
+    } else {
+        cmd = cmdHeader("AW");
+    }
+    return sendCommand(cmd);
 }
 
 bool ZeusModule::getContainerVolume(unsigned int gc_idx, unsigned int dg_idx,

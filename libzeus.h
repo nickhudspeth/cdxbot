@@ -178,8 +178,7 @@ extern "C" {
                       unsigned int lc_idx, double liquid_surface);
         bool ejectTip(void);
         bool home(bool init_z, bool init_dosing);
-        bool emergencyStop(void);
-        bool emergencyStopReset(void);
+        bool emergencyStop(bool state);
         bool getContainerGeometryParams(unsigned int index);
         bool getDeckGeometryParams(unsigned int index);
         bool getFirmwareVersion(void);

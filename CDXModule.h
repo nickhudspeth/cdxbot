@@ -48,10 +48,6 @@ LICENSE:
 #include <stdlib.h>
 #include <string>
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
-// typedef boost::function<void(const std::string&)> DebugMsgCallback;
-// typedef boost::function<void(const std::string&)> InfoMsgCallback;
-// typedef boost::function<void(const std::string&)> WarningMsgCallback;
-// typedef boost::function<void(const std::string&)> ErrorMsgCallback;
 
 /***********************    FUNCTION PROTOTYPES    ***********************/
 class CDXModule {
@@ -67,6 +63,7 @@ class CDXModule {
     virtual int lconf(void) {
         return 0;
     }
+    virtual bool emergencyStop(bool state){};
     // virtual void seterrfunc(void(*ef)(std::string s)) {
     // PRINT_ERROR = ef;
     // }
@@ -89,7 +86,7 @@ class CDXModule {
     boost::function<void(const std::string&)> PRINT_ERROR;
 
   protected:
-
+    bool _emergency_stop_active = true;
     // void(*PRINT_ERROR)(std::string s);
 
 };

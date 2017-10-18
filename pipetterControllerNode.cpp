@@ -39,6 +39,7 @@ LICENSE:
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterEmergencyStop.h"
 #include "cdxbot/pipetterHome.h"
 #include "cdxbot/pipetterMakeContainerGeometry.h"
 #include "cdxbot/pipetterMakeDeckGeometry.h"
@@ -187,6 +188,16 @@ bool shutdownServiceCallback(cdxbot::nodeShutdown::Request & req,
     return true;
 }
 
+bool emergencyStopCallback(cdxbot::pipetterEmergencyStop::Request &req,
+                           cdxbot::pipetterEmergencyStop::Response &resp) {
+    if(req.state) {
+        ROS_WARN_STREAM("pipetterControllerNode: Emergency stop activated.");
+    } else {
+        ROS_WARN_STREAM("pipetterControllerNode: Emergency stop deactivated.");
+    }
+    return pc->emergencyStop(req.state);
+}
+
 bool moveZCallback(cdxbot::pipetterMoveZ::Request &req,
                    cdxbot::pipetterMoveZ::Response &resp) {
     return pc->moveZ(req.pos, 1);
@@ -323,6 +334,8 @@ int main(int argc, char **argv) {
                                          &pickUpTipCallback);
     ros::ServiceServer ejectTipServer = nh.advertiseService("pipetter_eject_tip",
                                         &ejectTipCallback);
+    ros::ServiceServer emergencyStopServer = nh.advertiseService("pipetter_emergency_stop", &emergencyStopCallback);
+
     ros::ServiceServer aspirateServer = nh.advertiseService("pipetter_aspirate",
                                         &aspirateCallback);
     ros::ServiceServer dispenseServer = nh.advertiseService("pipetter_dispense",

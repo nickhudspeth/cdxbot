@@ -32,7 +32,7 @@ LICENSE:
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "GantryModule.h"
-#include "cdxbot/gantryEStopToggle.h"
+#include "cdxbot/gantryEmergencyStop.h"
 #include "cdxbot/gantryGetCurrentPosition.h"
 #include "cdxbot/gantryHome.h"
 #include "cdxbot/gantryMotorsToggle.h"
@@ -274,14 +274,14 @@ bool moveCallback(cdxbot::gantryMove::Request &req,
     return true;
 }
 
-bool eStopToggleCallback(cdxbot::gantryEStopToggle::Request &req,
-                         cdxbot::gantryEStopToggle::Response &resp) {
-    if(!req.state) {
-        gc->emergencyStopReset();
+bool emergencyStopCallback(cdxbot::gantryEmergencyStop::Request &req,
+                           cdxbot::gantryEmergencyStop::Response &resp) {
+    if(req.state) {
+        ROS_WARN_STREAM("gantryControllerNode: Emergency stop activated.");
     } else {
-        gc->emergencyStop();
+        ROS_WARN_STREAM("gantryControllerNode: Emergency stop deactivated.");
     }
-    return (resp.ok = true);
+    return gc->emergencyStop(req.state);
 }
 
 bool homeCallback(cdxbot::gantryHome::Request &req,
@@ -435,7 +435,7 @@ int main(int argc, char **argv) {
     ros::ServiceServer nodeInitServer = nh.advertiseService("gantry_init", &initServiceCallback);
     ros::ServiceServer nodeShutdownServer = nh.advertiseService("gantry_shutdown", &shutdownServiceCallback);
     ros::ServiceServer gantryMoveServer = nh.advertiseService("gantry_move", &moveCallback);
-    ros::ServiceServer gantryEStopToggle = nh.advertiseService("gantry_estop_toggle", &eStopToggleCallback);
+    ros::ServiceServer gantryEmergencyStop= nh.advertiseService("gantry_emergency_stop", &emergencyStopCallback);
     ros::ServiceServer gantryHome = nh.advertiseService("gantry_home", &homeCallback);
     ros::ServiceServer gantryMotorsToggle = nh.advertiseService("gantry_motors_toggle", &motorsToggleCallback);
     ros::ServiceServer gantrySetUnits = nh.advertiseService("gantry_set_units", &setUnitsCallback);

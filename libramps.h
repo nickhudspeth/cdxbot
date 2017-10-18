@@ -41,6 +41,7 @@ LICENSE:
 *************************************************************************/
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
+#include "GantryModule.h"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/timer.hpp>
@@ -51,18 +52,18 @@ LICENSE:
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <pthread.h>
 #include <sstream>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
-#include "GantryModule.h"
 /**************    CONSTANTS, MACROS, & DATA STRUCTURES    ***************/
 #define NETBUFSIZE 1024
 #define UNITS_MM 0
@@ -90,8 +91,7 @@ extern "C" {
         int lconf(void);
         void seterrfunc(void(*ef)(std::string s));
         void dwell(int t);
-        void emergencyStop(void);
-        void emergencyStopReset(void);
+        bool emergencyStop(bool state);
         bool home(unsigned int axis);
         int motorsDisable(unsigned int axis);
         int motorsEnable(void);

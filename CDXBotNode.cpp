@@ -32,7 +32,7 @@ LICENSE:
 
 /**********************    INCLUDE DIRECTIVES    ***********************/
 #include "CDXBot.h"
-#include "cdxbot/gantryEStopToggle.h"
+#include "cdxbot/gantryEmergencyStop.h"
 #include "cdxbot/gantryGetCurrentPosition.h"
 #include "cdxbot/gantryHome.h"
 #include "cdxbot/gantryMotorsToggle.h"
@@ -50,6 +50,7 @@ LICENSE:
 #include "cdxbot/pipetterAspirate.h"
 #include "cdxbot/pipetterDispense.h"
 #include "cdxbot/pipetterEjectTip.h"
+#include "cdxbot/pipetterEmergencyStop.h"
 #include "cdxbot/pipetterHome.h"
 #include "cdxbot/pipetterMakeContainerGeometry.h"
 #include "cdxbot/pipetterMakeDeckGeometry.h"
@@ -99,7 +100,7 @@ ros::Subscriber guiSub;
 // ros::Publisher shutdown_pub;
 
 /* Create service clients */
-ros::ServiceClient gantryEStopToggleClient;
+ros::ServiceClient gantryEmergencyStopClient;
 ros::ServiceClient gantryGetCurrentPositionClient;
 ros::ServiceClient gantryHomeClient;
 ros::ServiceClient gantryInitClient;
@@ -115,6 +116,7 @@ ros::ServiceClient pcClient;
 ros::ServiceClient pipetterAspirateClient;
 ros::ServiceClient pipetterDispenseClient;
 ros::ServiceClient pipetterEjectTipClient;
+ros::ServiceClient pipetterEmergencyStopClient;
 ros::ServiceClient pipetterHomeClient;
 ros::ServiceClient pipetterInitClient;
 ros::ServiceClient pipetterMakeContainerGeometryClient;
@@ -832,7 +834,7 @@ void aspirateCallback(CDXBot &cd, const struct action a) {
         if(!gantryMoveClient.call(gmreq, gmresp)) {
             ROS_ERROR_STREAM("CDXBotNode: Unable to move gantry to (x = " << gmreq.x << ", y = " << gmreq.y << ").");
         }
-       // Turn off liquid level detection
+        // Turn off liquid level detection
         cdxbot::pipetterSetLLDActive::Request pslreq;
         cdxbot::pipetterSetLLDActive::Response pslresp;
         pslreq.state = false;
@@ -1399,6 +1401,35 @@ void waitCallback(CDXBot &cd, const struct action a) {
     ROS_DEBUG_STREAM("CDXBotNode: Leaving waitCallback().");
 }
 
+void emergencyStopCallback(CDXBot &cd, const struct action a) {
+    static bool pipetter_estop_active = false;
+    static bool gantry_estop_active = false;
+    ROS_DEBUG_STREAM("CDXBotNode: Entered emergencyStopCallback().");
+    cdxbot::pipetterEmergencyStop::Request pesreq;
+    cdxbot::pipetterEmergencyStop::Response pesresp;
+    cdxbot::gantryEmergencyStop::Request gesreq;
+    cdxbot::gantryEmergencyStop::Response gesresp;
+
+    pipetter_estop_active ^= pipetter_estop_active;
+    gantry_estop_active ^= gantry_estop_active;
+
+    pesreq.state = pipetter_estop_active;
+    gesreq.state = gantry_estop_active;
+
+    if(!pipetterEmergencyStopClient.call(pesreq, pesresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Could not activate pipetter emergency stop.");
+    }
+    if(!gantryEmergencyStopClient.call(gesreq, gesresp)) {
+        ROS_ERROR_STREAM("CDXBotNode: Could not activate gantry emergency stop.");
+    }
+
+    if((pipetter_estop_active == true) || (gantry_estop_active == true)) {
+        cd.setRunStatus(0);
+    }
+
+    ROS_DEBUG_STREAM("CDXBotNode: Leaving emergencyStopCallback().");
+}
+
 void disposeTip(void) {
     ROS_DEBUG_STREAM("CDXBotNode: Entered disposeTip()");
     struct action b;
@@ -1476,6 +1507,7 @@ int main(int argc, char **argv) {
     // guiSub = nh.subscribe("/gui_cmd", 1000, &guiCmdReceived);
     /* Subscribe to topic published by QT interface */
     ros::Subscriber qtSub = nh.subscribe<qt_startcommand::startcommand>("/gui_cmd", 1000, boost::bind(&qtCmdReceived, _1, boost::ref(nh)));
+    ros::Subscriber qtEStopSub = nh.subscribe<std_msgs::String>("/estop", 1000, boost::bind(&emergencyStopCallback, _1, boost::ref(nh)));
     /* Subscribe to the status topics published by other nodes */
     ros::Subscriber gc_status = nh.subscribe("/gantry_status", 1000, &gantryStatusCallback);
     ros::Subscriber pipetter_zpos = nh.subscribe("/pipetter_zpos", 1000, &pipetterUpdateZPosCallback);
@@ -1488,7 +1520,7 @@ int main(int argc, char **argv) {
     // gcClient = nh.serviceClient<cdxbot::gc_cmd_s>("gc_cmd_s");
     // pcClient = nh.serviceClient<cdxbot::pc_cmd_s>("pc_cmd_s");
     // vcClient = nh.serviceClient<cdxbot::vc_cmd_s>("vc_cmd_s");
-    gantryEStopToggleClient = nh.serviceClient<cdxbot::gantryEStopToggle>("gantry_estop_toggle");
+    gantryEmergencyStopClient = nh.serviceClient<cdxbot::gantryEmergencyStop>("gantry_emergency_stop");
     gantryGetCurrentPositionClient = nh.serviceClient<cdxbot::gantryGetCurrentPosition>("gantry_get_current_position");
     gantryHomeClient = nh.serviceClient<cdxbot::gantryHome>("gantry_home");
     gantryInitClient = nh.serviceClient<cdxbot::nodeInit>("gantry_init");
@@ -1502,6 +1534,7 @@ int main(int argc, char **argv) {
     pipetterAspirateClient = nh.serviceClient<cdxbot::pipetterAspirate>("pipetter_aspirate");
     pipetterDispenseClient = nh.serviceClient<cdxbot::pipetterDispense>("pipetter_dispense");
     pipetterEjectTipClient = nh.serviceClient<cdxbot::pipetterEjectTip>("pipetter_eject_tip");
+    pipetterEmergencyStopClient = nh.serviceClient<cdxbot::pipetterEmergencyStop>("pipetter_emergency_stop");
     pipetterGetContainerVolumeClient = nh.serviceClient<cdxbot::pipetterGetContainerVolume>("pipetter_get_container_volume");
     pipetterHomeClient = nh.serviceClient<cdxbot::pipetterHome>("pipetter_home");
     pipetterInitClient = nh.serviceClient<cdxbot::nodeInit>("pipetter_init");
